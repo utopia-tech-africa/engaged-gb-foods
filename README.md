@@ -10,12 +10,13 @@ Field and client platform for the GBfoods nationwide depot sorting and segregati
 - Auth: field staff ID + PIN, ops/client email + password, sessions, `/auth/me`
 - Role shells for field, ops, and GBfoods client
 - Network master data: 16 Ghana regions, distributors, depots (optional recce lat/lng), QC assignments
-- Ops UI: `/ops/regions`, `/ops/distributors`, `/ops/depots`
+- Ops UI: `/ops/regions`, `/ops/distributors`, `/ops/depots`, `/ops/attendance`
+- Field attendance: photo check-in/out with optional GPS (no geofencing), R2 or local uploads
+- Field UI: `/field`, `/field/check-in?depotId=…`
 - GBfoods brand tokens and logo assets
 
 ## Not built yet
 
-- Attendance with location
 - Stock capture, reconciliation, and client control room
 
 See `PRD.md` for the full product definition.
@@ -71,8 +72,32 @@ Documented here instead of an `.env.example` file. Copy from the `.env.keep` stu
 | `JWT_ACCESS_TTL_SECONDS` | `900` | API |
 | `JWT_REFRESH_TTL_DAYS` | `14` | API |
 | `NEXT_PUBLIC_API_BASE_URL` | `http://localhost:4000/api/v1` | Web |
+| `R2_ACCOUNT_ID` | Cloudflare account id | API (optional locally) |
+| `R2_ACCESS_KEY_ID` | R2 API token access key | API (optional locally) |
+| `R2_SECRET_ACCESS_KEY` | R2 API token secret | API (optional locally) |
+| `R2_BUCKET` | bucket name | API (optional locally) |
+| `R2_PUBLIC_BASE_URL` | `https://pub.example.r2.dev` | API (optional locally) |
 
-R2 upload credentials (`R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, `R2_PUBLIC_BASE_URL`) land with attendance and evidence.
+When all `R2_*` variables are set, attendance photos use presigned PUT uploads to Cloudflare R2. If they are omitted, use `POST /api/v1/uploads/local` (multipart field `file`); files are stored under `apps/api/.uploads` and object keys are prefixed with `local/`.
+
+### Local attendance smoke test (no R2)
+
+```bash
+# Sign in as QC (see seed accounts), then:
+TOKEN="$(curl -s -X POST http://localhost:4000/api/v1/auth/field/sign-in \
+  -H 'Content-Type: application/json' \
+  -d '{"staffId":"BTL-0031","pin":"2468"}' | jq -r .accessToken)"
+
+curl -s -X POST http://localhost:4000/api/v1/uploads/local \
+  -H "Authorization: Bearer $TOKEN" \
+  -F "file=@/path/to/tiny.jpg;type=image/jpeg"
+
+# Use returned objectKey in attendance (replace DEPOT_ID from GET /assignments/me/depots):
+curl -s -X POST http://localhost:4000/api/v1/attendance \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"depotId":"DEPOT_ID","kind":"check_in","photoObjectKey":"local/….jpg","latitude":5.6,"longitude":-0.2,"accuracyMeters":12}'
+```
 
 ### Seed accounts
 

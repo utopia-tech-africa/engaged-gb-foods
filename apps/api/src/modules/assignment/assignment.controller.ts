@@ -7,9 +7,12 @@ import {
   ApiTags,
 } from "@nestjs/swagger";
 
+import { FIELD_ATTENDANCE_WRITE_ROLES } from "../../common/constants/attendance-roles";
 import { NETWORK_READ_ROLES, NETWORK_WRITE_ROLES } from "../../common/constants/network-roles";
+import { CurrentUser } from "../../common/decorators/current-user.decorator";
 import { Roles } from "../../common/decorators/roles.decorator";
 import { RolesGuard } from "../../common/guards/roles.guard";
+import type { AuthenticatedUser } from "../../common/types/authenticated-user.type";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { AssignmentService } from "./assignment.service";
 import { CreateAssignmentDto } from "./dto/create-assignment.dto";
@@ -20,6 +23,18 @@ import { CreateAssignmentDto } from "./dto/create-assignment.dto";
 @ApiBearerAuth()
 export class AssignmentController {
   constructor(@Inject(AssignmentService) private readonly assignmentService: AssignmentService) {}
+
+  @Get("me/depots")
+  @Roles(...FIELD_ATTENDANCE_WRITE_ROLES)
+  @ApiOperation({
+    operationId: "getMeDepots",
+    summary: "List my assigned depots",
+    description: "Returns active depots within the user's assignment scope for field check-in.",
+  })
+  @ApiOkResponse({ description: "Depots assigned to current user" })
+  getMeDepots(@CurrentUser() user: AuthenticatedUser) {
+    return this.assignmentService.listDepotsForUser(user.id);
+  }
 
   @Get()
   @Roles(...NETWORK_READ_ROLES)

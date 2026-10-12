@@ -1,7 +1,8 @@
 import { BadRequestException, Inject, Injectable, NotFoundException } from "@nestjs/common";
-import type { Assignment, Prisma } from "@prisma/client";
+import type { Assignment, Depot, Prisma } from "@prisma/client";
 
 import { PrismaService } from "../prisma/prisma.service";
+import { activeAssignmentWhere, depotScopeFromAssignments } from "./assignment-depots.helper";
 import type { CreateAssignmentDto } from "./dto/create-assignment.dto";
 
 export type AssignmentWithRelations = Prisma.AssignmentGetPayload<{
@@ -16,6 +17,21 @@ export type AssignmentWithRelations = Prisma.AssignmentGetPayload<{
 @Injectable()
 export class AssignmentService {
   constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
+
+  async listDepotsForUser(userId: string): Promise<Depot[]> {
+    const assignments = await this.prisma.assignment.findMany({
+      where: activeAssignmentWhere(userId, new Date()),
+    });
+    const scope = depotScopeFromAssignments(assignments);
+    if (!scope) {
+      return [];
+    }
+
+    return this.prisma.depot.findMany({
+      where: scope,
+      orderBy: [{ name: "asc" }],
+    });
+  }
 
   async listAssignments(): Promise<AssignmentWithRelations[]> {
     return this.prisma.assignment.findMany({
