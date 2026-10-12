@@ -9,11 +9,12 @@ Field and client platform for the GBfoods nationwide depot sorting and segregati
 - Prisma + PostgreSQL, health endpoint, Swagger
 - Auth: field staff ID + PIN, ops/client email + password, sessions, `/auth/me`
 - Role shells for field, ops, and GBfoods client
+- Network master data: 16 Ghana regions, distributors, depots (optional recce lat/lng), QC assignments
+- Ops UI: `/ops/regions`, `/ops/distributors`, `/ops/depots`
 - GBfoods brand tokens and logo assets
 
 ## Not built yet
 
-- Regions, distributors, depots
 - Attendance with location
 - Stock capture, reconciliation, and client control room
 
@@ -35,6 +36,7 @@ cp apps/web/.env.keep apps/web/.env.local
 pnpm --filter @gbfoods/api prisma:generate
 pnpm --filter @gbfoods/api exec prisma migrate dev --schema prisma/schema.prisma
 pnpm --filter @gbfoods/api seed:auth
+pnpm --filter @gbfoods/api seed:network
 ```
 
 ## Run
