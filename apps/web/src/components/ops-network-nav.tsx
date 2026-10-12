@@ -5,6 +5,7 @@ const links = [
   { href: "/ops/regions", label: "Regions" },
   { href: "/ops/distributors", label: "Distributors" },
   { href: "/ops/depots", label: "Depots" },
+  { href: "/ops/attendance", label: "Attendance" },
 ] as const;
 
 export const OpsNetworkNav = () => (

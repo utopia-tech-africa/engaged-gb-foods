@@ -8,6 +8,7 @@ coverage
 .env
 .env.*
 !.env.keep
+apps/api/.uploads
 apps/api/src/generated
 apps/web/src/lib/api/generated
 *.tsbuildinfo

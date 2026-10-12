@@ -24,6 +24,18 @@ enum DepotReadiness {
   hold
 }
 
+enum AttendanceKind {
+  check_in
+  check_out
+}
+
+enum VisitStatus {
+  scheduled
+  in_progress
+  complete
+  exception
+}
+
 model User {
   id                String        @id @default(cuid())
   fullName          String
@@ -42,6 +54,8 @@ model User {
   sessions          AuthSession[]
   supervisedClusters Cluster[]    @relation("ClusterSupervisor")
   assignments       Assignment[]
+  visits            Visit[]        @relation("VisitQcUser")
+  attendances       Attendance[]
 
   @@index([role])
   @@index([isActive])
@@ -133,6 +147,8 @@ model Depot {
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
   distributor    Distributor    @relation(fields: [distributorId], references: [id], onDelete: Cascade)
+  visits         Visit[]
+  attendances    Attendance[]
 
   @@unique([distributorId, code])
   @@index([distributorId])
@@ -160,4 +176,47 @@ model Assignment {
   @@index([clusterId])
   @@index([regionId])
   @@index([effectiveFrom])
+}
+
+model Visit {
+  id          String       @id @default(cuid())
+  code        String       @unique
+  depotId     String
+  qcUserId    String
+  date        DateTime     @db.Date
+  status      VisitStatus  @default(scheduled)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  depot       Depot        @relation(fields: [depotId], references: [id], onDelete: Cascade)
+  qcUser      User         @relation("VisitQcUser", fields: [qcUserId], references: [id], onDelete: Cascade)
+  attendances Attendance[]
+
+  @@unique([depotId, qcUserId, date])
+  @@index([depotId])
+  @@index([qcUserId])
+  @@index([date])
+  @@index([status])
+}
+
+model Attendance {
+  id             String         @id @default(cuid())
+  visitId        String?
+  userId         String
+  depotId        String
+  kind           AttendanceKind
+  photoObjectKey String
+  latitude       Float?
+  longitude      Float?
+  accuracyMeters Float?
+  capturedAt     DateTime
+  createdAt      DateTime       @default(now())
+  visit          Visit?         @relation(fields: [visitId], references: [id], onDelete: SetNull)
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  depot          Depot          @relation(fields: [depotId], references: [id], onDelete: Cascade)
+
+  @@index([depotId])
+  @@index([userId])
+  @@index([visitId])
+  @@index([capturedAt])
+  @@index([depotId, capturedAt])
 }

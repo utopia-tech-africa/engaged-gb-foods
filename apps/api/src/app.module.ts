@@ -3,12 +3,14 @@ import { ConfigModule } from "@nestjs/config";
 
 import { validateEnvironment } from "./config/environment";
 import { AssignmentModule } from "./modules/assignment/assignment.module";
+import { AttendanceModule } from "./modules/attendance/attendance.module";
 import { AuthModule } from "./modules/auth/auth.module";
 import { DepotModule } from "./modules/depot/depot.module";
 import { DistributorModule } from "./modules/distributor/distributor.module";
 import { HealthModule } from "./modules/health/health.module";
 import { PrismaModule } from "./modules/prisma/prisma.module";
 import { RegionModule } from "./modules/region/region.module";
+import { UploadModule } from "./modules/upload/upload.module";
 
 @Module({
   imports: [
@@ -23,6 +25,8 @@ import { RegionModule } from "./modules/region/region.module";
     DistributorModule,
     DepotModule,
     AssignmentModule,
+    UploadModule,
+    AttendanceModule,
   ],
 })
 export class AppModule {}
