@@ -46,12 +46,21 @@ export class UploadService {
     }
   }
 
+  assertStockEvidenceObjectKey(objectKey: string): void {
+    if (!objectKey.startsWith("stock_evidence/") && !objectKey.startsWith("local/")) {
+      throw new BadRequestException("Evidence objectKey must start with stock_evidence/ or local/");
+    }
+  }
+
   async createPresignedUpload(input: {
     contentType: string;
     contentLength: number;
     purpose: UploadPurpose;
   }): Promise<{ uploadUrl: string; objectKey: string; method: "PUT" }> {
-    if (input.purpose !== UploadPurpose.attendance_photo) {
+    if (
+      input.purpose !== UploadPurpose.attendance_photo &&
+      input.purpose !== UploadPurpose.stock_evidence
+    ) {
       throw new BadRequestException("Unsupported upload purpose");
     }
 
@@ -68,7 +77,8 @@ export class UploadService {
     }
 
     const ext = extensionForContentType(input.contentType);
-    const objectKey = `attendance/${randomUUID()}.${ext}`;
+    const prefix = input.purpose === UploadPurpose.stock_evidence ? "stock_evidence" : "attendance";
+    const objectKey = `${prefix}/${randomUUID()}.${ext}`;
 
     const client = new S3Client({
       region: "auto",

@@ -36,6 +36,30 @@ enum VisitStatus {
   exception
 }
 
+enum StockZone {
+  unexamined
+  conforming_pending_release
+  recoverable_pending_approval
+  held_or_rejected
+  released_remaining_on_site
+}
+
+enum StockUnit {
+  cases
+  loose_packs
+}
+
+enum StockEvidenceCategory {
+  pack
+  batch
+  defect
+  position
+}
+
+enum StockMovementType {
+  opening
+}
+
 model User {
   id                String        @id @default(cuid())
   fullName          String
@@ -56,6 +80,7 @@ model User {
   assignments       Assignment[]
   visits            Visit[]        @relation("VisitQcUser")
   attendances       Attendance[]
+  stockLotsCreated  StockLot[]     @relation("StockLotCreatedBy")
 
   @@index([role])
   @@index([isActive])
@@ -190,6 +215,7 @@ model Visit {
   depot       Depot        @relation(fields: [depotId], references: [id], onDelete: Cascade)
   qcUser      User         @relation("VisitQcUser", fields: [qcUserId], references: [id], onDelete: Cascade)
   attendances Attendance[]
+  stockLots   StockLot[]
 
   @@unique([depotId, qcUserId, date])
   @@index([depotId])
@@ -219,4 +245,87 @@ model Attendance {
   @@index([visitId])
   @@index([capturedAt])
   @@index([depotId, capturedAt])
+}
+
+model Sku {
+  id          String     @id @default(cuid())
+  name        String     @unique
+  brand       String?
+  packFactor  Int        @default(1)
+  caseUnit    String
+  looseUnit   String
+  isActive    Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  stockLots   StockLot[]
+
+  @@index([isActive])
+}
+
+model DefectCode {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  label     String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive])
+}
+
+model StockLot {
+  id               String     @id @default(cuid())
+  visitId          String
+  skuId            String
+  batchCode        String
+  expiryDate       DateTime?  @db.Date
+  zone             StockZone
+  quantity         Int
+  unit             StockUnit
+  baseQuantity     Int
+  custodian        String?
+  notes            String?
+  latitude         Float?
+  longitude        Float?
+  accuracyMeters   Float?
+  createdByUserId  String
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+  visit            Visit      @relation(fields: [visitId], references: [id], onDelete: Cascade)
+  sku              Sku        @relation(fields: [skuId], references: [id], onDelete: Restrict)
+  createdBy        User       @relation("StockLotCreatedBy", fields: [createdByUserId], references: [id], onDelete: Cascade)
+  evidence         StockEvidence[]
+  movements        StockMovement[]
+
+  @@index([visitId])
+  @@index([skuId])
+  @@index([zone])
+  @@index([createdByUserId])
+  @@index([createdAt])
+}
+
+model StockEvidence {
+  id          String                @id @default(cuid())
+  stockLotId  String
+  category    StockEvidenceCategory
+  objectKey   String
+  capturedAt  DateTime
+  createdAt   DateTime              @default(now())
+  stockLot    StockLot              @relation(fields: [stockLotId], references: [id], onDelete: Cascade)
+
+  @@index([stockLotId])
+  @@index([category])
+}
+
+model StockMovement {
+  id          String            @id @default(cuid())
+  stockLotId  String
+  type        StockMovementType
+  quantity    Int
+  baseQuantity Int
+  createdAt   DateTime          @default(now())
+  stockLot    StockLot          @relation(fields: [stockLotId], references: [id], onDelete: Cascade)
+
+  @@index([stockLotId])
+  @@index([type])
 }
