@@ -15,7 +15,7 @@ import {
   UserRole,
   VisitStatus,
 } from "@prisma/client";
-
+import { stampVisitLastSyncedAt } from "../../common/helpers/visit-sync.helper";
 import {
   activeAssignmentWhere,
   depotScopeFromAssignments,
@@ -236,7 +236,7 @@ export class StockLotService {
     const baseQuantity = this.computeBaseQuantity(dto.quantity, dto.unit, sku.packFactor);
     const capturedAt = new Date();
 
-    return this.prisma.stockLot.create({
+    const lot = await this.prisma.stockLot.create({
       data: {
         visitId,
         skuId: dto.skuId,
@@ -270,6 +270,9 @@ export class StockLotService {
       },
       include: stockLotInclude,
     });
+
+    await stampVisitLastSyncedAt(this.prisma, visitId);
+    return lot;
   }
 
   async listStockLots(
@@ -404,11 +407,14 @@ export class StockLotService {
         },
       });
 
-      return tx.stockLot.update({
+      const updated = await tx.stockLot.update({
         where: { id: lotId },
         data: { zone: nextZone },
         include: stockLotInclude,
       });
+
+      await stampVisitLastSyncedAt(tx, lot.visitId);
+      return updated;
     });
   }
 }

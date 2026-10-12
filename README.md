@@ -16,12 +16,12 @@ Field and client platform for the GBfoods nationwide depot sorting and segregati
 - Stock capture with zones, evidence, and opening movements
 - Visit reconciliation: balance by SKU/batch, custodians on held lots, three signatures, close or exception
 - GBfoods disposition on stock lots (`POST /stock-lots/:id/disposition`) with zone lock for release paths
-- Ops visit review: `/ops/visits/[id]`; client control room: `/client`, `/client/lots/[id]`
+- Ops visit review: `/ops/visits/[id]`; GBfoods control room: `/client`, `/client/depots/[id]`, `/client/lots/[id]` with overview KPIs, filters, CSV exports, and depot packs
 - GBfoods brand tokens and logo assets
 
 ## Not built yet
 
-- Full control-room dashboards, exports, and offline capture
+- Offline field capture and draft sync (server never exposes unsynced drafts to client)
 
 See `PRD.md` for the full product definition.
 
@@ -40,7 +40,7 @@ cp apps/api/.env.keep apps/api/.env
 cp apps/web/.env.keep apps/web/.env.local
 pnpm --filter @gbfoods/api prisma:generate
 pnpm --filter @gbfoods/api exec prisma migrate dev --schema prisma/schema.prisma
-# includes migration `reconcile_disposition` (dispositions, visit signatures, open actions)
+# includes migrations `reconcile_disposition`, `client_control_room` (Visit.lastSyncedAt)
 pnpm --filter @gbfoods/api seed:auth
 pnpm --filter @gbfoods/api seed:network
 ```
@@ -76,6 +76,7 @@ Documented here instead of an `.env.example` file. Copy from the `.env.keep` stu
 | `JWT_ACCESS_SECRET` | long random string (32+ chars) | API |
 | `JWT_ACCESS_TTL_SECONDS` | `900` | API |
 | `JWT_REFRESH_TTL_DAYS` | `14` | API |
+| `CLIENT_SYNC_DELAY_HOURS` | `2` | API (in-progress visits older than this count as sync delay) |
 | `NEXT_PUBLIC_API_BASE_URL` | `http://localhost:4000/api/v1` | Web |
 | `R2_ACCOUNT_ID` | Cloudflare account id | API (optional locally) |
 | `R2_ACCESS_KEY_ID` | R2 API token access key | API (optional locally) |
