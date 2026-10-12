@@ -7,15 +7,13 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { RequireAuth } from "@/components/require-auth";
 import { ShellFrame } from "@/components/shell-frame";
-import type { UserRole } from "@/lib/auth/types";
+import { CLIENT_CONTROL_ROLES } from "@/lib/client/roles";
 import { fetchStockLotById, type StockLot, ZONE_LABELS } from "@/lib/stock/api";
 import {
   DISPOSITION_LABELS,
   type DispositionDecision,
   postStockLotDisposition,
 } from "@/lib/visit/api";
-
-const CLIENT_ROLES: UserRole[] = ["gbfoods_reviewer", "admin"];
 
 const PENDING_ZONES = new Set([
   "held_or_rejected",
@@ -69,7 +67,7 @@ export default function ClientLotDispositionPage() {
   };
 
   return (
-    <RequireAuth roles={CLIENT_ROLES}>
+    <RequireAuth roles={CLIENT_CONTROL_ROLES}>
       <ShellFrame title="Disposition" eyebrow="GBfoods">
         <div className="max-w-lg space-y-6">
           <Link href="/client" className="text-sm font-medium text-brand hover:underline">

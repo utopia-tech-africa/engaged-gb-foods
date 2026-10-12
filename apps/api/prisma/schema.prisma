@@ -227,6 +227,7 @@ model Visit {
   date         DateTime          @db.Date
   status       VisitStatus       @default(scheduled)
   reconciledAt DateTime?
+  lastSyncedAt DateTime?
   createdAt    DateTime          @default(now())
   updatedAt    DateTime          @updatedAt
   depot        Depot             @relation(fields: [depotId], references: [id], onDelete: Cascade)

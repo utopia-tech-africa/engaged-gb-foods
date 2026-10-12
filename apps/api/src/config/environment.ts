@@ -34,6 +34,13 @@ export class EnvironmentVariables {
   @IsOptional()
   @IsString()
   NODE_ENV?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(168)
+  CLIENT_SYNC_DELAY_HOURS = 2;
 }
 
 export const validateEnvironment = (config: Record<string, unknown>): EnvironmentVariables => {
