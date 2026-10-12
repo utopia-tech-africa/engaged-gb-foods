@@ -7,8 +7,20 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { RequireAuth } from "@/components/require-auth";
 import { ShellFrame } from "@/components/shell-frame";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { CLIENT_CONTROL_ROLES } from "@/lib/client/roles";
 import { fetchStockLotById, type StockLot, ZONE_LABELS } from "@/lib/stock/api";
+import { cn } from "@/lib/utils";
 import {
   DISPOSITION_LABELS,
   type DispositionDecision,
@@ -70,7 +82,7 @@ export default function ClientLotDispositionPage() {
     <RequireAuth roles={CLIENT_CONTROL_ROLES}>
       <ShellFrame title="Disposition" eyebrow="GBfoods">
         <div className="max-w-lg space-y-6">
-          <Link href="/client" className="text-sm font-medium text-brand hover:underline">
+          <Link href="/client" className={cn(buttonVariants({ variant: "link" }), "h-auto p-0")}>
             ← Control room
           </Link>
 
@@ -79,53 +91,58 @@ export default function ClientLotDispositionPage() {
 
           {lot ? (
             <>
-              <div className="rounded-2xl border border-border bg-surface p-4 text-sm">
-                <p className="font-semibold">{lot.sku.name}</p>
-                <p className="text-brand">{ZONE_LABELS[lot.zone]}</p>
-                <p className="mt-2 text-brand-ink/70">
-                  {lot.visit.depot.name} · batch {lot.batchCode}
-                </p>
-                {!PENDING_ZONES.has(lot.zone) ? (
-                  <p className="mt-2 text-amber-700">
-                    This lot is not in a pending disposition zone.
+              <Card>
+                <CardContent className="text-sm">
+                  <p className="font-semibold">{lot.sku.name}</p>
+                  <p className="text-brand">{ZONE_LABELS[lot.zone]}</p>
+                  <p className="mt-2 text-brand-ink/70">
+                    {lot.visit.depot.name} · batch {lot.batchCode}
                   </p>
-                ) : null}
+                  {!PENDING_ZONES.has(lot.zone) ? (
+                    <p className="mt-2 text-amber-700">
+                      This lot is not in a pending disposition zone.
+                    </p>
+                  ) : null}
+                </CardContent>
+              </Card>
+
+              <div className="space-y-2">
+                <Label>Decision</Label>
+                <Select
+                  value={decision}
+                  onValueChange={(value) => {
+                    if (value) {
+                      setDecision(value as DispositionDecision);
+                    }
+                  }}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(Object.keys(DISPOSITION_LABELS) as DispositionDecision[]).map((key) => (
+                      <SelectItem key={key} value={key}>
+                        {DISPOSITION_LABELS[key]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
-              <label className="block text-sm">
-                <span className="font-medium">Decision</span>
-                <select
-                  value={decision}
-                  onChange={(event) => setDecision(event.target.value as DispositionDecision)}
-                  className="mt-1 w-full rounded-lg border border-border px-3 py-2"
-                >
-                  {(Object.keys(DISPOSITION_LABELS) as DispositionDecision[]).map((key) => (
-                    <option key={key} value={key}>
-                      {DISPOSITION_LABELS[key]}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="block text-sm">
-                <span className="font-medium">Reason</span>
-                <textarea
+              <div className="space-y-2">
+                <Label htmlFor="disposition-reason">Reason</Label>
+                <Textarea
+                  id="disposition-reason"
                   value={reason}
                   onChange={(event) => setReason(event.target.value)}
                   rows={4}
-                  className="mt-1 w-full rounded-lg border border-border px-3 py-2"
                   placeholder="Required rationale for audit trail"
                 />
-              </label>
+              </div>
 
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => void submit()}
-                className="rounded-full bg-brand px-6 py-3 text-sm font-semibold text-white disabled:opacity-50"
-              >
+              <Button type="button" disabled={busy} onClick={() => void submit()}>
                 Submit disposition
-              </button>
+              </Button>
             </>
           ) : null}
         </div>

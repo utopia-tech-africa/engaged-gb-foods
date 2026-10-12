@@ -6,9 +6,13 @@ import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { RequireAuth } from "@/components/require-auth";
 import { ShellFrame } from "@/components/shell-frame";
+import { Badge } from "@/components/ui/badge";
+import { buttonVariants } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { fetchMyDepots, type MyDepot } from "@/lib/attendance/api";
 import type { UserRole } from "@/lib/auth/types";
 import { fetchStockLots, type StockLot, ZONE_LABELS } from "@/lib/stock/api";
+import { cn } from "@/lib/utils";
 
 const FIELD_ROLES: UserRole[] = ["qc", "handler", "cluster_supervisor", "regional_supervisor"];
 
@@ -64,14 +68,9 @@ export default function FieldStockListPage() {
             evidence photos on site.
           </p>
 
-          <div className="flex flex-wrap gap-3">
-            <Link
-              href="/field"
-              className="rounded-full border border-border bg-surface px-4 py-2 text-sm font-medium text-brand-ink hover:border-brand hover:text-brand"
-            >
-              Field home
-            </Link>
-          </div>
+          <Link href="/field" className={cn(buttonVariants({ variant: "outline" }))}>
+            Field home
+          </Link>
 
           {depots.length > 0 ? (
             <div className="flex flex-wrap gap-2">
@@ -79,7 +78,7 @@ export default function FieldStockListPage() {
                 <Link
                   key={depot.id}
                   href={`/field/stock/new?depotId=${encodeURIComponent(depot.id)}`}
-                  className="rounded-full bg-brand px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand/90"
+                  className={cn(buttonVariants({ size: "sm" }))}
                 >
                   New lot · {depot.code}
                 </Link>
@@ -96,31 +95,32 @@ export default function FieldStockListPage() {
 
           <ul className="space-y-3">
             {sorted.map((lot) => (
-              <li
-                key={lot.id}
-                className="rounded-2xl border border-border bg-surface p-4 text-sm text-brand-ink"
-              >
-                <p className="font-semibold">{lot.sku.name}</p>
-                <p className="mt-1 text-brand">{ZONE_LABELS[lot.zone]}</p>
-                <p className="mt-2">
-                  <span className="text-brand-ink/60">Depot:</span> {lot.visit.depot.name} (
-                  {lot.visit.depot.code})
-                </p>
-                <p>
-                  <span className="text-brand-ink/60">Batch:</span> {lot.batchCode}
-                </p>
-                <p>
-                  <span className="text-brand-ink/60">Quantity:</span> {formatQty(lot)}
-                </p>
-                <p className="text-xs text-brand-ink/50">
-                  {new Date(lot.createdAt).toLocaleString()}
-                </p>
-                <Link
-                  href={`/field/visits/${lot.visitId}/reconcile`}
-                  className="mt-3 inline-flex text-sm font-semibold text-brand hover:underline"
-                >
-                  Reconcile visit
-                </Link>
+              <li key={lot.id}>
+                <Card>
+                  <CardContent className="text-sm text-brand-ink">
+                    <p className="font-semibold">{lot.sku.name}</p>
+                    <Badge className="mt-1">{ZONE_LABELS[lot.zone]}</Badge>
+                    <p className="mt-2">
+                      <span className="text-brand-ink/60">Depot:</span> {lot.visit.depot.name} (
+                      {lot.visit.depot.code})
+                    </p>
+                    <p>
+                      <span className="text-brand-ink/60">Batch:</span> {lot.batchCode}
+                    </p>
+                    <p>
+                      <span className="text-brand-ink/60">Quantity:</span> {formatQty(lot)}
+                    </p>
+                    <p className="text-xs text-brand-ink/50">
+                      {new Date(lot.createdAt).toLocaleString()}
+                    </p>
+                    <Link
+                      href={`/field/visits/${lot.visitId}/reconcile`}
+                      className={cn(buttonVariants({ variant: "link" }), "mt-3 h-auto p-0")}
+                    >
+                      Reconcile visit
+                    </Link>
+                  </CardContent>
+                </Card>
               </li>
             ))}
           </ul>

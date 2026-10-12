@@ -6,9 +6,30 @@ import { useAuth } from "@/components/auth-provider";
 import { OpsNetworkNav } from "@/components/ops-network-nav";
 import { RequireAuth } from "@/components/require-auth";
 import { ShellFrame } from "@/components/shell-frame";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import type { Distributor, Region } from "@/lib/network/api";
 import * as networkApi from "@/lib/network/api";
 import { canWriteNetwork, OPS_NETWORK_ROLES } from "@/lib/network/roles";
+
+const ALL_FILTER = "__all__";
 
 export default function OpsDistributorsPage() {
   const { accessToken, user } = useAuth();
@@ -89,89 +110,104 @@ export default function OpsDistributorsPage() {
         <div className="space-y-6">
           <OpsNetworkNav />
 
-          <div className="flex flex-wrap items-end gap-3">
-            <label className="flex flex-col gap-1 text-sm text-brand-ink">
-              Filter by region
-              <select
-                className="rounded-xl border border-border bg-surface px-3 py-2 text-foreground"
-                value={filterRegionId}
-                onChange={(event) => setFilterRegionId(event.target.value)}
-              >
-                <option value="">All regions</option>
+          <div className="max-w-md space-y-2">
+            <Label>Filter by region</Label>
+            <Select
+              value={filterRegionId || ALL_FILTER}
+              onValueChange={(value) => {
+                if (!value) {
+                  return;
+                }
+                setFilterRegionId(value === ALL_FILTER ? "" : value);
+              }}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="All regions" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ALL_FILTER}>All regions</SelectItem>
                 {regions.map((region) => (
-                  <option key={region.id} value={region.id}>
+                  <SelectItem key={region.id} value={region.id}>
                     {region.name}
-                  </option>
+                  </SelectItem>
                 ))}
-              </select>
-            </label>
+              </SelectContent>
+            </Select>
           </div>
 
           {writeEnabled ? (
-            <form
-              onSubmit={(event) => void onSubmit(event)}
-              className="grid gap-4 rounded-2xl border border-border bg-surface p-5 shadow-sm md:grid-cols-2"
-            >
-              <h2 className="md:col-span-2 font-display text-lg font-semibold text-foreground">
-                Add distributor
-              </h2>
-              <label className="flex flex-col gap-1 text-sm text-brand-ink">
-                Name
-                <input
-                  required
-                  className="rounded-xl border border-border px-3 py-2"
-                  value={name}
-                  onChange={(event) => setName(event.target.value)}
-                />
-              </label>
-              <label className="flex flex-col gap-1 text-sm text-brand-ink">
-                Code
-                <input
-                  required
-                  className="rounded-xl border border-border px-3 py-2 font-mono uppercase"
-                  value={code}
-                  onChange={(event) => setCode(event.target.value)}
-                />
-              </label>
-              <label className="flex flex-col gap-1 text-sm text-brand-ink">
-                Region
-                <select
-                  required
-                  className="rounded-xl border border-border bg-surface px-3 py-2"
-                  value={regionId}
-                  onChange={(event) => setRegionId(event.target.value)}
+            <Card>
+              <CardHeader>
+                <CardTitle className="font-display text-lg">Add distributor</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form
+                  onSubmit={(event) => void onSubmit(event)}
+                  className="grid gap-4 md:grid-cols-2"
                 >
-                  {regions.map((region) => (
-                    <option key={region.id} value={region.id}>
-                      {region.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="flex flex-col gap-1 text-sm text-brand-ink">
-                Contact name
-                <input
-                  className="rounded-xl border border-border px-3 py-2"
-                  value={contactName}
-                  onChange={(event) => setContactName(event.target.value)}
-                />
-              </label>
-              <label className="flex flex-col gap-1 text-sm text-brand-ink md:col-span-2">
-                Contact phone
-                <input
-                  className="rounded-xl border border-border px-3 py-2"
-                  value={contactPhone}
-                  onChange={(event) => setContactPhone(event.target.value)}
-                />
-              </label>
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="md:col-span-2 w-fit rounded-xl bg-brand px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-hover disabled:opacity-60"
-              >
-                {isSubmitting ? "Saving…" : "Create distributor"}
-              </button>
-            </form>
+                  <div className="space-y-2">
+                    <Label htmlFor="distributor-name">Name</Label>
+                    <Input
+                      id="distributor-name"
+                      required
+                      value={name}
+                      onChange={(event) => setName(event.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="distributor-code">Code</Label>
+                    <Input
+                      id="distributor-code"
+                      required
+                      className="font-mono uppercase"
+                      value={code}
+                      onChange={(event) => setCode(event.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Region</Label>
+                    <Select
+                      value={regionId}
+                      onValueChange={(value) => {
+                        if (value) {
+                          setRegionId(value);
+                        }
+                      }}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select region" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {regions.map((region) => (
+                          <SelectItem key={region.id} value={region.id}>
+                            {region.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="contact-name">Contact name</Label>
+                    <Input
+                      id="contact-name"
+                      value={contactName}
+                      onChange={(event) => setContactName(event.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <Label htmlFor="contact-phone">Contact phone</Label>
+                    <Input
+                      id="contact-phone"
+                      value={contactPhone}
+                      onChange={(event) => setContactPhone(event.target.value)}
+                    />
+                  </div>
+                  <Button type="submit" disabled={isSubmitting} className="md:col-span-2 w-fit">
+                    {isSubmitting ? "Saving…" : "Create distributor"}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
           ) : null}
 
           {error ? <p className="text-sm text-danger">{error}</p> : null}
@@ -179,33 +215,41 @@ export default function OpsDistributorsPage() {
           {isLoading ? (
             <p className="text-sm text-brand-ink">Loading distributors…</p>
           ) : (
-            <div className="overflow-hidden rounded-2xl border border-border bg-surface shadow-sm">
-              <table className="w-full text-left text-sm">
-                <thead className="border-b border-border bg-brand-muted/40 text-xs uppercase tracking-wide text-brand-ink">
-                  <tr>
-                    <th className="px-4 py-3 font-semibold">Code</th>
-                    <th className="px-4 py-3 font-semibold">Name</th>
-                    <th className="px-4 py-3 font-semibold">Region</th>
-                    <th className="px-4 py-3 font-semibold">Contact</th>
-                  </tr>
-                </thead>
-                <tbody>
+            <Card className="overflow-hidden p-0">
+              <Table>
+                <TableHeader className="bg-brand-muted/40">
+                  <TableRow>
+                    <TableHead className="text-xs uppercase tracking-wide text-brand-ink">
+                      Code
+                    </TableHead>
+                    <TableHead className="text-xs uppercase tracking-wide text-brand-ink">
+                      Name
+                    </TableHead>
+                    <TableHead className="text-xs uppercase tracking-wide text-brand-ink">
+                      Region
+                    </TableHead>
+                    <TableHead className="text-xs uppercase tracking-wide text-brand-ink">
+                      Contact
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {distributors.map((distributor) => (
-                    <tr key={distributor.id} className="border-b border-border last:border-0">
-                      <td className="px-4 py-3 font-mono text-brand">{distributor.code}</td>
-                      <td className="px-4 py-3">{distributor.name}</td>
-                      <td className="px-4 py-3">{regionNameById(distributor.regionId)}</td>
-                      <td className="px-4 py-3 text-brand-ink">
+                    <TableRow key={distributor.id}>
+                      <TableCell className="font-mono text-brand">{distributor.code}</TableCell>
+                      <TableCell>{distributor.name}</TableCell>
+                      <TableCell>{regionNameById(distributor.regionId)}</TableCell>
+                      <TableCell className="text-brand-ink">
                         {distributor.contactName ?? "—"}
                         {distributor.contactPhone ? (
                           <span className="block text-xs">{distributor.contactPhone}</span>
                         ) : null}
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
-            </div>
+                </TableBody>
+              </Table>
+            </Card>
           )}
         </div>
       </ShellFrame>

@@ -9,8 +9,21 @@ import { OpsNetworkNav } from "@/components/ops-network-nav";
 import { RequireAuth } from "@/components/require-auth";
 import { ShellFrame } from "@/components/shell-frame";
 import { SignaturePad } from "@/components/signature-pad";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { OPS_NETWORK_ROLES } from "@/lib/network/roles";
 import { ZONE_LABELS } from "@/lib/stock/api";
+import { cn } from "@/lib/utils";
 import {
   fetchVisitReconciliation,
   postVisitClose,
@@ -87,7 +100,7 @@ export default function OpsVisitDetailPage() {
       <ShellFrame title="Visit reconciliation" eyebrow="Operations">
         <div className="space-y-6">
           <OpsNetworkNav />
-          <Link href="/ops/stock" className="text-sm font-medium text-brand hover:underline">
+          <Link href="/ops/stock" className={cn(buttonVariants({ variant: "link" }), "h-auto p-0")}>
             ← Stock lots
           </Link>
 
@@ -96,42 +109,45 @@ export default function OpsVisitDetailPage() {
 
           {snapshot ? (
             <>
-              <div className="rounded-2xl border border-border bg-surface p-4 text-sm">
-                <p className="font-semibold">{snapshot.visit.depot.name}</p>
-                <p className="text-brand">{snapshot.visit.code}</p>
-                <p className="mt-1 text-brand-ink/70">
-                  QC: {snapshot.visit.qcUser.fullName} · Status {snapshot.visit.status}
-                </p>
-                <Link
-                  href={`/field/visits/${visitId}/reconcile`}
-                  className="mt-2 inline-block text-brand hover:underline"
-                >
-                  Open field reconcile view
-                </Link>
-              </div>
+              <Card>
+                <CardContent className="text-sm">
+                  <p className="font-semibold">{snapshot.visit.depot.name}</p>
+                  <p className="text-brand">{snapshot.visit.code}</p>
+                  <p className="mt-1 text-brand-ink/70">
+                    QC: {snapshot.visit.qcUser.fullName} · Status {snapshot.visit.status}
+                  </p>
+                  <Link
+                    href={`/field/visits/${visitId}/reconcile`}
+                    className={cn(buttonVariants({ variant: "link" }), "mt-2 h-auto p-0")}
+                  >
+                    Open field reconcile view
+                  </Link>
+                </CardContent>
+              </Card>
 
-              <div className="overflow-x-auto rounded-2xl border border-border">
-                <table className="min-w-full text-left text-sm">
-                  <thead className="bg-surface text-xs uppercase text-brand-ink/60">
-                    <tr>
-                      <th className="px-3 py-2">SKU / batch</th>
-                      <th className="px-3 py-2">Opening</th>
-                      <th className="px-3 py-2">Closing</th>
-                      <th className="px-3 py-2">Variance</th>
-                    </tr>
-                  </thead>
-                  <tbody>
+              <Card className="overflow-hidden p-0">
+                <Table>
+                  <TableHeader className="bg-surface">
+                    <TableRow>
+                      <TableHead className="text-xs uppercase text-brand-ink/60">
+                        SKU / batch
+                      </TableHead>
+                      <TableHead className="text-xs uppercase text-brand-ink/60">Opening</TableHead>
+                      <TableHead className="text-xs uppercase text-brand-ink/60">Closing</TableHead>
+                      <TableHead className="text-xs uppercase text-brand-ink/60">
+                        Variance
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
                     {snapshot.lines.map((line) => (
-                      <tr
-                        key={`${line.skuId}-${line.batchCode}`}
-                        className="border-t border-border"
-                      >
-                        <td className="px-3 py-2">
+                      <TableRow key={`${line.skuId}-${line.batchCode}`}>
+                        <TableCell>
                           {line.skuName}
                           <span className="block text-xs text-brand-ink/60">{line.batchCode}</span>
-                        </td>
-                        <td className="px-3 py-2">{line.opening}</td>
-                        <td className="px-3 py-2">
+                        </TableCell>
+                        <TableCell>{line.opening}</TableCell>
+                        <TableCell>
                           {line.closingTotal}
                           <span className="block text-xs text-brand-ink/60">
                             {Object.entries(line.closingByZone)
@@ -142,94 +158,114 @@ export default function OpsVisitDetailPage() {
                               )
                               .join(" · ")}
                           </span>
-                        </td>
-                        <td
-                          className={`px-3 py-2 font-semibold ${line.variance === 0 ? "text-green-700" : "text-red-600"}`}
+                        </TableCell>
+                        <TableCell
+                          className={`font-semibold ${line.variance === 0 ? "text-green-700" : "text-red-600"}`}
                         >
                           {line.variance}
-                        </td>
-                      </tr>
+                        </TableCell>
+                      </TableRow>
                     ))}
-                  </tbody>
-                </table>
-              </div>
+                  </TableBody>
+                </Table>
+              </Card>
 
               {!snapshot.canClose && snapshot.visit.status !== "complete" ? (
-                <div className="rounded-2xl border border-amber-200 bg-amber-50/50 p-4 text-sm">
-                  <h2 className="font-semibold text-brand-ink">Close as exception</h2>
-                  <p className="mt-1 text-brand-ink/70">
-                    Record an open action when variance or signatures cannot be cleared today.
-                  </p>
-                  <input
-                    type="text"
-                    placeholder="Open action description"
-                    value={exceptionDescription}
-                    onChange={(event) => setExceptionDescription(event.target.value)}
-                    className="mt-3 w-full rounded-lg border border-border px-3 py-2"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Owner name"
-                    value={exceptionOwner}
-                    onChange={(event) => setExceptionOwner(event.target.value)}
-                    className="mt-2 w-full rounded-lg border border-border px-3 py-2"
-                  />
-                  <button
-                    type="button"
-                    disabled={busy}
-                    onClick={() => {
-                      if (!accessToken) {
-                        return;
-                      }
-                      setBusy(true);
-                      void postVisitClose(accessToken, visitId, {
-                        openActions: [
-                          {
-                            description: exceptionDescription,
-                            ownerName: exceptionOwner,
-                          },
-                        ],
-                      })
-                        .then(() => reload())
-                        .catch((err: unknown) => {
-                          setError(err instanceof Error ? err.message : "Could not close visit");
+                <Card className="border-amber-200 bg-amber-50/50">
+                  <CardHeader>
+                    <CardTitle className="text-sm">Close as exception</CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-sm">
+                    <p className="text-brand-ink/70">
+                      Record an open action when variance or signatures cannot be cleared today.
+                    </p>
+                    <div className="mt-3 space-y-2">
+                      <Label htmlFor="exception-description">Open action description</Label>
+                      <Input
+                        id="exception-description"
+                        type="text"
+                        placeholder="Open action description"
+                        value={exceptionDescription}
+                        onChange={(event) => setExceptionDescription(event.target.value)}
+                      />
+                    </div>
+                    <div className="mt-2 space-y-2">
+                      <Label htmlFor="exception-owner">Owner name</Label>
+                      <Input
+                        id="exception-owner"
+                        type="text"
+                        placeholder="Owner name"
+                        value={exceptionOwner}
+                        onChange={(event) => setExceptionOwner(event.target.value)}
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="mt-3"
+                      disabled={busy}
+                      onClick={() => {
+                        if (!accessToken) {
+                          return;
+                        }
+                        setBusy(true);
+                        void postVisitClose(accessToken, visitId, {
+                          openActions: [
+                            {
+                              description: exceptionDescription,
+                              ownerName: exceptionOwner,
+                            },
+                          ],
                         })
-                        .finally(() => setBusy(false));
-                    }}
-                    className="mt-3 rounded-full border border-brand px-4 py-2 text-xs font-semibold text-brand disabled:opacity-50"
-                  >
-                    Close with open action
-                  </button>
-                </div>
+                          .then(() => reload())
+                          .catch((err: unknown) => {
+                            setError(err instanceof Error ? err.message : "Could not close visit");
+                          })
+                          .finally(() => setBusy(false));
+                      }}
+                    >
+                      Close with open action
+                    </Button>
+                  </CardContent>
+                </Card>
               ) : null}
 
-              <div className="rounded-2xl border border-border p-4">
-                <h2 className="text-sm font-semibold">
-                  {SIGNATURE_ROLE_LABELS.cluster_supervisor}
-                </h2>
-                <input
-                  type="text"
-                  value={supervisorName}
-                  onChange={(event) => setSupervisorName(event.target.value)}
-                  className="mt-2 w-full max-w-md rounded-lg border border-border px-3 py-2 text-sm"
-                />
-                <SignaturePad className="mt-3 max-w-md" onChange={setSignatureFile} />
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={() => void saveSupervisorSignature()}
-                  className="mt-3 rounded-full bg-brand px-4 py-2 text-xs font-semibold text-white disabled:opacity-50"
-                >
-                  Save supervisor signature
-                </button>
-                <p className="mt-3 text-xs text-brand-ink/60">
-                  Recorded:{" "}
-                  {snapshot.signatures
-                    .filter((s) => s.role === "cluster_supervisor")
-                    .map((s) => s.signerName)
-                    .join(", ") || "Not yet"}
-                </p>
-              </div>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm">
+                    {SIGNATURE_ROLE_LABELS.cluster_supervisor}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Label htmlFor="supervisor-name" className="sr-only">
+                    Supervisor name
+                  </Label>
+                  <Input
+                    id="supervisor-name"
+                    type="text"
+                    value={supervisorName}
+                    onChange={(event) => setSupervisorName(event.target.value)}
+                    className="max-w-md"
+                  />
+                  <SignaturePad className="mt-3 max-w-md" onChange={setSignatureFile} />
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="mt-3"
+                    disabled={busy}
+                    onClick={() => void saveSupervisorSignature()}
+                  >
+                    Save supervisor signature
+                  </Button>
+                  <p className="mt-3 text-xs text-brand-ink/60">
+                    Recorded:{" "}
+                    {snapshot.signatures
+                      .filter((s) => s.role === "cluster_supervisor")
+                      .map((s) => s.signerName)
+                      .join(", ") || "Not yet"}
+                  </p>
+                </CardContent>
+              </Card>
             </>
           ) : null}
         </div>

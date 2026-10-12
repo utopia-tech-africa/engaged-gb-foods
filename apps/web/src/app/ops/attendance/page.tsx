@@ -4,9 +4,13 @@ import { useEffect, useMemo, useState } from "react";
 
 import { AttendancePhoto } from "@/components/attendance-photo";
 import { useAuth } from "@/components/auth-provider";
+import { DatePicker } from "@/components/date-picker";
 import { OpsNetworkNav } from "@/components/ops-network-nav";
 import { RequireAuth } from "@/components/require-auth";
 import { ShellFrame } from "@/components/shell-frame";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
 import { type AttendanceRecord, fetchAttendanceForDate } from "@/lib/attendance/api";
 import { OPS_NETWORK_ROLES } from "@/lib/network/roles";
 
@@ -50,16 +54,9 @@ export default function OpsAttendancePage() {
       <ShellFrame title="Attendance" eyebrow="Operations">
         <div className="space-y-6">
           <OpsNetworkNav />
-          <div className="flex flex-wrap items-end gap-4">
-            <label className="block text-sm">
-              <span className="font-medium text-brand-ink">Date</span>
-              <input
-                type="date"
-                value={date}
-                onChange={(event) => setDate(event.target.value)}
-                className="mt-1 block rounded-lg border border-border bg-surface px-3 py-2 text-brand-ink"
-              />
-            </label>
+          <div className="max-w-xs space-y-2">
+            <Label htmlFor="attendance-date">Date</Label>
+            <DatePicker id="attendance-date" value={date} onChange={setDate} />
           </div>
 
           {loading ? <p className="text-sm text-brand-ink/70">Loading attendance…</p> : null}
@@ -71,42 +68,45 @@ export default function OpsAttendancePage() {
 
           <ul className="space-y-4">
             {sorted.map((row) => (
-              <li
-                key={row.id}
-                className="grid gap-4 rounded-2xl border border-border bg-surface p-4 md:grid-cols-[120px_1fr]"
-              >
-                {accessToken ? (
-                  <AttendancePhoto
-                    accessToken={accessToken}
-                    objectKey={row.photoObjectKey}
-                    alt={`${row.user.fullName} attendance`}
-                    className="h-28 w-full rounded-lg object-cover"
-                  />
-                ) : null}
-                <div className="space-y-1 text-sm text-brand-ink">
-                  <p className="font-semibold">
-                    {row.user.fullName}
-                    {row.user.staffId ? ` · ${row.user.staffId}` : ""}
-                  </p>
-                  <p>
-                    <span className="text-brand-ink/60">Depot:</span> {row.depot.name} (
-                    {row.depot.code})
-                  </p>
-                  <p>
-                    <span className="text-brand-ink/60">Kind:</span>{" "}
-                    {row.kind === "check_in" ? "Check in" : "Check out"}
-                  </p>
-                  <p>
-                    <span className="text-brand-ink/60">Location:</span> {formatLocation(row)}
-                  </p>
-                  <p>
-                    <span className="text-brand-ink/60">Photo key:</span>{" "}
-                    <code className="text-xs">{row.photoObjectKey}</code>
-                  </p>
-                  <p className="text-xs text-brand-ink/60">
-                    {new Date(row.capturedAt).toLocaleString()}
-                  </p>
-                </div>
+              <li key={row.id}>
+                <Card>
+                  <CardContent className="grid gap-4 md:grid-cols-[120px_1fr]">
+                    {accessToken ? (
+                      <AttendancePhoto
+                        accessToken={accessToken}
+                        objectKey={row.photoObjectKey}
+                        alt={`${row.user.fullName} attendance`}
+                        className="h-28 w-full rounded-lg object-cover"
+                      />
+                    ) : null}
+                    <div className="space-y-1 text-sm text-brand-ink">
+                      <p className="font-semibold">
+                        {row.user.fullName}
+                        {row.user.staffId ? ` · ${row.user.staffId}` : ""}
+                      </p>
+                      <p>
+                        <span className="text-brand-ink/60">Depot:</span> {row.depot.name} (
+                        {row.depot.code})
+                      </p>
+                      <p>
+                        <span className="text-brand-ink/60">Kind:</span>{" "}
+                        <Badge variant="secondary">
+                          {row.kind === "check_in" ? "Check in" : "Check out"}
+                        </Badge>
+                      </p>
+                      <p>
+                        <span className="text-brand-ink/60">Location:</span> {formatLocation(row)}
+                      </p>
+                      <p>
+                        <span className="text-brand-ink/60">Photo key:</span>{" "}
+                        <code className="text-xs">{row.photoObjectKey}</code>
+                      </p>
+                      <p className="text-xs text-brand-ink/60">
+                        {new Date(row.capturedAt).toLocaleString()}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
               </li>
             ))}
           </ul>

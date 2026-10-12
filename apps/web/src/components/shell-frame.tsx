@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 
 import { useAuth } from "@/components/auth-provider";
+import { Button } from "@/components/ui/button";
 
 type ShellFrameProps = {
   title: string;
@@ -41,15 +42,15 @@ export const ShellFrame = ({ title, eyebrow, children }: ShellFrameProps) => {
       </section>
 
       <div className="mt-auto pt-10">
-        <button
+        <Button
           type="button"
-          className="rounded-xl border border-border bg-surface px-4 py-2 text-sm font-medium text-brand-ink hover:border-brand hover:text-brand"
+          variant="outline"
           onClick={() => {
             void signOut().then(() => router.replace("/"));
           }}
         >
           Sign out
-        </button>
+        </Button>
       </div>
     </div>
   );

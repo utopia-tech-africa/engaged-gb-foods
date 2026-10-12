@@ -6,6 +6,16 @@ import { useAuth } from "@/components/auth-provider";
 import { OpsNetworkNav } from "@/components/ops-network-nav";
 import { RequireAuth } from "@/components/require-auth";
 import { ShellFrame } from "@/components/shell-frame";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import type { Region } from "@/lib/network/api";
 import * as networkApi from "@/lib/network/api";
 import { OPS_NETWORK_ROLES } from "@/lib/network/roles";
@@ -45,36 +55,36 @@ export default function OpsRegionsPage() {
           ) : error ? (
             <p className="text-sm text-danger">{error}</p>
           ) : (
-            <div className="overflow-hidden rounded-2xl border border-border bg-surface shadow-sm">
-              <table className="w-full text-left text-sm">
-                <thead className="border-b border-border bg-brand-muted/40 text-xs uppercase tracking-wide text-brand-ink">
-                  <tr>
-                    <th className="px-4 py-3 font-semibold">Code</th>
-                    <th className="px-4 py-3 font-semibold">Name</th>
-                    <th className="px-4 py-3 font-semibold">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
+            <Card className="overflow-hidden p-0">
+              <Table>
+                <TableHeader className="bg-brand-muted/40">
+                  <TableRow>
+                    <TableHead className="text-xs uppercase tracking-wide text-brand-ink">
+                      Code
+                    </TableHead>
+                    <TableHead className="text-xs uppercase tracking-wide text-brand-ink">
+                      Name
+                    </TableHead>
+                    <TableHead className="text-xs uppercase tracking-wide text-brand-ink">
+                      Status
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {regions.map((region) => (
-                    <tr key={region.id} className="border-b border-border last:border-0">
-                      <td className="px-4 py-3 font-mono text-brand">{region.code}</td>
-                      <td className="px-4 py-3 text-foreground">{region.name}</td>
-                      <td className="px-4 py-3">
-                        <span
-                          className={
-                            region.isActive
-                              ? "rounded-full bg-brand-muted px-2 py-0.5 text-xs font-medium text-brand"
-                              : "rounded-full bg-border px-2 py-0.5 text-xs text-brand-ink"
-                          }
-                        >
+                    <TableRow key={region.id}>
+                      <TableCell className="font-mono text-brand">{region.code}</TableCell>
+                      <TableCell className="text-foreground">{region.name}</TableCell>
+                      <TableCell>
+                        <Badge variant={region.isActive ? "default" : "outline"}>
                           {region.isActive ? "Active" : "Inactive"}
-                        </span>
-                      </td>
-                    </tr>
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
-            </div>
+                </TableBody>
+              </Table>
+            </Card>
           )}
         </div>
       </ShellFrame>

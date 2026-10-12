@@ -5,8 +5,21 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 
 import { useAuth } from "@/components/auth-provider";
+import { DatePicker } from "@/components/date-picker";
 import { RequireAuth } from "@/components/require-auth";
 import { ShellFrame } from "@/components/shell-frame";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { fetchMyDepots, type MyDepot } from "@/lib/attendance/api";
 import type { UserRole } from "@/lib/auth/types";
 import {
@@ -21,6 +34,7 @@ import {
   uploadPhotoForStockEvidence,
   ZONE_LABELS,
 } from "@/lib/stock/api";
+import { cn } from "@/lib/utils";
 
 const FIELD_ROLES: UserRole[] = ["qc", "handler", "cluster_supervisor", "regional_supervisor"];
 
@@ -227,7 +241,7 @@ function NewStockLotContent() {
 
   return (
     <div className="mx-auto max-w-lg space-y-6">
-      <Link href="/field/stock" className="text-sm font-medium text-brand hover:underline">
+      <Link href="/field/stock" className={cn(buttonVariants({ variant: "link" }), "h-auto p-0")}>
         ← Back to today&apos;s lots
       </Link>
 
@@ -245,122 +259,152 @@ function NewStockLotContent() {
         </p>
       ) : null}
 
-      <label className="block text-sm">
-        <span className="font-medium text-brand-ink">SKU</span>
-        <select
-          value={skuId}
-          onChange={(event) => setSkuId(event.target.value)}
-          className="mt-1 block w-full rounded-lg border border-border bg-surface px-3 py-2 text-brand-ink"
-        >
-          {skus.map((sku) => (
-            <option key={sku.id} value={sku.id}>
-              {sku.name}
-              {sku.brand ? ` · ${sku.brand}` : ""} (×{sku.packFactor}/case)
-            </option>
-          ))}
-        </select>
-      </label>
+      <Card>
+        <CardContent className="space-y-4 pt-6">
+          <div className="space-y-2">
+            <Label>SKU</Label>
+            <Select
+              value={skuId}
+              onValueChange={(value) => {
+                if (value) {
+                  setSkuId(value);
+                }
+              }}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select SKU" />
+              </SelectTrigger>
+              <SelectContent>
+                {skus.map((sku) => (
+                  <SelectItem key={sku.id} value={sku.id}>
+                    {sku.name}
+                    {sku.brand ? ` · ${sku.brand}` : ""} (×{sku.packFactor}/case)
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-      <label className="block text-sm">
-        <span className="font-medium text-brand-ink">Batch code</span>
-        <input
-          type="text"
-          value={batchCode}
-          onChange={(event) => setBatchCode(event.target.value)}
-          className="mt-1 block w-full rounded-lg border border-border bg-surface px-3 py-2 text-brand-ink"
-          autoComplete="off"
-        />
-      </label>
-
-      <label className="block text-sm">
-        <span className="font-medium text-brand-ink">Expiry date (optional)</span>
-        <input
-          type="date"
-          value={expiryDate}
-          onChange={(event) => setExpiryDate(event.target.value)}
-          className="mt-1 block w-full rounded-lg border border-border bg-surface px-3 py-2 text-brand-ink"
-        />
-      </label>
-
-      <label className="block text-sm">
-        <span className="font-medium text-brand-ink">Zone</span>
-        <select
-          value={zone}
-          onChange={(event) => setZone(event.target.value as StockZone)}
-          className="mt-1 block w-full rounded-lg border border-border bg-surface px-3 py-2 text-brand-ink"
-        >
-          {ALL_ZONES.map((value) => (
-            <option key={value} value={value}>
-              {ZONE_LABELS[value]}
-            </option>
-          ))}
-        </select>
-      </label>
-
-      <div className="grid grid-cols-2 gap-3">
-        <label className="block text-sm">
-          <span className="font-medium text-brand-ink">Quantity</span>
-          <input
-            type="number"
-            min={1}
-            value={quantity}
-            onChange={(event) => setQuantity(event.target.value)}
-            className="mt-1 block w-full rounded-lg border border-border bg-surface px-3 py-2 text-brand-ink"
-          />
-        </label>
-        <label className="block text-sm">
-          <span className="font-medium text-brand-ink">Unit</span>
-          <select
-            value={unit}
-            onChange={(event) => setUnit(event.target.value as StockUnit)}
-            className="mt-1 block w-full rounded-lg border border-border bg-surface px-3 py-2 text-brand-ink"
-          >
-            <option value="cases">{selectedSku?.caseUnit ?? "cases"}</option>
-            <option value="loose_packs">{selectedSku?.looseUnit ?? "loose packs"}</option>
-          </select>
-        </label>
-      </div>
-
-      <label className="block text-sm">
-        <span className="font-medium text-brand-ink">Notes (optional)</span>
-        <textarea
-          value={notes}
-          onChange={(event) => setNotes(event.target.value)}
-          rows={2}
-          className="mt-1 block w-full rounded-lg border border-border bg-surface px-3 py-2 text-brand-ink"
-        />
-      </label>
-
-      <div className="space-y-3 rounded-2xl border border-border bg-surface/80 p-4">
-        <p className="text-sm font-semibold text-brand-ink">Evidence photos</p>
-        {requiredCategories.length > 0 ? (
-          <p className="text-xs text-brand-ink/70">
-            This zone requires pack, batch, and defect photos.
-          </p>
-        ) : (
-          <p className="text-xs text-brand-ink/70">
-            Photos optional unless zone requires defect evidence.
-          </p>
-        )}
-        {[
-          ...requiredCategories,
-          ...optionalCategories.filter((c) => !requiredCategories.includes(c)),
-        ].map((category) => (
-          <label key={category} className="block text-sm">
-            <span className="font-medium text-brand-ink">
-              {EVIDENCE_LABELS[category]}
-              {requiredCategories.includes(category) ? " *" : ""}
-            </span>
-            <input
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              capture="environment"
-              onChange={onEvidenceChange(category)}
-              className="mt-1 block w-full text-sm text-brand-ink"
+          <div className="space-y-2">
+            <Label htmlFor="batch-code">Batch code</Label>
+            <Input
+              id="batch-code"
+              type="text"
+              value={batchCode}
+              onChange={(event) => setBatchCode(event.target.value)}
+              autoComplete="off"
             />
-          </label>
-        ))}
-      </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="expiry-date">Expiry date (optional)</Label>
+            <DatePicker id="expiry-date" value={expiryDate} onChange={setExpiryDate} />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Zone</Label>
+            <Select
+              value={zone}
+              onValueChange={(value) => {
+                if (value) {
+                  setZone(value as StockZone);
+                }
+              }}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {ALL_ZONES.map((value) => (
+                  <SelectItem key={value} value={value}>
+                    {ZONE_LABELS[value]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label htmlFor="quantity">Quantity</Label>
+              <Input
+                id="quantity"
+                type="number"
+                min={1}
+                value={quantity}
+                onChange={(event) => setQuantity(event.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Unit</Label>
+              <Select
+                value={unit}
+                onValueChange={(value) => {
+                  if (value) {
+                    setUnit(value as StockUnit);
+                  }
+                }}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="cases">{selectedSku?.caseUnit ?? "cases"}</SelectItem>
+                  <SelectItem value="loose_packs">
+                    {selectedSku?.looseUnit ?? "loose packs"}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="notes">Notes (optional)</Label>
+            <Textarea
+              id="notes"
+              value={notes}
+              onChange={(event) => setNotes(event.target.value)}
+              rows={2}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="bg-surface/80">
+        <CardHeader>
+          <CardTitle className="text-sm">Evidence photos</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {requiredCategories.length > 0 ? (
+            <p className="text-xs text-brand-ink/70">
+              This zone requires pack, batch, and defect photos.
+            </p>
+          ) : (
+            <p className="text-xs text-brand-ink/70">
+              Photos optional unless zone requires defect evidence.
+            </p>
+          )}
+          {[
+            ...requiredCategories,
+            ...optionalCategories.filter((c) => !requiredCategories.includes(c)),
+          ].map((category) => (
+            <div key={category} className="space-y-2">
+              <Label htmlFor={`evidence-${category}`}>
+                {EVIDENCE_LABELS[category]}
+                {requiredCategories.includes(category) ? " *" : ""}
+              </Label>
+              <input
+                id={`evidence-${category}`}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                capture="environment"
+                onChange={onEvidenceChange(category)}
+                className="block w-full text-sm text-brand-ink file:mr-3 file:rounded-lg file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-primary-foreground"
+              />
+            </div>
+          ))}
+        </CardContent>
+      </Card>
 
       {geo ? (
         <p className="text-xs text-brand-ink/60">
@@ -368,13 +412,9 @@ function NewStockLotContent() {
           {Math.round(geo.accuracyMeters)} m)
         </p>
       ) : (
-        <button
-          type="button"
-          onClick={requestLocation}
-          className="text-xs font-medium text-brand hover:underline"
-        >
+        <Button type="button" variant="link" className="h-auto p-0" onClick={requestLocation}>
           Retry location
-        </button>
+        </Button>
       )}
 
       {error ? <p className="text-sm text-red-600">{error}</p> : null}
@@ -382,14 +422,14 @@ function NewStockLotContent() {
         <p className="text-sm font-medium text-green-700">Stock lot saved. Redirecting…</p>
       ) : null}
 
-      <button
+      <Button
         type="button"
         disabled={!canSubmit}
+        className="w-full"
         onClick={() => void onSubmit()}
-        className="w-full rounded-xl bg-brand px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-brand/90 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {submitting ? "Saving…" : "Save stock lot"}
-      </button>
+      </Button>
     </div>
   );
 }

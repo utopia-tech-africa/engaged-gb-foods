@@ -6,6 +6,10 @@ import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
 
 import { useAuth } from "@/components/auth-provider";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { homePathForRole } from "@/lib/auth/routes";
 
 export default function FieldSignInPage() {
@@ -43,41 +47,38 @@ export default function FieldSignInPage() {
       <h1 className="font-display mt-3 text-3xl font-semibold text-foreground">Field sign in</h1>
       <p className="mt-2 text-sm text-brand-ink">Enter your staff ID and PIN to open your depot.</p>
 
-      <form
-        onSubmit={onSubmit}
-        className="mt-8 space-y-4 rounded-3xl border border-border bg-surface p-6"
-      >
-        <label className="block space-y-2 text-sm">
-          <span className="font-medium text-brand-ink">Staff ID</span>
-          <input
-            className="w-full rounded-xl border border-border bg-background px-3 py-3 outline-none focus:border-brand"
-            value={staffId}
-            onChange={(event) => setStaffId(event.target.value)}
-            autoComplete="username"
-            required
-          />
-        </label>
-        <label className="block space-y-2 text-sm">
-          <span className="font-medium text-brand-ink">PIN</span>
-          <input
-            className="w-full rounded-xl border border-border bg-background px-3 py-3 outline-none focus:border-brand"
-            value={pin}
-            onChange={(event) => setPin(event.target.value)}
-            type="password"
-            inputMode="numeric"
-            autoComplete="current-password"
-            required
-          />
-        </label>
-        {error ? <p className="text-sm text-danger">{error}</p> : null}
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="w-full rounded-xl bg-brand px-4 py-3 text-sm font-semibold text-white hover:bg-brand-hover disabled:opacity-60"
-        >
-          {isSubmitting ? "Signing in…" : "Sign in"}
-        </button>
-      </form>
+      <Card className="mt-8">
+        <CardContent>
+          <form onSubmit={onSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="staff-id">Staff ID</Label>
+              <Input
+                id="staff-id"
+                value={staffId}
+                onChange={(event) => setStaffId(event.target.value)}
+                autoComplete="username"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="pin">PIN</Label>
+              <Input
+                id="pin"
+                value={pin}
+                onChange={(event) => setPin(event.target.value)}
+                type="password"
+                inputMode="numeric"
+                autoComplete="current-password"
+                required
+              />
+            </div>
+            {error ? <p className="text-sm text-danger">{error}</p> : null}
+            <Button type="submit" disabled={isSubmitting} className="w-full">
+              {isSubmitting ? "Signing in…" : "Sign in"}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
 
       <p className="mt-6 text-sm text-brand-ink">
         Ops or GBfoods?{" "}
