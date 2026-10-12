@@ -7,8 +7,50 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-/// Placeholder so Prisma can generate. Domain models land in feature PRs.
-model HealthProbe {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
+enum UserRole {
+  qc
+  handler
+  cluster_supervisor
+  regional_supervisor
+  national_ops
+  national_quality
+  admin
+  gbfoods_reviewer
+}
+
+model User {
+  id                String        @id @default(cuid())
+  fullName          String
+  staffId           String?       @unique
+  email             String?       @unique
+  phone             String?
+  pinHash           String?
+  passwordHash      String?
+  role              UserRole
+  isActive          Boolean       @default(true)
+  failedPinAttempts Int           @default(0)
+  lockedAt          DateTime?
+  photoObjectKey    String?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  sessions          AuthSession[]
+
+  @@index([role])
+  @@index([isActive])
+}
+
+model AuthSession {
+  id               String    @id @default(cuid())
+  userId           String
+  refreshTokenHash String
+  userAgent        String?
+  ipAddress        String?
+  expiresAt        DateTime
+  revokedAt        DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
 }
