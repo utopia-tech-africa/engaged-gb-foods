@@ -1,0 +1,15 @@
+node_modules
+.DS_Store
+dist
+.next
+.turbo
+coverage
+*.log
+.env
+.env.*
+!.env.keep
+apps/api/src/generated
+apps/web/src/lib/api/generated
+*.tsbuildinfo
+.pnpm-store
+openapi/openapi.json
