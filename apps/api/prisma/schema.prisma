@@ -18,6 +18,12 @@ enum UserRole {
   gbfoods_reviewer
 }
 
+enum DepotReadiness {
+  unknown
+  ready
+  hold
+}
+
 model User {
   id                String        @id @default(cuid())
   fullName          String
@@ -34,6 +40,8 @@ model User {
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
   sessions          AuthSession[]
+  supervisedClusters Cluster[]    @relation("ClusterSupervisor")
+  assignments       Assignment[]
 
   @@index([role])
   @@index([isActive])
@@ -53,4 +61,103 @@ model AuthSession {
 
   @@index([userId])
   @@index([expiresAt])
+}
+
+model Region {
+  id           String         @id @default(cuid())
+  code         String         @unique
+  name         String
+  slug         String         @unique
+  isActive     Boolean        @default(true)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  clusters     Cluster[]
+  distributors Distributor[]
+  assignments  Assignment[]
+
+  @@index([isActive])
+}
+
+model Cluster {
+  id               String         @id @default(cuid())
+  regionId         String
+  name             String
+  code             String
+  supervisorUserId String?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  region           Region         @relation(fields: [regionId], references: [id], onDelete: Cascade)
+  supervisorUser   User?          @relation("ClusterSupervisor", fields: [supervisorUserId], references: [id], onDelete: SetNull)
+  distributors     Distributor[]
+  assignments      Assignment[]
+
+  @@unique([regionId, code])
+  @@index([regionId])
+  @@index([supervisorUserId])
+}
+
+model Distributor {
+  id           String       @id @default(cuid())
+  regionId     String
+  clusterId    String?
+  name         String
+  code         String       @unique
+  contactName  String?
+  contactPhone String?
+  isActive     Boolean      @default(true)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  region       Region       @relation(fields: [regionId], references: [id], onDelete: Cascade)
+  cluster      Cluster?     @relation(fields: [clusterId], references: [id], onDelete: SetNull)
+  depots       Depot[]
+  assignments  Assignment[]
+
+  @@index([regionId])
+  @@index([clusterId])
+  @@index([isActive])
+}
+
+model Depot {
+  id             String         @id @default(cuid())
+  distributorId  String
+  code           String
+  name           String
+  address        String
+  latitude       Float?
+  longitude      Float?
+  contactName    String?
+  contactPhone   String?
+  openingHours   String?
+  readiness      DepotReadiness @default(unknown)
+  isActive       Boolean        @default(true)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  distributor    Distributor    @relation(fields: [distributorId], references: [id], onDelete: Cascade)
+
+  @@unique([distributorId, code])
+  @@index([distributorId])
+  @@index([isActive])
+  @@index([readiness])
+}
+
+model Assignment {
+  id            String       @id @default(cuid())
+  userId        String
+  distributorId String?
+  clusterId     String?
+  regionId      String?
+  effectiveFrom DateTime
+  effectiveTo   DateTime?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  distributor   Distributor? @relation(fields: [distributorId], references: [id], onDelete: SetNull)
+  cluster       Cluster?     @relation(fields: [clusterId], references: [id], onDelete: SetNull)
+  region        Region?      @relation(fields: [regionId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([distributorId])
+  @@index([clusterId])
+  @@index([regionId])
+  @@index([effectiveFrom])
 }
