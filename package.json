@@ -1,0 +1,29 @@
+{
+  "name": "engaged-gb-foods",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@10.8.0",
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "start": "turbo run start",
+    "start:web": "pnpm --filter @gbfoods/web start",
+    "start:api": "pnpm --filter @gbfoods/api start",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "lint:ci": "biome ci .",
+    "typecheck": "turbo run typecheck",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*": "biome check --write --no-errors-on-unmatched --files-ignore-unknown=true"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.2.4",
+    "@types/node": "^22.15.17",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.5.1",
+    "turbo": "^2.5.0",
+    "typescript": "^5.8.3"
+  }
+}
