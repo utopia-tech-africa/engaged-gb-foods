@@ -1,10 +1,11 @@
-import { plainToInstance } from "class-transformer";
-import { IsInt, IsOptional, IsString, Max, Min, validateSync } from "class-validator";
+import { plainToInstance, Type } from "class-transformer";
+import { IsInt, IsOptional, IsString, Max, Min, MinLength, validateSync } from "class-validator";
 
 export class EnvironmentVariables {
   @IsString()
   HOST = "0.0.0.0";
 
+  @Type(() => Number)
   @IsInt()
   @Min(1)
   @Max(65535)
@@ -15,6 +16,20 @@ export class EnvironmentVariables {
 
   @IsString()
   DATABASE_URL!: string;
+
+  @IsString()
+  @MinLength(32)
+  JWT_ACCESS_SECRET!: string;
+
+  @Type(() => Number)
+  @IsInt()
+  @Min(60)
+  JWT_ACCESS_TTL_SECONDS = 900;
+
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  JWT_REFRESH_TTL_DAYS = 14;
 
   @IsOptional()
   @IsString()

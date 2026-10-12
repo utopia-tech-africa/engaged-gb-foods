@@ -1,6 +1,5 @@
 import Image from "next/image";
-
-const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:4000/api/v1";
+import Link from "next/link";
 
 export default function HomePage() {
   return (
@@ -31,36 +30,42 @@ export default function HomePage() {
             Field crews capture attendance, counts, and evidence at the depot. Supervisors verify.
             GBfoods decides what is released.
           </p>
+          <div className="flex flex-wrap gap-3">
+            <Link
+              href="/auth/field"
+              className="rounded-xl bg-brand px-5 py-3 text-sm font-semibold text-white hover:bg-brand-hover"
+            >
+              Field sign in
+            </Link>
+            <Link
+              href="/auth/ops"
+              className="rounded-xl border border-border bg-surface px-5 py-3 text-sm font-semibold text-brand-ink hover:border-brand hover:text-brand"
+            >
+              Ops / client sign in
+            </Link>
+          </div>
         </div>
 
         <div className="rounded-[1.5rem] border border-border bg-surface/90 p-6 shadow-[0_20px_60px_rgba(28,25,23,0.06)]">
-          <p className="text-sm font-medium text-brand-ink">Local development</p>
+          <p className="text-sm font-medium text-brand-ink">Pilot seed accounts</p>
           <ul className="mt-4 space-y-3 text-sm text-foreground">
             <li>
-              Web:{" "}
-              <a
-                className="font-medium text-brand hover:text-brand-hover"
-                href="http://localhost:3000"
-              >
-                http://localhost:3000
-              </a>
+              Field QC: <span className="font-medium">BTL-0031</span> / PIN{" "}
+              <span className="font-medium">2468</span>
             </li>
             <li>
-              API docs:{" "}
-              <a
-                className="font-medium text-brand hover:text-brand-hover"
-                href={`${apiBaseUrl}/docs`}
-              >
-                {apiBaseUrl}/docs
-              </a>
+              Admin: <span className="font-medium">admin@gbfoods.local</span>
             </li>
-            <li>Auth, network, and field capture land in the next feature PRs.</li>
+            <li>
+              GBfoods: <span className="font-medium">reviewer@gbfoods.local</span>
+            </li>
+            <li>Default ops password: ChangeMe123!</li>
           </ul>
         </div>
       </section>
 
       <footer className="mt-16 border-t border-border pt-6 text-sm text-brand-ink">
-        BTL Africa · GBfoods Stock Control · scaffold
+        BTL Africa · GBfoods Stock Control
       </footer>
     </main>
   );
