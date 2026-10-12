@@ -4,6 +4,7 @@ import { IsEnum, IsInt, IsString, Max, Min } from "class-validator";
 export enum UploadPurpose {
   attendance_photo = "attendance_photo",
   stock_evidence = "stock_evidence",
+  signature = "signature",
 }
 
 const MAX_ATTENDANCE_PHOTO_BYTES = 5 * 1024 * 1024;

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 import { AttendancePhoto } from "@/components/attendance-photo";
@@ -103,6 +104,12 @@ export default function OpsStockPage() {
                     </p>
                   ) : null}
                 </div>
+                <Link
+                  href={`/ops/visits/${row.visitId}`}
+                  className="mt-3 inline-flex text-sm font-semibold text-brand hover:underline"
+                >
+                  Visit reconciliation
+                </Link>
                 {row.evidence.length > 0 && accessToken ? (
                   <div className="mt-4 flex flex-wrap gap-2">
                     {row.evidence.map((item) => (
