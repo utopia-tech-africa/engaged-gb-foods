@@ -35,9 +35,16 @@ export default function FieldHomePage() {
         <div className="space-y-6">
           <p className="max-w-xl text-base text-brand-ink">
             Signed in as {user?.fullName}
-            {user?.staffId ? ` · ${user.staffId}` : ""}. Choose a depot to check in with a selfie
-            and your current location when GPS is available.
+            {user?.staffId ? ` · ${user.staffId}` : ""}. Check in at a depot or capture stock lots
+            with batch evidence for today&apos;s visit.
           </p>
+
+          <Link
+            href="/field/stock"
+            className="inline-flex rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand/90"
+          >
+            Today&apos;s stock lots
+          </Link>
 
           {loading ? <p className="text-sm text-brand-ink/70">Loading assigned depots…</p> : null}
           {error ? <p className="text-sm text-red-600">{error}</p> : null}
