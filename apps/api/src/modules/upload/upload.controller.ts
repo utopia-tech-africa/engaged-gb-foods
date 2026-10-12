@@ -27,6 +27,7 @@ import type { Request, Response } from "express";
 
 import { FIELD_ATTENDANCE_WRITE_ROLES } from "../../common/constants/attendance-roles";
 import { NETWORK_READ_ROLES } from "../../common/constants/network-roles";
+import { FIELD_STOCK_WRITE_ROLES } from "../../common/constants/stock-roles";
 import { Roles } from "../../common/decorators/roles.decorator";
 import { RolesGuard } from "../../common/guards/roles.guard";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
@@ -41,12 +42,12 @@ export class UploadController {
   constructor(@Inject(UploadService) private readonly uploadService: UploadService) {}
 
   @Post("presign")
-  @Roles(...FIELD_ATTENDANCE_WRITE_ROLES)
+  @Roles(...FIELD_ATTENDANCE_WRITE_ROLES, ...FIELD_STOCK_WRITE_ROLES)
   @ApiOperation({
     operationId: "postUploadsPresign",
-    summary: "Presign attendance photo upload",
+    summary: "Presign photo upload",
     description:
-      "Returns a presigned PUT URL for Cloudflare R2 when R2 credentials are configured.",
+      "Returns a presigned PUT URL for attendance or stock evidence when R2 is configured.",
   })
   @ApiCreatedResponse({ description: "Presigned upload details" })
   postUploadsPresign(@Body() body: PresignUploadDto) {
@@ -54,7 +55,7 @@ export class UploadController {
   }
 
   @Post("local")
-  @Roles(...FIELD_ATTENDANCE_WRITE_ROLES)
+  @Roles(...FIELD_ATTENDANCE_WRITE_ROLES, ...FIELD_STOCK_WRITE_ROLES)
   @UseInterceptors(FileInterceptor("file", { limits: { fileSize: MAX_ATTENDANCE_PHOTO_BYTES } }))
   @ApiConsumes("multipart/form-data")
   @ApiBody({
@@ -85,7 +86,7 @@ export class UploadController {
   }
 
   @Post("local/raw")
-  @Roles(...FIELD_ATTENDANCE_WRITE_ROLES)
+  @Roles(...FIELD_ATTENDANCE_WRITE_ROLES, ...FIELD_STOCK_WRITE_ROLES)
   @ApiConsumes("application/octet-stream", "image/jpeg", "image/png", "image/webp")
   @ApiOperation({
     operationId: "postUploadsLocalRaw",

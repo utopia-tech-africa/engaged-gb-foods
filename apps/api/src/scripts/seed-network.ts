@@ -159,8 +159,46 @@ const seed = async (): Promise<void> => {
     }
   }
 
+  const skuSeeds = [
+    {
+      name: "Gino Tomato Mix",
+      brand: "Gino",
+      packFactor: 24,
+      caseUnit: "case",
+      looseUnit: "sachet",
+    },
+    {
+      name: "Pomo Tomato Mix",
+      brand: "Pomo",
+      packFactor: 24,
+      caseUnit: "case",
+      looseUnit: "sachet",
+    },
+  ] as const;
+
+  for (const entry of skuSeeds) {
+    await prisma.sku.upsert({
+      where: { name: entry.name },
+      create: {
+        name: entry.name,
+        brand: entry.brand,
+        packFactor: entry.packFactor,
+        caseUnit: entry.caseUnit,
+        looseUnit: entry.looseUnit,
+        isActive: true,
+      },
+      update: {
+        brand: entry.brand,
+        packFactor: entry.packFactor,
+        caseUnit: entry.caseUnit,
+        looseUnit: entry.looseUnit,
+        isActive: true,
+      },
+    });
+  }
+
   console.log(
-    `Seeded ${GHANA_REGIONS.length} regions, 1 cluster, ${distributors.length} distributors, ${depotSeeds.length} depots`,
+    `Seeded ${GHANA_REGIONS.length} regions, 1 cluster, ${distributors.length} distributors, ${depotSeeds.length} depots, ${skuSeeds.length} SKUs`,
   );
 };
 

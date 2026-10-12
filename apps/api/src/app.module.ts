@@ -10,6 +10,8 @@ import { DistributorModule } from "./modules/distributor/distributor.module";
 import { HealthModule } from "./modules/health/health.module";
 import { PrismaModule } from "./modules/prisma/prisma.module";
 import { RegionModule } from "./modules/region/region.module";
+import { SkuModule } from "./modules/sku/sku.module";
+import { StockLotModule } from "./modules/stock-lot/stock-lot.module";
 import { UploadModule } from "./modules/upload/upload.module";
 
 @Module({
@@ -27,6 +29,8 @@ import { UploadModule } from "./modules/upload/upload.module";
     AssignmentModule,
     UploadModule,
     AttendanceModule,
+    SkuModule,
+    StockLotModule,
   ],
 })
 export class AppModule {}
