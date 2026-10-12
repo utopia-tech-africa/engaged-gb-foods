@@ -115,6 +115,12 @@ export default function FieldStockListPage() {
                 <p className="text-xs text-brand-ink/50">
                   {new Date(lot.createdAt).toLocaleString()}
                 </p>
+                <Link
+                  href={`/field/visits/${lot.visitId}/reconcile`}
+                  className="mt-3 inline-flex text-sm font-semibold text-brand hover:underline"
+                >
+                  Reconcile visit
+                </Link>
               </li>
             ))}
           </ul>

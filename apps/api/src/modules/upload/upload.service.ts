@@ -52,6 +52,12 @@ export class UploadService {
     }
   }
 
+  assertSignatureObjectKey(objectKey: string): void {
+    if (!objectKey.startsWith("signatures/") && !objectKey.startsWith("local/")) {
+      throw new BadRequestException("Signature objectKey must start with signatures/ or local/");
+    }
+  }
+
   async createPresignedUpload(input: {
     contentType: string;
     contentLength: number;
@@ -59,7 +65,8 @@ export class UploadService {
   }): Promise<{ uploadUrl: string; objectKey: string; method: "PUT" }> {
     if (
       input.purpose !== UploadPurpose.attendance_photo &&
-      input.purpose !== UploadPurpose.stock_evidence
+      input.purpose !== UploadPurpose.stock_evidence &&
+      input.purpose !== UploadPurpose.signature
     ) {
       throw new BadRequestException("Unsupported upload purpose");
     }
@@ -77,7 +84,12 @@ export class UploadService {
     }
 
     const ext = extensionForContentType(input.contentType);
-    const prefix = input.purpose === UploadPurpose.stock_evidence ? "stock_evidence" : "attendance";
+    const prefix =
+      input.purpose === UploadPurpose.stock_evidence
+        ? "stock_evidence"
+        : input.purpose === UploadPurpose.signature
+          ? "signatures"
+          : "attendance";
     const objectKey = `${prefix}/${randomUUID()}.${ext}`;
 
     const client = new S3Client({

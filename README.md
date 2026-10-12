@@ -12,12 +12,16 @@ Field and client platform for the GBfoods nationwide depot sorting and segregati
 - Network master data: 16 Ghana regions, distributors, depots (optional recce lat/lng), QC assignments
 - Ops UI: `/ops/regions`, `/ops/distributors`, `/ops/depots`, `/ops/attendance`
 - Field attendance: photo check-in/out with optional GPS (no geofencing), R2 or local uploads
-- Field UI: `/field`, `/field/check-in?depotId=…`
+- Field UI: `/field`, `/field/check-in?depotId=…`, `/field/stock`, `/field/visits/[id]/reconcile`
+- Stock capture with zones, evidence, and opening movements
+- Visit reconciliation: balance by SKU/batch, custodians on held lots, three signatures, close or exception
+- GBfoods disposition on stock lots (`POST /stock-lots/:id/disposition`) with zone lock for release paths
+- Ops visit review: `/ops/visits/[id]`; client control room: `/client`, `/client/lots/[id]`
 - GBfoods brand tokens and logo assets
 
 ## Not built yet
 
-- Stock capture, reconciliation, and client control room
+- Full control-room dashboards, exports, and offline capture
 
 See `PRD.md` for the full product definition.
 
@@ -36,6 +40,7 @@ cp apps/api/.env.keep apps/api/.env
 cp apps/web/.env.keep apps/web/.env.local
 pnpm --filter @gbfoods/api prisma:generate
 pnpm --filter @gbfoods/api exec prisma migrate dev --schema prisma/schema.prisma
+# includes migration `reconcile_disposition` (dispositions, visit signatures, open actions)
 pnpm --filter @gbfoods/api seed:auth
 pnpm --filter @gbfoods/api seed:network
 ```

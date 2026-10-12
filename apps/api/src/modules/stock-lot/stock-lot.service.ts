@@ -6,11 +6,13 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import {
+  DispositionDecision,
   type Prisma,
   StockEvidenceCategory,
   StockMovementType,
   StockUnit,
   StockZone,
+  UserRole,
   VisitStatus,
 } from "@prisma/client";
 
@@ -20,7 +22,9 @@ import {
 } from "../assignment/assignment-depots.helper";
 import { PrismaService } from "../prisma/prisma.service";
 import { UploadService } from "../upload/upload.service";
+import type { CreateDispositionDto } from "./dto/create-disposition.dto";
 import type { CreateStockLotDto } from "./dto/create-stock-lot.dto";
+import type { PatchStockLotCustodianDto } from "./dto/patch-stock-lot-custodian.dto";
 
 const startOfUtcDay = (value: Date): Date =>
   new Date(Date.UTC(value.getUTCFullYear(), value.getUTCMonth(), value.getUTCDate()));
@@ -56,7 +60,32 @@ const stockLotInclude = {
     },
   },
   createdBy: { select: { id: true, fullName: true, staffId: true, role: true } },
+  dispositions: {
+    orderBy: { decidedAt: "desc" as const },
+    include: {
+      decidedBy: { select: { id: true, fullName: true, role: true } },
+    },
+  },
 } satisfies Prisma.StockLotInclude;
+
+const zoneForDisposition = (decision: DispositionDecision): StockZone => {
+  switch (decision) {
+    case DispositionDecision.release:
+      return StockZone.released_remaining_on_site;
+    case DispositionDecision.hold:
+    case DispositionDecision.reject:
+      return StockZone.held_or_rejected;
+    case DispositionDecision.approve_repack:
+      return StockZone.recoverable_pending_approval;
+    default:
+      return StockZone.held_or_rejected;
+  }
+};
+
+const LOCKED_ZONE_TARGETS = new Set<StockZone>([
+  StockZone.released_remaining_on_site,
+  StockZone.conforming_pending_release,
+]);
 
 export type StockLotRecord = Prisma.StockLotGetPayload<{ include: typeof stockLotInclude }>;
 
@@ -301,5 +330,85 @@ export class StockLotService {
       throw new NotFoundException("Stock lot not found");
     }
     return lot;
+  }
+
+  assertZonePatchAllowed(nextZone: StockZone): void {
+    if (LOCKED_ZONE_TARGETS.has(nextZone)) {
+      throw new BadRequestException(
+        "Zone cannot be set to release or conforming via direct update; use GBfoods disposition",
+      );
+    }
+  }
+
+  async patchCustodian(
+    userId: string,
+    userRole: UserRole,
+    lotId: string,
+    dto: PatchStockLotCustodianDto,
+  ): Promise<StockLotRecord> {
+    const lot = await this.getStockLotById(lotId);
+
+    if (lot.zone !== StockZone.held_or_rejected) {
+      throw new BadRequestException("Custodian applies only to held or rejected lots");
+    }
+
+    const opsRoles = new Set<UserRole>([
+      UserRole.cluster_supervisor,
+      UserRole.regional_supervisor,
+      UserRole.admin,
+    ]);
+
+    if (!opsRoles.has(userRole)) {
+      const allowed = await this.userCanAccessDepot(userId, lot.visit.depot.id);
+      if (!allowed) {
+        throw new ForbiddenException("You are not assigned to this depot scope");
+      }
+    }
+
+    return this.prisma.stockLot.update({
+      where: { id: lotId },
+      data: { custodian: dto.custodian.trim() },
+      include: stockLotInclude,
+    });
+  }
+
+  async createDisposition(
+    userId: string,
+    lotId: string,
+    dto: CreateDispositionDto,
+  ): Promise<StockLotRecord> {
+    const reason = dto.reason.trim();
+    if (!reason) {
+      throw new BadRequestException("reason is required");
+    }
+
+    const lot = await this.getStockLotById(lotId);
+    const nextZone = zoneForDisposition(dto.decision);
+
+    return this.prisma.$transaction(async (tx) => {
+      await tx.disposition.create({
+        data: {
+          stockLotId: lotId,
+          decision: dto.decision,
+          reason,
+          decidedByUserId: userId,
+        },
+      });
+
+      await tx.stockMovement.create({
+        data: {
+          stockLotId: lotId,
+          type: StockMovementType.disposition,
+          quantity: lot.quantity,
+          baseQuantity: lot.baseQuantity,
+        },
+      });
+
+      return tx.stockLot.update({
+        where: { id: lotId },
+        data: { zone: nextZone },
+        include: stockLotInclude,
+      });
+    });
   }
 }

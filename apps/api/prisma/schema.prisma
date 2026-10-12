@@ -58,6 +58,20 @@ enum StockEvidenceCategory {
 
 enum StockMovementType {
   opening
+  disposition
+}
+
+enum DispositionDecision {
+  release
+  hold
+  reject
+  approve_repack
+}
+
+enum SignatureRole {
+  qc
+  cluster_supervisor
+  depot_representative
 }
 
 model User {
@@ -81,6 +95,8 @@ model User {
   visits            Visit[]        @relation("VisitQcUser")
   attendances       Attendance[]
   stockLotsCreated  StockLot[]     @relation("StockLotCreatedBy")
+  dispositions      Disposition[]
+  visitSignatures   VisitSignature[] @relation("VisitSignatureSignedBy")
 
   @@index([role])
   @@index([isActive])
@@ -204,18 +220,21 @@ model Assignment {
 }
 
 model Visit {
-  id          String       @id @default(cuid())
-  code        String       @unique
-  depotId     String
-  qcUserId    String
-  date        DateTime     @db.Date
-  status      VisitStatus  @default(scheduled)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  depot       Depot        @relation(fields: [depotId], references: [id], onDelete: Cascade)
-  qcUser      User         @relation("VisitQcUser", fields: [qcUserId], references: [id], onDelete: Cascade)
-  attendances Attendance[]
-  stockLots   StockLot[]
+  id           String            @id @default(cuid())
+  code         String            @unique
+  depotId      String
+  qcUserId     String
+  date         DateTime          @db.Date
+  status       VisitStatus       @default(scheduled)
+  reconciledAt DateTime?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  depot        Depot             @relation(fields: [depotId], references: [id], onDelete: Cascade)
+  qcUser       User              @relation("VisitQcUser", fields: [qcUserId], references: [id], onDelete: Cascade)
+  attendances  Attendance[]
+  stockLots    StockLot[]
+  signatures   VisitSignature[]
+  openActions  VisitOpenAction[]
 
   @@unique([depotId, qcUserId, date])
   @@index([depotId])
@@ -296,6 +315,7 @@ model StockLot {
   createdBy        User       @relation("StockLotCreatedBy", fields: [createdByUserId], references: [id], onDelete: Cascade)
   evidence         StockEvidence[]
   movements        StockMovement[]
+  dispositions     Disposition[]
 
   @@index([visitId])
   @@index([skuId])
@@ -328,4 +348,47 @@ model StockMovement {
 
   @@index([stockLotId])
   @@index([type])
+}
+
+model Disposition {
+  id              String              @id @default(cuid())
+  stockLotId      String
+  decision        DispositionDecision
+  reason          String
+  decidedByUserId String
+  decidedAt       DateTime            @default(now())
+  stockLot        StockLot            @relation(fields: [stockLotId], references: [id], onDelete: Cascade)
+  decidedBy       User                @relation(fields: [decidedByUserId], references: [id], onDelete: Cascade)
+
+  @@index([stockLotId])
+  @@index([decidedByUserId])
+  @@index([decidedAt])
+}
+
+model VisitSignature {
+  id             String        @id @default(cuid())
+  visitId        String
+  role           SignatureRole
+  signerName     String
+  imageObjectKey String?
+  signedAt       DateTime      @default(now())
+  signedByUserId String?
+  visit          Visit         @relation(fields: [visitId], references: [id], onDelete: Cascade)
+  signedBy       User?         @relation("VisitSignatureSignedBy", fields: [signedByUserId], references: [id], onDelete: SetNull)
+
+  @@unique([visitId, role])
+  @@index([visitId])
+}
+
+model VisitOpenAction {
+  id                String    @id @default(cuid())
+  visitId           String
+  description       String
+  ownerName         String
+  dueAt             DateTime?
+  acceptedByGBfoods Boolean   @default(false)
+  createdAt         DateTime  @default(now())
+  visit             Visit     @relation(fields: [visitId], references: [id], onDelete: Cascade)
+
+  @@index([visitId])
 }

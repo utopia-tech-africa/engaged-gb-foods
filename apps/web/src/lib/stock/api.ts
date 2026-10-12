@@ -38,6 +38,7 @@ export type StockLot = {
   quantity: number;
   unit: StockUnit;
   baseQuantity: number;
+  custodian: string | null;
   notes: string | null;
   latitude: number | null;
   longitude: number | null;
@@ -98,6 +99,9 @@ const requestJson = async <T>(
 };
 
 export const fetchSkus = (accessToken: string): Promise<Sku[]> => requestJson(accessToken, "/skus");
+
+export const fetchStockLotById = (accessToken: string, id: string): Promise<StockLot> =>
+  requestJson(accessToken, `/stock-lots/${encodeURIComponent(id)}`);
 
 export const fetchStockLots = (
   accessToken: string,

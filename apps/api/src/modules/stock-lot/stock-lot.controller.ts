@@ -1,4 +1,14 @@
-import { Body, Controller, Get, Inject, Param, Post, Query, UseGuards } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Get,
+  Inject,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from "@nestjs/common";
 import {
   ApiBearerAuth,
   ApiCreatedResponse,
@@ -9,13 +19,16 @@ import {
 
 import { NETWORK_READ_ROLES } from "../../common/constants/network-roles";
 import { FIELD_STOCK_WRITE_ROLES } from "../../common/constants/stock-roles";
+import { CUSTODIAN_WRITE_ROLES, DISPOSITION_WRITE_ROLES } from "../../common/constants/visit-roles";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
 import { Roles } from "../../common/decorators/roles.decorator";
 import { RolesGuard } from "../../common/guards/roles.guard";
 import type { AuthenticatedUser } from "../../common/types/authenticated-user.type";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
+import { CreateDispositionDto } from "./dto/create-disposition.dto";
 import { CreateStockLotDto } from "./dto/create-stock-lot.dto";
 import { ListStockLotsQueryDto } from "./dto/list-stock-lots-query.dto";
+import { PatchStockLotCustodianDto } from "./dto/patch-stock-lot-custodian.dto";
 import { StockLotService } from "./stock-lot.service";
 
 @ApiTags("Stock lots")
@@ -64,5 +77,38 @@ export class StockLotController {
   @ApiOkResponse({ description: "Stock lot detail" })
   getStockLotsById(@Param("id") id: string) {
     return this.stockLotService.getStockLotById(id);
+  }
+
+  @Post(":id/disposition")
+  @Roles(...DISPOSITION_WRITE_ROLES)
+  @ApiOperation({
+    operationId: "postStockLotsByIdDisposition",
+    summary: "Record GBfoods disposition",
+    description:
+      "GBfoods reviewer records release, hold, reject, or repack approval; updates lot zone and appends a disposition movement.",
+  })
+  @ApiCreatedResponse({ description: "Disposition recorded" })
+  postStockLotsByIdDisposition(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("id") id: string,
+    @Body() body: CreateDispositionDto,
+  ) {
+    return this.stockLotService.createDisposition(user.id, id, body);
+  }
+
+  @Patch(":id/custodian")
+  @Roles(...CUSTODIAN_WRITE_ROLES)
+  @ApiOperation({
+    operationId: "patchStockLotsByIdCustodian",
+    summary: "Set held lot custodian",
+    description: "Field or supervisor assigns custodian name for held or rejected stock lots.",
+  })
+  @ApiOkResponse({ description: "Custodian updated" })
+  patchStockLotsByIdCustodian(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("id") id: string,
+    @Body() body: PatchStockLotCustodianDto,
+  ) {
+    return this.stockLotService.patchCustodian(user.id, user.role, id, body);
   }
 }

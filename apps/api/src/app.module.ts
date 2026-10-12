@@ -13,6 +13,7 @@ import { RegionModule } from "./modules/region/region.module";
 import { SkuModule } from "./modules/sku/sku.module";
 import { StockLotModule } from "./modules/stock-lot/stock-lot.module";
 import { UploadModule } from "./modules/upload/upload.module";
+import { VisitModule } from "./modules/visit/visit.module";
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { UploadModule } from "./modules/upload/upload.module";
     AttendanceModule,
     SkuModule,
     StockLotModule,
+    VisitModule,
   ],
 })
 export class AppModule {}
