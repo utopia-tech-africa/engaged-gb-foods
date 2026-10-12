@@ -13,7 +13,7 @@ import {
   UserRole,
   VisitStatus,
 } from "@prisma/client";
-
+import { stampVisitLastSyncedAt } from "../../common/helpers/visit-sync.helper";
 import {
   activeAssignmentWhere,
   depotScopeFromAssignments,
@@ -326,7 +326,7 @@ export class VisitService {
 
     const { signedByUserId } = this.assertSignatureRoleAllowed(visit, userId, userRole, dto);
 
-    return this.prisma.visitSignature.upsert({
+    const signature = await this.prisma.visitSignature.upsert({
       where: {
         visitId_role: {
           visitId,
@@ -347,6 +347,9 @@ export class VisitService {
         signedByUserId,
       },
     });
+
+    await stampVisitLastSyncedAt(this.prisma, visitId);
+    return signature;
   }
 
   async closeVisit(visitId: string, userId: string, userRole: UserRole, dto: CloseVisitDto) {
@@ -375,7 +378,7 @@ export class VisitService {
           })),
         });
 
-        return tx.visit.update({
+        const closed = await tx.visit.update({
           where: { id: visitId },
           data: {
             status: VisitStatus.exception,
@@ -383,6 +386,8 @@ export class VisitService {
           },
           include: visitListInclude,
         });
+        await stampVisitLastSyncedAt(tx, visitId);
+        return closed;
       });
     }
 
@@ -392,7 +397,7 @@ export class VisitService {
       );
     }
 
-    return this.prisma.visit.update({
+    const closed = await this.prisma.visit.update({
       where: { id: visitId },
       data: {
         status: VisitStatus.complete,
@@ -400,5 +405,7 @@ export class VisitService {
       },
       include: visitListInclude,
     });
+    await stampVisitLastSyncedAt(this.prisma, visitId);
+    return closed;
   }
 }

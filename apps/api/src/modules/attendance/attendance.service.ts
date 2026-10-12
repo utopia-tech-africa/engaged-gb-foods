@@ -1,6 +1,6 @@
 import { ForbiddenException, Inject, Injectable, NotFoundException } from "@nestjs/common";
 import { AttendanceKind, type Prisma, VisitStatus } from "@prisma/client";
-
+import { stampVisitLastSyncedAt } from "../../common/helpers/visit-sync.helper";
 import {
   activeAssignmentWhere,
   depotScopeFromAssignments,
@@ -124,6 +124,7 @@ export class AttendanceService {
           )?.staffId ?? null,
       });
       visitId = visit.id;
+      await stampVisitLastSyncedAt(this.prisma, visit.id);
     } else {
       const visit = await this.prisma.visit.findUnique({
         where: {
@@ -140,6 +141,7 @@ export class AttendanceService {
           where: { id: visit.id },
           data: { status: VisitStatus.complete },
         });
+        await stampVisitLastSyncedAt(this.prisma, visit.id);
       }
     }
 
