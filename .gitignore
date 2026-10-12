@@ -13,3 +13,4 @@ apps/web/src/lib/api/generated
 *.tsbuildinfo
 .pnpm-store
 openapi/openapi.json
+AGENTS.md
