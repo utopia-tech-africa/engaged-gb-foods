@@ -30,9 +30,19 @@ export default function FieldHomePage() {
             with batch evidence for today&apos;s visit.
           </p>
 
-          <Link href="/field/stock" className={cn(buttonVariants())}>
-            Today&apos;s stock lots
-          </Link>
+          <div className="flex flex-wrap gap-2">
+            <Link href="/field/stock" className={cn(buttonVariants())}>
+              Today&apos;s stock lots
+            </Link>
+            {user?.role !== "handler" ? (
+              <Link
+                href="/field/escalations/new"
+                className={cn(buttonVariants({ variant: "outline" }))}
+              >
+                Report an exception
+              </Link>
+            ) : null}
+          </div>
 
           {loading ? <p className="text-sm text-brand-ink/70">Loading assigned depots…</p> : null}
           {error ? <p className="text-sm text-red-600">{error}</p> : null}

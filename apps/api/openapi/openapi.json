@@ -580,7 +580,7 @@
     },
     "/uploads/presign": {
       "post": {
-        "description": "Returns a presigned PUT URL for attendance, stock evidence, or signatures when R2 is configured.",
+        "description": "Returns a presigned PUT URL for attendance, stock evidence, escalation photos, or signatures when R2 is configured.",
         "operationId": "postUploadsPresign",
         "parameters": [],
         "requestBody": {
@@ -2150,6 +2150,182 @@
         ]
       }
     },
+    "/escalations": {
+      "get": {
+        "description": "Lists field exceptions raised as escalations, newest first, optionally filtered by depot, visit, and status.",
+        "operationId": "getEscalations",
+        "parameters": [
+          {
+            "name": "depotId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by depot id",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "visitId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by visit id",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/EscalationStatus"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Escalation list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EscalationResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List escalations",
+        "tags": [
+          "Escalations"
+        ]
+      },
+      "post": {
+        "description": "Records a field exception with a trigger, note, and photos. The visit status is not changed, so the field can still reconcile.",
+        "operationId": "postEscalations",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateEscalationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Escalation created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EscalationResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Raise escalation",
+        "tags": [
+          "Escalations"
+        ]
+      }
+    },
+    "/escalations/{id}": {
+      "get": {
+        "description": "Returns a single escalation with depot, reporter, and photo evidence.",
+        "operationId": "getEscalationsById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Escalation detail",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EscalationResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get escalation by id",
+        "tags": [
+          "Escalations"
+        ]
+      },
+      "patch": {
+        "description": "Updates status, owner, due date, or written record. Moving to resolved stamps the resolution time; moving back clears it.",
+        "operationId": "patchEscalationsById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateEscalationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Escalation updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EscalationResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update escalation",
+        "tags": [
+          "Escalations"
+        ]
+      }
+    },
     "/users": {
       "get": {
         "description": "Lists users for ops screens, optionally filtered by role, active flag, or a search term on name, staff ID, or email. Omit isActive to include inactive users. Returns no credentials.",
@@ -3296,7 +3472,8 @@
         "enum": [
           "attendance_photo",
           "stock_evidence",
-          "signature"
+          "signature",
+          "escalation_photo"
         ]
       },
       "PresignUploadDto": {
@@ -5051,6 +5228,246 @@
           },
           "depotsException": {
             "type": "number"
+          }
+        }
+      },
+      "EscalationStatus": {
+        "type": "string",
+        "enum": [
+          "open",
+          "in_progress",
+          "resolved"
+        ]
+      },
+      "EscalationTrigger": {
+        "type": "string",
+        "enum": [
+          "quality_or_safety",
+          "count_mismatch",
+          "access_or_crew",
+          "excess_volume_or_delay"
+        ]
+      },
+      "EscalationDepotDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name"
+        ]
+      },
+      "EscalationReporterDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "fullName",
+          "role"
+        ]
+      },
+      "EscalationEvidenceResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "objectKey": {
+            "type": "string"
+          },
+          "capturedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "objectKey",
+          "capturedAt",
+          "createdAt"
+        ]
+      },
+      "EscalationResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "visitId": {
+            "type": "string",
+            "nullable": true
+          },
+          "depotId": {
+            "type": "string"
+          },
+          "trigger": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EscalationTrigger"
+              }
+            ]
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EscalationStatus"
+              }
+            ]
+          },
+          "note": {
+            "type": "string"
+          },
+          "ownerName": {
+            "type": "string",
+            "nullable": true
+          },
+          "dueAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "writtenRecord": {
+            "type": "string",
+            "nullable": true
+          },
+          "reportedByUserId": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "resolvedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "depot": {
+            "$ref": "#/components/schemas/EscalationDepotDto"
+          },
+          "reportedBy": {
+            "$ref": "#/components/schemas/EscalationReporterDto"
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EscalationEvidenceResponseDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "visitId",
+          "depotId",
+          "trigger",
+          "status",
+          "note",
+          "ownerName",
+          "dueAt",
+          "writtenRecord",
+          "reportedByUserId",
+          "createdAt",
+          "updatedAt",
+          "resolvedAt",
+          "depot",
+          "reportedBy",
+          "evidence"
+        ]
+      },
+      "CreateEscalationDto": {
+        "type": "object",
+        "properties": {
+          "depotId": {
+            "type": "string",
+            "description": "Depot the exception was found at"
+          },
+          "visitId": {
+            "type": "string",
+            "description": "Visit the exception belongs to, when known"
+          },
+          "trigger": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EscalationTrigger"
+              }
+            ]
+          },
+          "note": {
+            "type": "string",
+            "description": "What happened, in the reporter's words"
+          },
+          "evidenceKeys": {
+            "description": "Object keys of uploaded photos; capture time is stamped by the API",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "ownerName": {
+            "type": "string",
+            "description": "Person who owns the follow-up"
+          },
+          "dueAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "depotId",
+          "trigger",
+          "note"
+        ]
+      },
+      "UpdateEscalationDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EscalationStatus"
+              }
+            ]
+          },
+          "ownerName": {
+            "type": "string",
+            "description": "Owner of the follow-up. An empty string clears it."
+          },
+          "dueAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Follow-up due date"
+          },
+          "writtenRecord": {
+            "type": "string",
+            "description": "Written record of the resolution or decision"
           }
         }
       },

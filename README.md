@@ -20,6 +20,7 @@ Field and client platform for the GBfoods nationwide depot sorting and segregati
 - Depot recce (`/ops/recce`, `/recces`): checklist, gaps with owner and deadline, optional photo keys, ready/hold decision synced to `Depot.readiness`; a critical gap forces hold
 - People and assignments (`/ops/people`, `/ops/assignments`; API `/users`, `/assignments`, `/clusters`): admin and national ops create, edit, deactivate users and reset PINs (field roles) or passwords (desk roles); field roles need staff ID + PIN, desk roles need email + password; assign field users to a distributor, cluster, or region with dates and end assignments. Credential hashes are never returned. Deactivating or resetting credentials revokes the user's sessions
 - Training assessment roster (`/ops/assessment`, `/assessments`, `/users`): safety, quality, and record-keeping must all pass; any fail means not dispatchable
+- Field exceptions and escalations (`/field/escalations/new`, `/ops/escalations`, `/escalations`): trigger, note, and photos create a timestamped escalation; ops list open items and update status, owner, due date, and written record. Raising one does not change the visit status. Online only for now
 - GBfoods brand tokens and logo assets
 - Installable PWA (Serwist service worker, web manifest, `/~offline` fallback) and an offline field queue for depot check-in/out and new stock lots, with sync on reconnect
 - Web data layer: Orval-generated React Query hooks from the committed OpenAPI spec (no hand-written fetch wrappers for JSON endpoints)
@@ -47,7 +48,7 @@ cp apps/api/.env.keep apps/api/.env
 cp apps/web/.env.keep apps/web/.env.local
 pnpm --filter @gbfoods/api prisma:generate
 pnpm --filter @gbfoods/api exec prisma migrate dev --schema prisma/schema.prisma
-# includes migrations `reconcile_disposition`, `client_control_room` (Visit.lastSyncedAt)
+# includes migrations `reconcile_disposition`, `client_control_room` (Visit.lastSyncedAt), `escalation`
 pnpm --filter @gbfoods/api seed:auth
 pnpm --filter @gbfoods/api seed:network
 ```

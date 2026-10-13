@@ -7,6 +7,7 @@ export * from './clusters/clusters';
 export * from './daily-returns/daily-returns';
 export * from './depots/depots';
 export * from './distributors/distributors';
+export * from './escalations/escalations';
 export * from './health/health';
 export * from './recces/recces';
 export * from './regions/regions';

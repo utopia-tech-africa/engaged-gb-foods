@@ -13,4 +13,5 @@ export const UploadPurpose = {
   attendance_photo: 'attendance_photo',
   stock_evidence: 'stock_evidence',
   signature: 'signature',
+  escalation_photo: 'escalation_photo',
 } as const;
