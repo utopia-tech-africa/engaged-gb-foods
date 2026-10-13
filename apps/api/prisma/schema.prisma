@@ -112,6 +112,7 @@ model User {
   assessments       Assessment[]   @relation("AssessmentSubject")
   assessmentsGiven  Assessment[]   @relation("AssessmentAssessor")
   dailyReturnsSubmitted DailyReturn[] @relation("DailyReturnSubmitter")
+  escalationsReported Escalation[] @relation("EscalationReporter")
 
   @@index([role])
   @@index([isActive])
@@ -207,6 +208,7 @@ model Depot {
   visits         Visit[]
   attendances    Attendance[]
   recces         Recce[]
+  escalations    Escalation[]
 
   @@unique([distributorId, code])
   @@index([distributorId])
@@ -253,6 +255,7 @@ model Visit {
   stockLots    StockLot[]
   signatures   VisitSignature[]
   openActions  VisitOpenAction[]
+  escalations  Escalation[]
 
   @@unique([depotId, qcUserId, date])
   @@index([depotId])
@@ -495,4 +498,53 @@ model DailyReturn {
   @@unique([regionId, date])
   @@index([date])
   @@index([regionId])
+}
+
+enum EscalationTrigger {
+  quality_or_safety
+  count_mismatch
+  access_or_crew
+  excess_volume_or_delay
+}
+
+enum EscalationStatus {
+  open
+  in_progress
+  resolved
+}
+
+model Escalation {
+  id               String               @id @default(cuid())
+  visitId          String?
+  depotId          String
+  trigger          EscalationTrigger
+  status           EscalationStatus     @default(open)
+  note             String
+  ownerName        String?
+  dueAt            DateTime?
+  writtenRecord    String?
+  reportedByUserId String
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+  resolvedAt       DateTime?
+  visit            Visit?               @relation(fields: [visitId], references: [id], onDelete: SetNull)
+  depot            Depot                @relation(fields: [depotId], references: [id], onDelete: Cascade)
+  reportedBy       User                 @relation("EscalationReporter", fields: [reportedByUserId], references: [id], onDelete: Restrict)
+  evidence         EscalationEvidence[]
+
+  @@index([depotId])
+  @@index([visitId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model EscalationEvidence {
+  id           String     @id @default(cuid())
+  escalationId String
+  objectKey    String
+  capturedAt   DateTime
+  createdAt    DateTime   @default(now())
+  escalation   Escalation @relation(fields: [escalationId], references: [id], onDelete: Cascade)
+
+  @@index([escalationId])
 }

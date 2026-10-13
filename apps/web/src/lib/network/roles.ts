@@ -29,3 +29,15 @@ export const DAILY_RETURN_WRITE_ROLES: UserRole[] = [
 
 export const canWriteDailyReturn = (role: UserRole): boolean =>
   DAILY_RETURN_WRITE_ROLES.includes(role);
+
+/** Matches API guard for triaging escalations (status, owner, due date, written record). */
+export const ESCALATION_OPS_WRITE_ROLES: UserRole[] = [
+  "admin",
+  "national_ops",
+  "national_quality",
+  "regional_supervisor",
+  "cluster_supervisor",
+];
+
+export const canTriageEscalation = (role: UserRole): boolean =>
+  ESCALATION_OPS_WRITE_ROLES.includes(role);

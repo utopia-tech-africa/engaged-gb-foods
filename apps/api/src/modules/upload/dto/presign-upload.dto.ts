@@ -5,6 +5,7 @@ export enum UploadPurpose {
   attendance_photo = "attendance_photo",
   stock_evidence = "stock_evidence",
   signature = "signature",
+  escalation_photo = "escalation_photo",
 }
 
 const MAX_ATTENDANCE_PHOTO_BYTES = 5 * 1024 * 1024;
