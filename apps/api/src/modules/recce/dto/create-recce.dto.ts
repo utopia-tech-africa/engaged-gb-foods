@@ -25,7 +25,7 @@ export class CreateRecceDto {
   @Type(() => RecceChecklistDto)
   checklist!: RecceChecklistDto;
 
-  @ApiProperty({ enum: RecceDecision })
+  @ApiProperty({ enum: RecceDecision, enumName: "RecceDecision" })
   @IsEnum(RecceDecision)
   decision!: RecceDecision;
 

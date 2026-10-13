@@ -20,6 +20,7 @@ Field and client platform for the GBfoods nationwide depot sorting and segregati
 - Depot recce (`/ops/recce`, `/recces`): checklist, gaps with owner and deadline, optional photo keys, ready/hold decision synced to `Depot.readiness`; a critical gap forces hold
 - Training assessment roster (`/ops/assessment`, `/assessments`, `/users`): safety, quality, and record-keeping must all pass; any fail means not dispatchable
 - GBfoods brand tokens and logo assets
+- Web data layer: Orval-generated React Query hooks from the committed OpenAPI spec (no hand-written fetch wrappers for JSON endpoints)
 
 ## Not built yet
 
@@ -56,6 +57,23 @@ pnpm dev
 - Web: http://localhost:3000
 - API: http://localhost:4000/api/v1
 - Swagger: http://localhost:4000/api/v1/docs
+
+## API client (OpenAPI + Orval)
+
+The API publishes OpenAPI at `/api/v1/docs-json`. The spec is committed at `apps/api/openapi/openapi.json` and the generated React Query client is committed at `apps/web/src/lib/api/generated`, so `pnpm typecheck` works without a running API or database.
+
+After any API change (controllers, DTOs, response types), regenerate both, in this order:
+
+```bash
+pnpm --filter @gbfoods/api docs:openapi
+pnpm --filter @gbfoods/web generate:api
+```
+
+- `docs:openapi` compiles the API with `tsc` and exports the spec (it needs the compiled decorator metadata, so it does not run through `tsx`). It does not need a database connection.
+- Do not edit files under `apps/web/src/lib/api/generated` by hand.
+- Components import hooks such as `useGetRegions`, `usePostDepots` from `@/lib/api/generated/<tag>/<tag>`. Mutations take `{ data }` (plus `id` for path params).
+- `apps/web/src/lib/api/custom-fetch.ts` is the Orval mutator. It sends `Authorization: Bearer <accessToken>` from the stored session when one exists, and throws `ApiError` with the Nest `message`.
+- Photo bytes are the only special case: `apps/web/src/lib/uploads.ts` PUTs to the presigned R2 URL (or falls back to the generated local upload call) and loads private images as blobs.
 
 ## Lint and typecheck
 

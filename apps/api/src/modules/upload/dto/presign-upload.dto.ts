@@ -20,7 +20,7 @@ export class PresignUploadDto {
   @Max(MAX_ATTENDANCE_PHOTO_BYTES)
   contentLength!: number;
 
-  @ApiProperty({ enum: UploadPurpose })
+  @ApiProperty({ enum: UploadPurpose, enumName: "UploadPurpose" })
   @IsEnum(UploadPurpose)
   purpose!: UploadPurpose;
 }

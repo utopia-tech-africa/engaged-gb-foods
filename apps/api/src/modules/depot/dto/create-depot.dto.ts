@@ -61,7 +61,7 @@ export class CreateDepotDto {
   @MaxLength(200)
   openingHours?: string;
 
-  @ApiPropertyOptional({ enum: DepotReadiness })
+  @ApiPropertyOptional({ enum: DepotReadiness, enumName: "DepotReadiness" })
   @IsOptional()
   @IsEnum(DepotReadiness)
   readiness?: DepotReadiness;

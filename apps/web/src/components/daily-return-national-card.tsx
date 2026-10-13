@@ -2,10 +2,10 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { NationalSummary } from "@/lib/daily-return/api";
+import type { NationalSummaryResponseDto } from "@/lib/api/generated/model";
 
 type NationalCardProps = {
-  summary: NationalSummary | null;
+  summary: NationalSummaryResponseDto | null;
   isLoading: boolean;
 };
 

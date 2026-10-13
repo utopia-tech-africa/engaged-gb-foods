@@ -3,7 +3,7 @@ import { DispositionDecision } from "@prisma/client";
 import { IsEnum, IsString, MinLength } from "class-validator";
 
 export class CreateDispositionDto {
-  @ApiProperty({ enum: DispositionDecision })
+  @ApiProperty({ enum: DispositionDecision, enumName: "DispositionDecision" })
   @IsEnum(DispositionDecision)
   decision!: DispositionDecision;
 

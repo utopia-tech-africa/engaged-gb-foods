@@ -1,7 +1,8 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 
 import { useAuth } from "@/components/auth-provider";
 import { RequireAuth } from "@/components/require-auth";
@@ -9,15 +10,15 @@ import { ShellFrame } from "@/components/shell-frame";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { useGetMeDepots } from "@/lib/api/generated/assignments/assignments";
 import {
-  type AttendanceKind,
-  type AttendanceRecord,
-  fetchMyDepots,
-  type MyDepot,
-  postAttendance,
-  uploadPhotoForAttendance,
-} from "@/lib/attendance/api";
+  getGetAttendanceQueryKey,
+  getGetMeAttendanceTodayQueryKey,
+  usePostAttendance,
+} from "@/lib/api/generated/attendance/attendance";
+import type { AttendanceKind, AttendanceResponseDto } from "@/lib/api/generated/model";
 import type { UserRole } from "@/lib/auth/types";
+import { uploadPhoto } from "@/lib/uploads";
 import { cn } from "@/lib/utils";
 
 const FIELD_ROLES: UserRole[] = ["qc", "handler", "cluster_supervisor", "regional_supervisor"];
@@ -28,7 +29,7 @@ type GeoSnapshot = {
   accuracyMeters: number;
 };
 
-const formatLocation = (record: AttendanceRecord): string => {
+const formatLocation = (record: AttendanceResponseDto): string => {
   if (record.latitude === null || record.longitude === null) {
     return "Location unavailable";
   }
@@ -43,32 +44,29 @@ function CheckInContent() {
   const depotId = searchParams.get("depotId");
   const { accessToken } = useAuth();
 
-  const [depot, setDepot] = useState<MyDepot | null>(null);
+  const queryClient = useQueryClient();
+  const createAttendance = usePostAttendance();
+  const depotsQuery = useGetMeDepots({
+    query: { enabled: Boolean(accessToken) && Boolean(depotId) },
+  });
+
   const [kind, setKind] = useState<AttendanceKind>("check_in");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [geo, setGeo] = useState<GeoSnapshot | null>(null);
   const [geoDenied, setGeoDenied] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<AttendanceRecord | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<AttendanceResponseDto | null>(null);
 
-  useEffect(() => {
-    if (!accessToken || !depotId) {
-      return;
-    }
-    void fetchMyDepots(accessToken)
-      .then((depots) => {
-        const match = depots.find((item) => item.id === depotId) ?? null;
-        setDepot(match);
-        if (!match) {
-          setError("Depot not found in your assignments.");
-        }
-      })
-      .catch((err: unknown) => {
-        setError(err instanceof Error ? err.message : "Could not load depot");
-      });
-  }, [accessToken, depotId]);
+  const depot = depotsQuery.data?.find((item) => item.id === depotId) ?? null;
+  const depotError = depotsQuery.error
+    ? depotsQuery.error.message
+    : depotsQuery.isSuccess && !depot
+      ? "Depot not found in your assignments."
+      : null;
+  const error = actionError ?? depotError;
+  const submitting = isUploading || createAttendance.isPending;
 
   const requestLocation = useCallback(() => {
     if (!navigator.geolocation) {
@@ -104,39 +102,44 @@ function CheckInContent() {
     setFile(selected);
     setPreviewUrl(URL.createObjectURL(selected));
     setSuccess(null);
-    setError(null);
+    setActionError(null);
   };
 
-  const canSubmit = useMemo(
-    () => Boolean(depot && file && accessToken && !submitting),
-    [depot, file, accessToken, submitting],
-  );
+  const canSubmit = Boolean(depot && file && accessToken && !submitting);
 
   const onSubmit = async () => {
-    if (!depot || !file || !accessToken) {
+    if (!depot || !file) {
       return;
     }
-    setSubmitting(true);
-    setError(null);
+    setActionError(null);
     try {
-      const photoObjectKey = await uploadPhotoForAttendance(accessToken, file);
-      const record = await postAttendance(accessToken, {
-        depotId: depot.id,
-        kind,
-        photoObjectKey,
-        ...(geo
-          ? {
-              latitude: geo.latitude,
-              longitude: geo.longitude,
-              accuracyMeters: geo.accuracyMeters,
-            }
-          : {}),
+      setIsUploading(true);
+      const photoObjectKey = await uploadPhoto(file, "attendance_photo").finally(() =>
+        setIsUploading(false),
+      );
+      const record = await createAttendance.mutateAsync({
+        data: {
+          depotId: depot.id,
+          kind,
+          photoObjectKey,
+          ...(geo
+            ? {
+                latitude: geo.latitude,
+                longitude: geo.longitude,
+                accuracyMeters: geo.accuracyMeters,
+              }
+            : {}),
+        },
       });
       setSuccess(record);
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: getGetAttendanceQueryKey({ date: "" }).slice(0, 1),
+        }),
+        queryClient.invalidateQueries({ queryKey: getGetMeAttendanceTodayQueryKey() }),
+      ]);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Check-in failed");
-    } finally {
-      setSubmitting(false);
+      setActionError(err instanceof Error ? err.message : "Check-in failed");
     }
   };
 

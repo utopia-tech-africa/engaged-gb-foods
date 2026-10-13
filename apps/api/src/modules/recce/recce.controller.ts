@@ -26,6 +26,7 @@ import type { AuthenticatedUser } from "../../common/types/authenticated-user.ty
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { CreateRecceDto } from "./dto/create-recce.dto";
 import { ListRecceQueryDto } from "./dto/list-recces-query.dto";
+import { RecceResponseDto } from "./dto/recce-response.dto";
 import { UpdateRecceDto } from "./dto/update-recce.dto";
 import { RecceService } from "./recce.service";
 
@@ -44,7 +45,7 @@ export class RecceController {
     description:
       "Lists depot recces with gaps and evidence, newest first, optionally filtered by depot or decision.",
   })
-  @ApiOkResponse({ description: "Recce list" })
+  @ApiOkResponse({ description: "Recce list", type: [RecceResponseDto] })
   getRecces(@Query() query: ListRecceQueryDto) {
     return this.recceService.listRecces({ depotId: query.depotId, decision: query.decision });
   }
@@ -56,7 +57,7 @@ export class RecceController {
     summary: "Get recce by id",
     description: "Returns a single recce with checklist, gaps, evidence, depot, and author.",
   })
-  @ApiOkResponse({ description: "Recce detail" })
+  @ApiOkResponse({ description: "Recce detail", type: RecceResponseDto })
   getReccesById(@Param("id") id: string) {
     return this.recceService.getRecceById(id);
   }
@@ -69,7 +70,7 @@ export class RecceController {
     description:
       "Records a depot recce with checklist, gaps, and optional photo keys. A critical gap forces a hold decision. The depot readiness is synced to the latest recce decision.",
   })
-  @ApiCreatedResponse({ description: "Recce created" })
+  @ApiCreatedResponse({ description: "Recce created", type: RecceResponseDto })
   postRecces(@CurrentUser() user: AuthenticatedUser, @Body() body: CreateRecceDto) {
     return this.recceService.createRecce(user.id, body);
   }
@@ -82,7 +83,7 @@ export class RecceController {
     description:
       "Updates checklist, decision, notes, or replaces gaps and evidence. A critical gap still forces a hold decision. The depot readiness is re-synced to its latest recce.",
   })
-  @ApiOkResponse({ description: "Recce updated" })
+  @ApiOkResponse({ description: "Recce updated", type: RecceResponseDto })
   patchReccesById(@Param("id") id: string, @Body() body: UpdateRecceDto) {
     return this.recceService.updateRecce(id, body);
   }

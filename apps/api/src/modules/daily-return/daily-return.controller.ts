@@ -26,6 +26,10 @@ import type { AuthenticatedUser } from "../../common/types/authenticated-user.ty
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { DailyReturnService } from "./daily-return.service";
 import { CreateDailyReturnDto } from "./dto/create-daily-return.dto";
+import {
+  DailyReturnResponseDto,
+  NationalSummaryResponseDto,
+} from "./dto/daily-return-response.dto";
 import { ListDailyReturnsQueryDto } from "./dto/list-daily-returns-query.dto";
 import { NationalSummaryQueryDto } from "./dto/national-summary-query.dto";
 import { UpdateDailyReturnDto } from "./dto/update-daily-return.dto";
@@ -47,7 +51,7 @@ export class DailyReturnController {
     description:
       "Lists regional daily returns, newest first, optionally filtered by region and by a single day.",
   })
-  @ApiOkResponse({ description: "Daily return list" })
+  @ApiOkResponse({ description: "Daily return list", type: [DailyReturnResponseDto] })
   getDailyReturns(@Query() query: ListDailyReturnsQueryDto) {
     return this.dailyReturnService.list({ regionId: query.regionId, date: query.date });
   }
@@ -60,7 +64,7 @@ export class DailyReturnController {
     description:
       "Aggregates the regional daily returns for a day: how many active regions have submitted, national depot totals, and a per-region breakdown including regions still outstanding.",
   })
-  @ApiOkResponse({ description: "National summary for the day" })
+  @ApiOkResponse({ description: "National summary for the day", type: NationalSummaryResponseDto })
   getDailyReturnsNationalSummary(@Query() query: NationalSummaryQueryDto) {
     return this.dailyReturnService.nationalSummary(query.date);
   }
@@ -72,7 +76,7 @@ export class DailyReturnController {
     summary: "Get daily return by id",
     description: "Returns a single regional daily return with region and submitter.",
   })
-  @ApiOkResponse({ description: "Daily return detail" })
+  @ApiOkResponse({ description: "Daily return detail", type: DailyReturnResponseDto })
   getDailyReturnsById(@Param("id") id: string) {
     return this.dailyReturnService.getById(id);
   }
@@ -85,7 +89,10 @@ export class DailyReturnController {
     description:
       "Submits the daily return for a region and date. If one already exists for that region and date it is updated instead (upsert). Depot counts not supplied are derived from active depots and that day's visits in the region.",
   })
-  @ApiCreatedResponse({ description: "Daily return created or updated" })
+  @ApiCreatedResponse({
+    description: "Daily return created or updated",
+    type: DailyReturnResponseDto,
+  })
   postDailyReturns(@CurrentUser() user: AuthenticatedUser, @Body() body: CreateDailyReturnDto) {
     return this.dailyReturnService.submit(user.id, body);
   }
@@ -98,7 +105,7 @@ export class DailyReturnController {
     description:
       "Updates summaries or depot counts on an existing daily return. Region and date cannot change.",
   })
-  @ApiOkResponse({ description: "Daily return updated" })
+  @ApiOkResponse({ description: "Daily return updated", type: DailyReturnResponseDto })
   patchDailyReturnsById(
     @CurrentUser() user: AuthenticatedUser,
     @Param("id") id: string,

@@ -11,17 +11,20 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type { Assessment, AssessmentResult } from "@/lib/assessment/api";
-import type { UserSummary } from "@/lib/users/api";
+import type {
+  AssessmentResponseDto,
+  AssessmentResult,
+  UserSummaryResponseDto,
+} from "@/lib/api/generated/model";
 
-export type RosterRow = { user: UserSummary; assessment: Assessment | null };
+export type RosterRow = { user: UserSummaryResponseDto; assessment: AssessmentResponseDto | null };
 
 const resultOf = (row: RosterRow): AssessmentResult => row.assessment?.result ?? "pending";
 
 export const filterRoster = (rows: RosterRow[], filter: AssessmentResult | "all"): RosterRow[] =>
   filter === "all" ? rows : rows.filter((row) => resultOf(row) === filter);
 
-const failedSteps = (assessment: Assessment): string =>
+const failedSteps = (assessment: AssessmentResponseDto): string =>
   [
     assessment.safetyPass ? null : "safety",
     assessment.qualityPass ? null : "quality",

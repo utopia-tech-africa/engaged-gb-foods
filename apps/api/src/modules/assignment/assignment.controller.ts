@@ -16,6 +16,7 @@ import type { AuthenticatedUser } from "../../common/types/authenticated-user.ty
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { AssignmentService } from "./assignment.service";
 import { CreateAssignmentDto } from "./dto/create-assignment.dto";
+import { MyDepotResponseDto } from "./dto/my-depot-response.dto";
 
 @ApiTags("Assignments")
 @Controller("assignments")
@@ -31,7 +32,7 @@ export class AssignmentController {
     summary: "List my assigned depots",
     description: "Returns active depots within the user's assignment scope for field check-in.",
   })
-  @ApiOkResponse({ description: "Depots assigned to current user" })
+  @ApiOkResponse({ description: "Depots assigned to current user", type: [MyDepotResponseDto] })
   getMeDepots(@CurrentUser() user: AuthenticatedUser) {
     return this.assignmentService.listDepotsForUser(user.id);
   }

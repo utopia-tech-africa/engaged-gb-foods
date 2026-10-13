@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 
 import { AttendancePhoto } from "@/components/attendance-photo";
 import { useAuth } from "@/components/auth-provider";
@@ -13,13 +13,15 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import type { StockLotResponseDto } from "@/lib/api/generated/model";
+import { useGetStockLots } from "@/lib/api/generated/stock-lots/stock-lots";
 import { OPS_NETWORK_ROLES } from "@/lib/network/roles";
-import { fetchStockLots, type StockLot, ZONE_LABELS } from "@/lib/stock/api";
+import { ZONE_LABELS } from "@/lib/stock/constants";
 import { cn } from "@/lib/utils";
 
 const todayIso = (): string => new Date().toISOString().slice(0, 10);
 
-const formatQty = (lot: StockLot): string => {
+const formatQty = (lot: StockLotResponseDto): string => {
   const unitLabel = lot.unit === "cases" ? lot.sku.caseUnit : lot.sku.looseUnit;
   return `${lot.quantity} ${unitLabel} · ${lot.baseQuantity} ${lot.sku.looseUnit} base`;
 };
@@ -27,27 +29,14 @@ const formatQty = (lot: StockLot): string => {
 export default function OpsStockPage() {
   const { accessToken } = useAuth();
   const [date, setDate] = useState(todayIso());
-  const [rows, setRows] = useState<StockLot[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    data: rows = [],
+    isLoading: loading,
+    error: loadError,
+  } = useGetStockLots({ date }, { query: { enabled: Boolean(accessToken) } });
+  const error = loadError?.message ?? null;
 
-  useEffect(() => {
-    if (!accessToken) {
-      return;
-    }
-    setLoading(true);
-    void fetchStockLots(accessToken, { date })
-      .then(setRows)
-      .catch((err: unknown) => {
-        setError(err instanceof Error ? err.message : "Could not load stock lots");
-      })
-      .finally(() => setLoading(false));
-  }, [accessToken, date]);
-
-  const sorted = useMemo(
-    () => [...rows].sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
-    [rows],
-  );
+  const sorted = [...rows].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
   return (
     <RequireAuth roles={[...OPS_NETWORK_ROLES, "cluster_supervisor", "regional_supervisor"]}>
@@ -114,7 +103,6 @@ export default function OpsStockPage() {
                         {row.evidence.map((item) => (
                           <div key={item.id} className="w-24">
                             <AttendancePhoto
-                              accessToken={accessToken}
                               objectKey={item.objectKey}
                               alt={`${item.category} evidence`}
                               className="h-20 w-full rounded-lg object-cover"

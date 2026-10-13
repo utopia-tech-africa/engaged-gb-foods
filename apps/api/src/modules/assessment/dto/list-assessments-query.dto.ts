@@ -9,7 +9,11 @@ export class ListAssessmentsQueryDto {
   @IsString()
   userId?: string;
 
-  @ApiPropertyOptional({ enum: AssessmentResult, description: "Filter by result" })
+  @ApiPropertyOptional({
+    enum: AssessmentResult,
+    enumName: "AssessmentResult",
+    description: "Filter by result",
+  })
   @IsOptional()
   @IsEnum(AssessmentResult)
   result?: AssessmentResult;

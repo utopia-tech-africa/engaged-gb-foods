@@ -21,6 +21,7 @@ import type { Request } from "express";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
 import type { AuthenticatedUser } from "../../common/types/authenticated-user.type";
 import { AuthService } from "./auth.service";
+import { AuthTokenResponseDto, AuthUserDto } from "./dto/auth-response.dto";
 import { FieldSignInDto } from "./dto/field-sign-in.dto";
 import { OpsSignInDto } from "./dto/ops-sign-in.dto";
 import { RefreshTokenDto } from "./dto/refresh-token.dto";
@@ -38,7 +39,7 @@ export class AuthController {
     summary: "Sign in with staff ID and PIN",
     description: "Authenticates a field user and returns an access and refresh token pair.",
   })
-  @ApiOkResponse({ description: "Field sign-in successful" })
+  @ApiOkResponse({ description: "Field sign-in successful", type: AuthTokenResponseDto })
   @ApiUnauthorizedResponse({ description: "Invalid staff ID or PIN" })
   postAuthFieldSignIn(@Body() body: FieldSignInDto, @Req() request: Request) {
     return this.authService.signInField(body, request.headers["user-agent"], request.ip);
@@ -52,7 +53,7 @@ export class AuthController {
     description:
       "Authenticates an operations, quality, admin, or GBfoods reviewer user and returns tokens.",
   })
-  @ApiOkResponse({ description: "Ops sign-in successful" })
+  @ApiOkResponse({ description: "Ops sign-in successful", type: AuthTokenResponseDto })
   @ApiUnauthorizedResponse({ description: "Invalid email or password" })
   postAuthOpsSignIn(@Body() body: OpsSignInDto, @Req() request: Request) {
     return this.authService.signInOps(body, request.headers["user-agent"], request.ip);
@@ -65,6 +66,7 @@ export class AuthController {
     summary: "Refresh access token",
     description: "Exchanges a valid refresh token for a new access and refresh token pair.",
   })
+  @ApiOkResponse({ description: "Tokens refreshed", type: AuthTokenResponseDto })
   postAuthRefresh(@Body() body: RefreshTokenDto) {
     return this.authService.refresh(body.refreshToken);
   }
@@ -88,6 +90,7 @@ export class AuthController {
     summary: "Get current user",
     description: "Returns the authenticated user profile for the bearer access token.",
   })
+  @ApiOkResponse({ description: "Current user", type: AuthUserDto })
   getAuthMe(@CurrentUser() user: AuthenticatedUser) {
     return this.authService.getMe(user.id);
   }

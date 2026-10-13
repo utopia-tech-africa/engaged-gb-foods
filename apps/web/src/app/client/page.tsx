@@ -1,7 +1,8 @@
 "use client";
 
+import { keepPreviousData } from "@tanstack/react-query";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 
 import { useAuth } from "@/components/auth-provider";
 import { DatePicker } from "@/components/date-picker";
@@ -26,16 +27,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  type ClientOverview,
-  type ClientReviewStatus,
-  downloadClientCsv,
-  fetchClientOverview,
-  formatSyncTime,
-  REVIEW_STATUS_LABELS,
-} from "@/lib/client/api";
+import { useGetClientOverview } from "@/lib/api/generated/client/client";
+import type { ClientReviewStatus } from "@/lib/api/generated/model";
+import { useGetRegions } from "@/lib/api/generated/regions/regions";
+import { downloadClientCsv } from "@/lib/client/download-csv";
+import { formatSyncTime, REVIEW_STATUS_LABELS } from "@/lib/client/format";
 import { CLIENT_CONTROL_ROLES } from "@/lib/client/roles";
-import { fetchRegions, type Region } from "@/lib/network/api";
 import { cn } from "@/lib/utils";
 
 const ALL_FILTER = "__all__";
@@ -61,75 +58,45 @@ const reviewBadgeVariant = (status: ClientReviewStatus): "default" | "secondary"
 
 export default function ClientControlRoomPage() {
   const { user, accessToken } = useAuth();
-  const [overview, setOverview] = useState<ClientOverview | null>(null);
-  const [regions, setRegions] = useState<Region[]>([]);
   const [date, setDate] = useState(todayIso);
   const [regionId, setRegionId] = useState("");
   const [reviewStatus, setReviewStatus] = useState<"" | ClientReviewStatus>("");
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [exportError, setExportError] = useState<string | null>(null);
   const [exportBusy, setExportBusy] = useState<"reconciliation" | "holds" | null>(null);
 
-  const load = useCallback(async () => {
-    if (!accessToken) {
-      return;
-    }
-    setLoading(true);
-    try {
-      const data = await fetchClientOverview(accessToken, {
-        date,
-        regionId: regionId || undefined,
-        reviewStatus: reviewStatus || undefined,
-      });
-      setOverview(data);
-      setError(null);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Could not load control room");
-    } finally {
-      setLoading(false);
-    }
-  }, [accessToken, date, regionId, reviewStatus]);
-
-  useEffect(() => {
-    void load();
-  }, [load]);
-
-  useEffect(() => {
-    if (!accessToken) {
-      return;
-    }
-    void fetchRegions(accessToken)
-      .then(setRegions)
-      .catch(() => {
-        /* regions optional for filter */
-      });
-  }, [accessToken]);
-
-  const kpis = useMemo(
-    () =>
-      overview ?? {
-        depotsComplete: 0,
-        depotsTotal: 0,
-        recordsToReview: 0,
-        qualityHolds: 0,
-        depotsWithSyncDelay: 0,
-        lastSyncAt: null,
-      },
-    [overview],
+  const enabled = Boolean(accessToken);
+  const overviewQuery = useGetClientOverview(
+    {
+      date,
+      regionId: regionId || undefined,
+      reviewStatus: reviewStatus || undefined,
+    },
+    { query: { enabled, placeholderData: keepPreviousData } },
   );
+  // Regions only feed the optional filter, so a failed load is not surfaced.
+  const regionsQuery = useGetRegions({ query: { enabled } });
+
+  const overview = overviewQuery.data;
+  const regions = regionsQuery.data ?? [];
+  const loading = overviewQuery.isLoading;
+  const error = exportError ?? overviewQuery.error?.message ?? null;
+
+  const kpis = overview ?? {
+    depotsComplete: 0,
+    depotsTotal: 0,
+    recordsToReview: 0,
+    qualityHolds: 0,
+    depotsWithSyncDelay: 0,
+    lastSyncAt: null,
+  };
 
   const runExport = async (kind: "reconciliation" | "holds") => {
-    if (!accessToken) {
-      return;
-    }
     setExportBusy(kind);
+    setExportError(null);
     try {
-      await downloadClientCsv(accessToken, kind, {
-        date,
-        regionId: regionId || undefined,
-      });
+      await downloadClientCsv(kind, { date, regionId: regionId || undefined });
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Export failed");
+      setExportError(err instanceof Error ? err.message : "Export failed");
     } finally {
       setExportBusy(null);
     }

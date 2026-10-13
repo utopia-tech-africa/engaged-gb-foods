@@ -21,7 +21,7 @@ export class UpdateRecceDto {
   @Type(() => RecceChecklistDto)
   checklist?: RecceChecklistDto;
 
-  @ApiPropertyOptional({ enum: RecceDecision })
+  @ApiPropertyOptional({ enum: RecceDecision, enumName: "RecceDecision" })
   @IsOptional()
   @IsEnum(RecceDecision)
   decision?: RecceDecision;

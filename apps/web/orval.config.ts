@@ -8,6 +8,7 @@ export default defineConfig({
       target: "./src/lib/api/generated",
       schemas: "./src/lib/api/generated/model",
       client: "react-query",
+      httpClient: "axios",
       override: {
         mutator: {
           path: "./src/lib/api/custom-fetch.ts",
