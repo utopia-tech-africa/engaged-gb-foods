@@ -37,7 +37,7 @@ See `PRD.md` for the full product definition.
 
 - Node.js 22+
 - pnpm 10.8.0
-- PostgreSQL 16+ (local or Docker)
+- Docker Desktop (for local Postgres) or PostgreSQL 16+
 
 ## Setup
 
@@ -46,9 +46,13 @@ pnpm install
 cp apps/api/.env.keep apps/api/.env
 # edit DATABASE_URL and other vars in apps/api/.env
 cp apps/web/.env.keep apps/web/.env.local
+
+# Start Postgres on localhost:5436 (matches apps/api/.env.keep)
+docker compose up -d
+
 pnpm --filter @gbfoods/api prisma:generate
-pnpm --filter @gbfoods/api exec prisma migrate dev --schema prisma/schema.prisma
-# includes migrations `reconcile_disposition`, `client_control_room` (Visit.lastSyncedAt), `escalation`
+pnpm --filter @gbfoods/api exec prisma migrate deploy --schema prisma/schema.prisma
+# includes migrations for recce/assessment, daily return, and escalation
 pnpm --filter @gbfoods/api seed:auth
 pnpm --filter @gbfoods/api seed:network
 ```

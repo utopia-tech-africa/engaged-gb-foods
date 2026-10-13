@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: gbfoods-stock-postgres
+    restart: unless-stopped
+    ports:
+      - "5436:5432"
+    environment:
+      POSTGRES_USER: portfolio
+      POSTGRES_PASSWORD: portfolio
+      POSTGRES_DB: gbfoods_stock
+    volumes:
+      - gbfoods_stock_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U portfolio -d gbfoods_stock"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  gbfoods_stock_pgdata:
