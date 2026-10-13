@@ -3,10 +3,10 @@ import { UserRole } from "@prisma/client";
 
 /** User profile for ops screens. Never includes PIN or password hashes. */
 export class UserResponseDto {
-  @ApiProperty()
+  @ApiProperty({ type: String })
   id!: string;
 
-  @ApiProperty()
+  @ApiProperty({ type: String })
   fullName!: string;
 
   @ApiProperty({ type: String, nullable: true })
@@ -21,13 +21,13 @@ export class UserResponseDto {
   @ApiProperty({ enum: UserRole, enumName: "UserRole" })
   role!: UserRole;
 
-  @ApiProperty()
+  @ApiProperty({ type: Boolean })
   isActive!: boolean;
 
-  @ApiProperty({ description: "True when a field PIN has been set" })
+  @ApiProperty({ type: Boolean, description: "True when a field PIN has been set" })
   hasPin!: boolean;
 
-  @ApiProperty({ description: "True when a desk password has been set" })
+  @ApiProperty({ type: Boolean, description: "True when a desk password has been set" })
   hasPassword!: boolean;
 
   @ApiProperty({ type: String, format: "date-time", nullable: true })

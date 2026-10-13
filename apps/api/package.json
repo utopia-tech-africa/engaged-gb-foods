@@ -5,7 +5,7 @@
   "scripts": {
     "prebuild": "prisma generate --schema prisma/schema.prisma",
     "build": "tsc --project tsconfig.json",
-    "dev": "tsx watch src/main.ts",
+    "dev": "tsc-watch --project tsconfig.json --onSuccess \"node dist/main.js\"",
     "docs:openapi": "tsc --project tsconfig.json && node dist/scripts/export-openapi.js",
     "start": "node dist/main.js",
     "typecheck": "tsc --project tsconfig.json --noEmit",
@@ -41,6 +41,7 @@
     "@types/multer": "^2.3.0",
     "@types/node": "^22.15.17",
     "@types/passport-jwt": "^4.0.1",
+    "tsc-watch": "^7.2.1",
     "tsx": "^4.19.4",
     "typescript": "^5.8.3"
   }
