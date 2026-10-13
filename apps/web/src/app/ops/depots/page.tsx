@@ -6,9 +6,31 @@ import { useAuth } from "@/components/auth-provider";
 import { OpsNetworkNav } from "@/components/ops-network-nav";
 import { RequireAuth } from "@/components/require-auth";
 import { ShellFrame } from "@/components/shell-frame";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Textarea } from "@/components/ui/textarea";
 import type { Depot, Distributor } from "@/lib/network/api";
 import * as networkApi from "@/lib/network/api";
 import { canWriteNetwork, OPS_NETWORK_ROLES } from "@/lib/network/roles";
+
+const ALL_FILTER = "__all__";
 
 export default function OpsDepotsPage() {
   const { accessToken, user } = useAuth();
@@ -97,103 +119,118 @@ export default function OpsDepotsPage() {
         <div className="space-y-6">
           <OpsNetworkNav />
 
-          <div className="flex flex-wrap items-end gap-3">
-            <label className="flex flex-col gap-1 text-sm text-brand-ink">
-              Filter by distributor
-              <select
-                className="rounded-xl border border-border bg-surface px-3 py-2 text-foreground"
-                value={filterDistributorId}
-                onChange={(event) => setFilterDistributorId(event.target.value)}
-              >
-                <option value="">All distributors</option>
+          <div className="max-w-md space-y-2">
+            <Label>Filter by distributor</Label>
+            <Select
+              value={filterDistributorId || ALL_FILTER}
+              onValueChange={(value) => {
+                if (!value) {
+                  return;
+                }
+                setFilterDistributorId(value === ALL_FILTER ? "" : value);
+              }}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="All distributors" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ALL_FILTER}>All distributors</SelectItem>
                 {distributors.map((distributor) => (
-                  <option key={distributor.id} value={distributor.id}>
+                  <SelectItem key={distributor.id} value={distributor.id}>
                     {distributor.code} — {distributor.name}
-                  </option>
+                  </SelectItem>
                 ))}
-              </select>
-            </label>
+              </SelectContent>
+            </Select>
           </div>
 
           {writeEnabled ? (
-            <form
-              onSubmit={(event) => void onSubmit(event)}
-              className="grid gap-4 rounded-2xl border border-border bg-surface p-5 shadow-sm md:grid-cols-2"
-            >
-              <h2 className="md:col-span-2 font-display text-lg font-semibold text-foreground">
-                Add depot
-              </h2>
-              <label className="flex flex-col gap-1 text-sm text-brand-ink md:col-span-2">
-                Distributor
-                <select
-                  required
-                  className="rounded-xl border border-border bg-surface px-3 py-2"
-                  value={distributorId}
-                  onChange={(event) => setDistributorId(event.target.value)}
+            <Card>
+              <CardHeader>
+                <CardTitle className="font-display text-lg">Add depot</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form
+                  onSubmit={(event) => void onSubmit(event)}
+                  className="grid gap-4 md:grid-cols-2"
                 >
-                  {distributors.map((distributor) => (
-                    <option key={distributor.id} value={distributor.id}>
-                      {distributor.code} — {distributor.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="flex flex-col gap-1 text-sm text-brand-ink">
-                Code
-                <input
-                  required
-                  className="rounded-xl border border-border px-3 py-2 font-mono uppercase"
-                  value={code}
-                  onChange={(event) => setCode(event.target.value)}
-                />
-              </label>
-              <label className="flex flex-col gap-1 text-sm text-brand-ink">
-                Name
-                <input
-                  required
-                  className="rounded-xl border border-border px-3 py-2"
-                  value={name}
-                  onChange={(event) => setName(event.target.value)}
-                />
-              </label>
-              <label className="flex flex-col gap-1 text-sm text-brand-ink md:col-span-2">
-                Address
-                <textarea
-                  required
-                  rows={2}
-                  className="rounded-xl border border-border px-3 py-2"
-                  value={address}
-                  onChange={(event) => setAddress(event.target.value)}
-                />
-              </label>
-              <label className="flex flex-col gap-1 text-sm text-brand-ink">
-                Latitude (optional recce pin)
-                <input
-                  inputMode="decimal"
-                  className="rounded-xl border border-border px-3 py-2"
-                  value={latitude}
-                  onChange={(event) => setLatitude(event.target.value)}
-                  placeholder="5.6148"
-                />
-              </label>
-              <label className="flex flex-col gap-1 text-sm text-brand-ink">
-                Longitude (optional recce pin)
-                <input
-                  inputMode="decimal"
-                  className="rounded-xl border border-border px-3 py-2"
-                  value={longitude}
-                  onChange={(event) => setLongitude(event.target.value)}
-                  placeholder="-0.2057"
-                />
-              </label>
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="md:col-span-2 w-fit rounded-xl bg-brand px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-hover disabled:opacity-60"
-              >
-                {isSubmitting ? "Saving…" : "Create depot"}
-              </button>
-            </form>
+                  <div className="space-y-2 md:col-span-2">
+                    <Label>Distributor</Label>
+                    <Select
+                      value={distributorId}
+                      onValueChange={(value) => {
+                        if (value) {
+                          setDistributorId(value);
+                        }
+                      }}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select distributor" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {distributors.map((distributor) => (
+                          <SelectItem key={distributor.id} value={distributor.id}>
+                            {distributor.code} — {distributor.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="depot-code">Code</Label>
+                    <Input
+                      id="depot-code"
+                      required
+                      className="font-mono uppercase"
+                      value={code}
+                      onChange={(event) => setCode(event.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="depot-name">Name</Label>
+                    <Input
+                      id="depot-name"
+                      required
+                      value={name}
+                      onChange={(event) => setName(event.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <Label htmlFor="depot-address">Address</Label>
+                    <Textarea
+                      id="depot-address"
+                      required
+                      rows={2}
+                      value={address}
+                      onChange={(event) => setAddress(event.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="depot-lat">Latitude (optional recce pin)</Label>
+                    <Input
+                      id="depot-lat"
+                      inputMode="decimal"
+                      value={latitude}
+                      onChange={(event) => setLatitude(event.target.value)}
+                      placeholder="5.6148"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="depot-lng">Longitude (optional recce pin)</Label>
+                    <Input
+                      id="depot-lng"
+                      inputMode="decimal"
+                      value={longitude}
+                      onChange={(event) => setLongitude(event.target.value)}
+                      placeholder="-0.2057"
+                    />
+                  </div>
+                  <Button type="submit" disabled={isSubmitting} className="md:col-span-2 w-fit">
+                    {isSubmitting ? "Saving…" : "Create depot"}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
           ) : null}
 
           {error ? <p className="text-sm text-danger">{error}</p> : null}
@@ -201,37 +238,47 @@ export default function OpsDepotsPage() {
           {isLoading ? (
             <p className="text-sm text-brand-ink">Loading depots…</p>
           ) : (
-            <div className="overflow-hidden rounded-2xl border border-border bg-surface shadow-sm">
-              <table className="w-full text-left text-sm">
-                <thead className="border-b border-border bg-brand-muted/40 text-xs uppercase tracking-wide text-brand-ink">
-                  <tr>
-                    <th className="px-4 py-3 font-semibold">Code</th>
-                    <th className="px-4 py-3 font-semibold">Name</th>
-                    <th className="px-4 py-3 font-semibold">Distributor</th>
-                    <th className="px-4 py-3 font-semibold">Recce pin</th>
-                    <th className="px-4 py-3 font-semibold">Readiness</th>
-                  </tr>
-                </thead>
-                <tbody>
+            <Card className="overflow-hidden p-0">
+              <Table>
+                <TableHeader className="bg-brand-muted/40">
+                  <TableRow>
+                    <TableHead className="text-xs uppercase tracking-wide text-brand-ink">
+                      Code
+                    </TableHead>
+                    <TableHead className="text-xs uppercase tracking-wide text-brand-ink">
+                      Name
+                    </TableHead>
+                    <TableHead className="text-xs uppercase tracking-wide text-brand-ink">
+                      Distributor
+                    </TableHead>
+                    <TableHead className="text-xs uppercase tracking-wide text-brand-ink">
+                      Recce pin
+                    </TableHead>
+                    <TableHead className="text-xs uppercase tracking-wide text-brand-ink">
+                      Readiness
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {depots.map((depot) => (
-                    <tr key={depot.id} className="border-b border-border last:border-0">
-                      <td className="px-4 py-3 font-mono text-brand">{depot.code}</td>
-                      <td className="px-4 py-3">
+                    <TableRow key={depot.id}>
+                      <TableCell className="font-mono text-brand">{depot.code}</TableCell>
+                      <TableCell>
                         <span className="block font-medium">{depot.name}</span>
                         <span className="text-xs text-brand-ink">{depot.address}</span>
-                      </td>
-                      <td className="px-4 py-3">{distributorNameById(depot.distributorId)}</td>
-                      <td className="px-4 py-3 font-mono text-xs text-brand-ink">
+                      </TableCell>
+                      <TableCell>{distributorNameById(depot.distributorId)}</TableCell>
+                      <TableCell className="font-mono text-xs text-brand-ink">
                         {depot.latitude !== null && depot.longitude !== null
                           ? `${depot.latitude.toFixed(4)}, ${depot.longitude.toFixed(4)}`
                           : "—"}
-                      </td>
-                      <td className="px-4 py-3 capitalize">{depot.readiness}</td>
-                    </tr>
+                      </TableCell>
+                      <TableCell className="capitalize">{depot.readiness}</TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
-            </div>
+                </TableBody>
+              </Table>
+            </Card>
           )}
         </div>
       </ShellFrame>

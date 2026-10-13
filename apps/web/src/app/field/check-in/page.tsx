@@ -6,6 +6,9 @@ import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { RequireAuth } from "@/components/require-auth";
 import { ShellFrame } from "@/components/shell-frame";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
 import {
   type AttendanceKind,
   type AttendanceRecord,
@@ -15,6 +18,7 @@ import {
   uploadPhotoForAttendance,
 } from "@/lib/attendance/api";
 import type { UserRole } from "@/lib/auth/types";
+import { cn } from "@/lib/utils";
 
 const FIELD_ROLES: UserRole[] = ["qc", "handler", "cluster_supervisor", "regional_supervisor"];
 
@@ -147,40 +151,37 @@ function CheckInContent() {
   return (
     <div className="mx-auto max-w-lg space-y-6">
       {depot ? (
-        <div className="rounded-2xl border border-border bg-surface p-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-brand">{depot.code}</p>
-          <h2 className="mt-1 text-xl font-semibold text-brand-ink">{depot.name}</h2>
-          <p className="mt-2 text-sm text-brand-ink/70">{depot.address}</p>
-        </div>
+        <Card>
+          <CardContent>
+            <p className="text-xs font-semibold uppercase tracking-wide text-brand">{depot.code}</p>
+            <h2 className="mt-1 text-xl font-semibold text-brand-ink">{depot.name}</h2>
+            <p className="mt-2 text-sm text-brand-ink/70">{depot.address}</p>
+          </CardContent>
+        </Card>
       ) : null}
 
       <div className="flex gap-2">
         {(["check_in", "check_out"] as const).map((value) => (
-          <button
+          <Button
             key={value}
             type="button"
-            className={`rounded-full px-4 py-2 text-sm font-medium ${
-              kind === value
-                ? "bg-brand text-white"
-                : "border border-border bg-surface text-brand-ink"
-            }`}
+            variant={kind === value ? "default" : "outline"}
+            className={cn("rounded-full", kind === value && "bg-brand hover:bg-brand/90")}
             onClick={() => setKind(value)}
           >
             {value === "check_in" ? "Check in" : "Check out"}
-          </button>
+          </Button>
         ))}
       </div>
 
       <div className="space-y-2">
-        <label htmlFor="selfie" className="block text-sm font-medium text-brand-ink">
-          Selfie photo
-        </label>
+        <Label htmlFor="selfie">Selfie photo</Label>
         <input
           id="selfie"
           type="file"
           accept="image/jpeg,image/png,image/webp"
           capture="user"
-          className="block w-full text-sm text-brand-ink file:mr-3 file:rounded-lg file:border-0 file:bg-brand file:px-4 file:py-2 file:text-sm file:font-medium file:text-white"
+          className="block w-full text-sm text-brand-ink file:mr-3 file:rounded-lg file:border-0 file:bg-primary file:px-4 file:py-2 file:text-sm file:font-medium file:text-primary-foreground"
           onChange={onFileChange}
         />
         {previewUrl ? (
@@ -193,50 +194,51 @@ function CheckInContent() {
         ) : null}
       </div>
 
-      <div className="rounded-xl border border-dashed border-border bg-surface/80 p-4 text-sm text-brand-ink">
-        <p className="font-medium">Location</p>
-        {geo ? (
-          <p className="mt-1 text-brand-ink/80">
-            {geo.latitude.toFixed(5)}, {geo.longitude.toFixed(5)} (±{Math.round(geo.accuracyMeters)}{" "}
-            m)
-          </p>
-        ) : geoDenied ? (
-          <p className="mt-1 text-brand-ink/70">
-            GPS unavailable or denied — attendance will be saved without coordinates.
-          </p>
-        ) : (
-          <p className="mt-1 text-brand-ink/70">Requesting location…</p>
-        )}
-        <button
-          type="button"
-          className="mt-3 text-sm font-medium text-brand underline-offset-2 hover:underline"
-          onClick={requestLocation}
-        >
-          Refresh location
-        </button>
-      </div>
+      <Card className="border-dashed bg-surface/80">
+        <CardContent className="text-sm text-brand-ink">
+          <p className="font-medium">Location</p>
+          {geo ? (
+            <p className="mt-1 text-brand-ink/80">
+              {geo.latitude.toFixed(5)}, {geo.longitude.toFixed(5)} (±
+              {Math.round(geo.accuracyMeters)} m)
+            </p>
+          ) : geoDenied ? (
+            <p className="mt-1 text-brand-ink/70">
+              GPS unavailable or denied — attendance will be saved without coordinates.
+            </p>
+          ) : (
+            <p className="mt-1 text-brand-ink/70">Requesting location…</p>
+          )}
+          <Button
+            type="button"
+            variant="link"
+            className="mt-3 h-auto p-0"
+            onClick={requestLocation}
+          >
+            Refresh location
+          </Button>
+        </CardContent>
+      </Card>
 
       {error ? <p className="text-sm text-red-600">{error}</p> : null}
 
       {success ? (
-        <div className="rounded-2xl border border-green-200 bg-green-50 p-4 text-sm text-green-900">
-          <p className="font-semibold">
-            {success.kind === "check_in" ? "Checked in" : "Checked out"} successfully
-          </p>
-          <p className="mt-2">{formatLocation(success)}</p>
-          <button
-            type="button"
-            className="mt-4 rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white"
-            onClick={() => router.push("/field")}
-          >
-            Back to depots
-          </button>
-        </div>
+        <Card className="border-green-200 bg-green-50/80">
+          <CardContent className="text-sm text-green-900">
+            <p className="font-semibold">
+              {success.kind === "check_in" ? "Checked in" : "Checked out"} successfully
+            </p>
+            <p className="mt-2">{formatLocation(success)}</p>
+            <Button type="button" className="mt-4" onClick={() => router.push("/field")}>
+              Back to depots
+            </Button>
+          </CardContent>
+        </Card>
       ) : (
-        <button
+        <Button
           type="button"
           disabled={!canSubmit}
-          className="w-full rounded-xl bg-brand px-4 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+          className="w-full"
           onClick={() => void onSubmit()}
         >
           {submitting
@@ -244,7 +246,7 @@ function CheckInContent() {
             : kind === "check_in"
               ? "Submit check-in"
               : "Submit check-out"}
-        </button>
+        </Button>
       )}
     </div>
   );

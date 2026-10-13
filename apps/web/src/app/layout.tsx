@@ -3,6 +3,8 @@ import { Manrope, Sora } from "next/font/google";
 import type { ReactNode } from "react";
 
 import { Providers } from "@/components/providers";
+import { Toaster } from "@/components/ui/sonner";
+import { cn } from "@/lib/utils";
 
 import "./globals.css";
 
@@ -30,9 +32,12 @@ type RootLayoutProps = {
 
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
-    <html lang="en">
-      <body className={`${sans.variable} ${display.variable} antialiased`}>
-        <Providers>{children}</Providers>
+    <html lang="en" className={cn(sans.variable, display.variable)}>
+      <body className="font-sans antialiased">
+        <Providers>
+          {children}
+          <Toaster richColors position="top-center" />
+        </Providers>
       </body>
     </html>
   );

@@ -4,8 +4,28 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { useAuth } from "@/components/auth-provider";
+import { DatePicker } from "@/components/date-picker";
 import { RequireAuth } from "@/components/require-auth";
 import { ShellFrame } from "@/components/shell-frame";
+import { Badge } from "@/components/ui/badge";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import {
   type ClientOverview,
   type ClientReviewStatus,
@@ -16,6 +36,9 @@ import {
 } from "@/lib/client/api";
 import { CLIENT_CONTROL_ROLES } from "@/lib/client/roles";
 import { fetchRegions, type Region } from "@/lib/network/api";
+import { cn } from "@/lib/utils";
+
+const ALL_FILTER = "__all__";
 
 const todayIso = (): string => new Date().toISOString().slice(0, 10);
 
@@ -24,6 +47,16 @@ const visitStatusLabel = (status: string | null): string => {
     return "No visit";
   }
   return status.replace(/_/g, " ");
+};
+
+const reviewBadgeVariant = (status: ClientReviewStatus): "default" | "secondary" | "outline" => {
+  if (status === "hold") {
+    return "default";
+  }
+  if (status === "pending") {
+    return "secondary";
+  }
+  return "outline";
 };
 
 export default function ClientControlRoomPage() {
@@ -122,77 +155,90 @@ export default function ClientControlRoomPage() {
               { label: "Sync delays", value: String(kpis.depotsWithSyncDelay) },
               { label: "Last sync", value: formatSyncTime(kpis.lastSyncAt) },
             ].map((item) => (
-              <div
-                key={item.label}
-                className="rounded-2xl border border-border bg-brand-muted/40 p-4"
-              >
-                <p className="text-xs font-semibold uppercase tracking-wide text-brand-ink/60">
-                  {item.label}
-                </p>
-                <p className="mt-1 text-xl font-semibold text-brand-ink">{item.value}</p>
-              </div>
+              <Card key={item.label} className="bg-brand-muted/40">
+                <CardContent className="p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-brand-ink/60">
+                    {item.label}
+                  </p>
+                  <p className="mt-1 text-xl font-semibold text-brand-ink">{item.value}</p>
+                </CardContent>
+              </Card>
             ))}
           </section>
 
-          <section className="flex flex-wrap items-end gap-4 rounded-2xl border border-border bg-surface p-4">
-            <label className="flex flex-col gap-1 text-sm text-brand-ink">
-              <span className="font-medium">Date</span>
-              <input
-                type="date"
-                value={date}
-                onChange={(event) => setDate(event.target.value)}
-                className="rounded-xl border border-border px-3 py-2"
-              />
-            </label>
-            <label className="flex flex-col gap-1 text-sm text-brand-ink">
-              <span className="font-medium">Region</span>
-              <select
-                value={regionId}
-                onChange={(event) => setRegionId(event.target.value)}
-                className="min-w-[12rem] rounded-xl border border-border px-3 py-2"
-              >
-                <option value="">All regions</option>
-                {regions.map((region) => (
-                  <option key={region.id} value={region.id}>
-                    {region.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="flex flex-col gap-1 text-sm text-brand-ink">
-              <span className="font-medium">Review status</span>
-              <select
-                value={reviewStatus}
-                onChange={(event) => setReviewStatus(event.target.value as "" | ClientReviewStatus)}
-                className="min-w-[12rem] rounded-xl border border-border px-3 py-2"
-              >
-                <option value="">All statuses</option>
-                {(Object.keys(REVIEW_STATUS_LABELS) as ClientReviewStatus[]).map((key) => (
-                  <option key={key} value={key}>
-                    {REVIEW_STATUS_LABELS[key]}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <div className="flex flex-wrap gap-2 pb-0.5">
-              <button
-                type="button"
-                disabled={exportBusy !== null}
-                onClick={() => void runExport("reconciliation")}
-                className="rounded-full border border-brand bg-white px-4 py-2 text-xs font-semibold text-brand disabled:opacity-50"
-              >
-                {exportBusy === "reconciliation" ? "Exporting…" : "Export reconciliation CSV"}
-              </button>
-              <button
-                type="button"
-                disabled={exportBusy !== null}
-                onClick={() => void runExport("holds")}
-                className="rounded-full bg-brand px-4 py-2 text-xs font-semibold text-white disabled:opacity-50"
-              >
-                {exportBusy === "holds" ? "Exporting…" : "Export holds CSV"}
-              </button>
-            </div>
-          </section>
+          <Card>
+            <CardContent className="flex flex-wrap items-end gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="client-date">Date</Label>
+                <DatePicker id="client-date" value={date} onChange={setDate} />
+              </div>
+              <div className="min-w-[12rem] space-y-2">
+                <Label>Region</Label>
+                <Select
+                  value={regionId || ALL_FILTER}
+                  onValueChange={(value) => {
+                    if (!value) {
+                      return;
+                    }
+                    setRegionId(value === ALL_FILTER ? "" : value);
+                  }}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="All regions" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={ALL_FILTER}>All regions</SelectItem>
+                    {regions.map((region) => (
+                      <SelectItem key={region.id} value={region.id}>
+                        {region.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="min-w-[12rem] space-y-2">
+                <Label>Review status</Label>
+                <Select
+                  value={reviewStatus || ALL_FILTER}
+                  onValueChange={(value) => {
+                    if (!value) {
+                      return;
+                    }
+                    setReviewStatus(value === ALL_FILTER ? "" : (value as ClientReviewStatus));
+                  }}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="All statuses" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={ALL_FILTER}>All statuses</SelectItem>
+                    {(Object.keys(REVIEW_STATUS_LABELS) as ClientReviewStatus[]).map((key) => (
+                      <SelectItem key={key} value={key}>
+                        {REVIEW_STATUS_LABELS[key]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex flex-wrap gap-2 pb-0.5">
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={exportBusy !== null}
+                  onClick={() => void runExport("reconciliation")}
+                >
+                  {exportBusy === "reconciliation" ? "Exporting…" : "Export reconciliation CSV"}
+                </Button>
+                <Button
+                  type="button"
+                  disabled={exportBusy !== null}
+                  onClick={() => void runExport("holds")}
+                >
+                  {exportBusy === "holds" ? "Exporting…" : "Export holds CSV"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
 
           {loading ? <p className="text-sm text-brand-ink/70">Loading depots…</p> : null}
           {error ? <p className="text-sm text-red-600">{error}</p> : null}
@@ -202,62 +248,68 @@ export default function ClientControlRoomPage() {
           ) : null}
 
           {overview && overview.depots.length > 0 ? (
-            <div className="overflow-x-auto rounded-2xl border border-border">
-              <table className="min-w-full text-left text-sm text-brand-ink">
-                <thead className="bg-brand-muted/50 text-xs uppercase tracking-wide text-brand-ink/70">
-                  <tr>
-                    <th className="px-4 py-3 font-semibold">Depot</th>
-                    <th className="px-4 py-3 font-semibold">Region</th>
-                    <th className="px-4 py-3 font-semibold">Visit</th>
-                    <th className="px-4 py-3 font-semibold">Coverage</th>
-                    <th className="px-4 py-3 font-semibold">Review</th>
-                    <th className="px-4 py-3 font-semibold">Holds</th>
-                    <th className="px-4 py-3 font-semibold">Last sync</th>
-                    <th className="px-4 py-3 font-semibold" />
-                  </tr>
-                </thead>
-                <tbody>
+            <Card className="overflow-hidden p-0">
+              <Table>
+                <TableHeader className="bg-brand-muted/50">
+                  <TableRow>
+                    <TableHead className="text-xs uppercase tracking-wide text-brand-ink/70">
+                      Depot
+                    </TableHead>
+                    <TableHead className="text-xs uppercase tracking-wide text-brand-ink/70">
+                      Region
+                    </TableHead>
+                    <TableHead className="text-xs uppercase tracking-wide text-brand-ink/70">
+                      Visit
+                    </TableHead>
+                    <TableHead className="text-xs uppercase tracking-wide text-brand-ink/70">
+                      Coverage
+                    </TableHead>
+                    <TableHead className="text-xs uppercase tracking-wide text-brand-ink/70">
+                      Review
+                    </TableHead>
+                    <TableHead className="text-xs uppercase tracking-wide text-brand-ink/70">
+                      Holds
+                    </TableHead>
+                    <TableHead className="text-xs uppercase tracking-wide text-brand-ink/70">
+                      Last sync
+                    </TableHead>
+                    <TableHead className="text-right text-xs uppercase tracking-wide text-brand-ink/70" />
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {overview.depots.map((depot) => (
-                    <tr key={depot.depotId} className="border-t border-border">
-                      <td className="px-4 py-3">
+                    <TableRow key={depot.depotId}>
+                      <TableCell>
                         <p className="font-semibold">{depot.name}</p>
                         <p className="text-xs text-brand-ink/60">{depot.code}</p>
-                      </td>
-                      <td className="px-4 py-3">{depot.regionName}</td>
-                      <td className="px-4 py-3 capitalize">
+                      </TableCell>
+                      <TableCell>{depot.regionName}</TableCell>
+                      <TableCell className="capitalize">
                         {visitStatusLabel(depot.visitStatus)}
-                      </td>
-                      <td className="px-4 py-3">{depot.coverage}%</td>
-                      <td className="px-4 py-3">
-                        <span
-                          className={
-                            depot.reviewStatus === "hold"
-                              ? "font-semibold text-brand"
-                              : depot.reviewStatus === "pending"
-                                ? "text-brand-ink"
-                                : "text-brand-ink/60"
-                          }
-                        >
+                      </TableCell>
+                      <TableCell>{depot.coverage}%</TableCell>
+                      <TableCell>
+                        <Badge variant={reviewBadgeVariant(depot.reviewStatus)}>
                           {REVIEW_STATUS_LABELS[depot.reviewStatus]}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">{depot.openHolds}</td>
-                      <td className="px-4 py-3 whitespace-nowrap">
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{depot.openHolds}</TableCell>
+                      <TableCell className="whitespace-nowrap">
                         {formatSyncTime(depot.lastSyncedAt)}
-                      </td>
-                      <td className="px-4 py-3 text-right">
+                      </TableCell>
+                      <TableCell className="text-right">
                         <Link
                           href={`/client/depots/${depot.depotId}?date=${encodeURIComponent(date)}`}
-                          className="inline-flex rounded-full border border-brand px-3 py-1.5 text-xs font-semibold text-brand"
+                          className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
                         >
                           Open pack
                         </Link>
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
-            </div>
+                </TableBody>
+              </Table>
+            </Card>
           ) : null}
         </div>
       </ShellFrame>

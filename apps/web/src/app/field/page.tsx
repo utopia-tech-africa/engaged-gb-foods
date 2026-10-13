@@ -6,8 +6,11 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { RequireAuth } from "@/components/require-auth";
 import { ShellFrame } from "@/components/shell-frame";
+import { buttonVariants } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { fetchMyDepots, type MyDepot } from "@/lib/attendance/api";
 import type { UserRole } from "@/lib/auth/types";
+import { cn } from "@/lib/utils";
 
 const FIELD_ROLES: UserRole[] = ["qc", "handler", "cluster_supervisor", "regional_supervisor"];
 
@@ -39,10 +42,7 @@ export default function FieldHomePage() {
             with batch evidence for today&apos;s visit.
           </p>
 
-          <Link
-            href="/field/stock"
-            className="inline-flex rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand/90"
-          >
+          <Link href="/field/stock" className={cn(buttonVariants())}>
             Today&apos;s stock lots
           </Link>
 
@@ -58,16 +58,20 @@ export default function FieldHomePage() {
           <ul className="grid gap-3 sm:grid-cols-2">
             {depots.map((depot) => (
               <li key={depot.id}>
-                <Link
-                  href={`/field/check-in?depotId=${encodeURIComponent(depot.id)}`}
-                  className="block rounded-2xl border border-border bg-surface p-4 transition hover:border-brand hover:shadow-sm"
-                >
-                  <p className="font-semibold text-brand-ink">{depot.name}</p>
-                  <p className="mt-1 text-xs font-medium uppercase tracking-wide text-brand">
-                    {depot.code}
-                  </p>
-                  <p className="mt-2 text-sm text-brand-ink/70">{depot.address}</p>
-                </Link>
+                <Card className="transition hover:ring-brand/40">
+                  <CardContent className="p-0">
+                    <Link
+                      href={`/field/check-in?depotId=${encodeURIComponent(depot.id)}`}
+                      className="block p-4"
+                    >
+                      <p className="font-semibold text-brand-ink">{depot.name}</p>
+                      <p className="mt-1 text-xs font-medium uppercase tracking-wide text-brand">
+                        {depot.code}
+                      </p>
+                      <p className="mt-2 text-sm text-brand-ink/70">{depot.address}</p>
+                    </Link>
+                  </CardContent>
+                </Card>
               </li>
             ))}
           </ul>

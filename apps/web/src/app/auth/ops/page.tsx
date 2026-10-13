@@ -6,6 +6,10 @@ import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
 
 import { useAuth } from "@/components/auth-provider";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { homePathForRole } from "@/lib/auth/routes";
 
 export default function OpsSignInPage() {
@@ -45,41 +49,38 @@ export default function OpsSignInPage() {
         Sign in with email for operations, quality, admin, or GBfoods review.
       </p>
 
-      <form
-        onSubmit={onSubmit}
-        className="mt-8 space-y-4 rounded-3xl border border-border bg-surface p-6"
-      >
-        <label className="block space-y-2 text-sm">
-          <span className="font-medium text-brand-ink">Email</span>
-          <input
-            className="w-full rounded-xl border border-border bg-background px-3 py-3 outline-none focus:border-brand"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            type="email"
-            autoComplete="username"
-            required
-          />
-        </label>
-        <label className="block space-y-2 text-sm">
-          <span className="font-medium text-brand-ink">Password</span>
-          <input
-            className="w-full rounded-xl border border-border bg-background px-3 py-3 outline-none focus:border-brand"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            type="password"
-            autoComplete="current-password"
-            required
-          />
-        </label>
-        {error ? <p className="text-sm text-danger">{error}</p> : null}
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="w-full rounded-xl bg-brand px-4 py-3 text-sm font-semibold text-white hover:bg-brand-hover disabled:opacity-60"
-        >
-          {isSubmitting ? "Signing in…" : "Sign in"}
-        </button>
-      </form>
+      <Card className="mt-8">
+        <CardContent>
+          <form onSubmit={onSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                type="email"
+                autoComplete="username"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                type="password"
+                autoComplete="current-password"
+                required
+              />
+            </div>
+            {error ? <p className="text-sm text-danger">{error}</p> : null}
+            <Button type="submit" disabled={isSubmitting} className="w-full">
+              {isSubmitting ? "Signing in…" : "Sign in"}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
 
       <p className="mt-6 text-sm text-brand-ink">
         Field crew?{" "}

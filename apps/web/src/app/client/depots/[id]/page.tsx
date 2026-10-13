@@ -7,9 +7,20 @@ import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { RequireAuth } from "@/components/require-auth";
 import { ShellFrame } from "@/components/shell-frame";
+import { buttonVariants } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { type ClientDepotPack, fetchClientDepotPack, formatSyncTime } from "@/lib/client/api";
 import { CLIENT_CONTROL_ROLES } from "@/lib/client/roles";
 import { ZONE_LABELS } from "@/lib/stock/api";
+import { cn } from "@/lib/utils";
 import type { ReconciliationSnapshot } from "@/lib/visit/api";
 
 const todayIso = (): string => new Date().toISOString().slice(0, 10);
@@ -56,7 +67,7 @@ export default function ClientDepotPackPage() {
           <div className="flex flex-wrap items-center gap-3 text-sm">
             <Link
               href={`/client?date=${encodeURIComponent(date)}`}
-              className="text-brand font-semibold"
+              className={cn(buttonVariants({ variant: "link" }), "h-auto p-0")}
             >
               ← Control room
             </Link>
@@ -68,126 +79,142 @@ export default function ClientDepotPackPage() {
 
           {pack ? (
             <>
-              <section className="rounded-2xl border border-border bg-surface p-4 text-sm text-brand-ink">
-                <h2 className="font-semibold">Visits</h2>
-                {pack.visits.length === 0 ? (
-                  <p className="mt-2 text-brand-ink/70">No visits recorded for this day.</p>
-                ) : (
-                  <ul className="mt-2 space-y-1">
-                    {pack.visits.map((visit) => (
-                      <li key={visit.id}>
-                        {visit.code} · {visit.status.replace(/_/g, " ")} · last sync{" "}
-                        {formatSyncTime(visit.lastSyncedAt)}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </section>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm">Visits</CardTitle>
+                </CardHeader>
+                <CardContent className="text-sm text-brand-ink">
+                  {pack.visits.length === 0 ? (
+                    <p className="text-brand-ink/70">No visits recorded for this day.</p>
+                  ) : (
+                    <ul className="space-y-1">
+                      {pack.visits.map((visit) => (
+                        <li key={visit.id}>
+                          {visit.code} · {visit.status.replace(/_/g, " ")} · last sync{" "}
+                          {formatSyncTime(visit.lastSyncedAt)}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </CardContent>
+              </Card>
 
               {reconciliations.map((snapshot) => (
-                <section
-                  key={snapshot.visit.id}
-                  className="rounded-2xl border border-border bg-surface p-4"
-                >
-                  <h2 className="text-sm font-semibold text-brand-ink">
-                    Reconciliation · {snapshot.visit.code}
-                  </h2>
-                  {snapshot.lines.length === 0 ? (
-                    <p className="mt-2 text-sm text-brand-ink/70">No stock lines yet.</p>
-                  ) : (
-                    <div className="mt-3 overflow-x-auto">
-                      <table className="min-w-full text-left text-sm">
-                        <thead className="text-xs uppercase text-brand-ink/60">
-                          <tr>
-                            <th className="py-2 pr-4">SKU / batch</th>
-                            <th className="py-2 pr-4">Opening</th>
-                            <th className="py-2 pr-4">Closing</th>
-                            <th className="py-2">Variance</th>
-                          </tr>
-                        </thead>
-                        <tbody>
+                <Card key={snapshot.visit.id}>
+                  <CardHeader>
+                    <CardTitle className="text-sm">
+                      Reconciliation · {snapshot.visit.code}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {snapshot.lines.length === 0 ? (
+                      <p className="text-sm text-brand-ink/70">No stock lines yet.</p>
+                    ) : (
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="text-xs uppercase text-brand-ink/60">
+                              SKU / batch
+                            </TableHead>
+                            <TableHead className="text-xs uppercase text-brand-ink/60">
+                              Opening
+                            </TableHead>
+                            <TableHead className="text-xs uppercase text-brand-ink/60">
+                              Closing
+                            </TableHead>
+                            <TableHead className="text-xs uppercase text-brand-ink/60">
+                              Variance
+                            </TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
                           {snapshot.lines.map((line) => (
-                            <tr
-                              key={`${line.skuId}-${line.batchCode}`}
-                              className="border-t border-border"
-                            >
-                              <td className="py-2 pr-4">
+                            <TableRow key={`${line.skuId}-${line.batchCode}`}>
+                              <TableCell>
                                 {line.skuName}
                                 <span className="block text-xs text-brand-ink/60">
                                   {line.batchCode}
                                 </span>
-                              </td>
-                              <td className="py-2 pr-4">{line.opening}</td>
-                              <td className="py-2 pr-4">{line.closingTotal}</td>
-                              <td className="py-2">{line.variance}</td>
-                            </tr>
+                              </TableCell>
+                              <TableCell>{line.opening}</TableCell>
+                              <TableCell>{line.closingTotal}</TableCell>
+                              <TableCell>{line.variance}</TableCell>
+                            </TableRow>
                           ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </section>
+                        </TableBody>
+                      </Table>
+                    )}
+                  </CardContent>
+                </Card>
               ))}
 
-              <section className="rounded-2xl border border-border bg-surface p-4">
-                <h2 className="text-sm font-semibold text-brand-ink">Quality holds</h2>
-                {pack.holds.length === 0 ? (
-                  <p className="mt-2 text-sm text-brand-ink/70">No held or rejected lots.</p>
-                ) : (
-                  <ul className="mt-3 space-y-3">
-                    {pack.holds.map((hold) => (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm">Quality holds</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {pack.holds.length === 0 ? (
+                    <p className="text-sm text-brand-ink/70">No held or rejected lots.</p>
+                  ) : (
+                    <ul className="space-y-3">
+                      {pack.holds.map((hold) => (
+                        <li
+                          key={hold.id}
+                          className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border p-3 text-sm"
+                        >
+                          <div>
+                            <p className="font-semibold text-brand-ink">
+                              {hold.skuName} · batch {hold.batchCode}
+                            </p>
+                            <p className="text-brand-ink/70">
+                              {hold.baseQuantity} base units · {hold.visitCode}
+                              {hold.custodian ? ` · custodian ${hold.custodian}` : ""}
+                            </p>
+                          </div>
+                          {hold.pendingDisposition ? (
+                            <Link
+                              href={`/client/lots/${hold.id}`}
+                              className={cn(buttonVariants({ size: "sm" }))}
+                            >
+                              Disposition
+                            </Link>
+                          ) : (
+                            <span className="text-xs text-brand-ink/60">Disposition recorded</span>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm">All lots</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-2 text-sm text-brand-ink">
+                    {(
+                      pack.lots as Array<{
+                        id: string;
+                        batchCode: string;
+                        zone: keyof typeof ZONE_LABELS;
+                        sku: { name: string };
+                      }>
+                    ).map((lot) => (
                       <li
-                        key={hold.id}
-                        className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border p-3 text-sm"
+                        key={lot.id}
+                        className="flex justify-between gap-2 border-b border-border/60 py-2"
                       >
-                        <div>
-                          <p className="font-semibold text-brand-ink">
-                            {hold.skuName} · batch {hold.batchCode}
-                          </p>
-                          <p className="text-brand-ink/70">
-                            {hold.baseQuantity} base units · {hold.visitCode}
-                            {hold.custodian ? ` · custodian ${hold.custodian}` : ""}
-                          </p>
-                        </div>
-                        {hold.pendingDisposition ? (
-                          <Link
-                            href={`/client/lots/${hold.id}`}
-                            className="rounded-full bg-brand px-4 py-2 text-xs font-semibold text-white"
-                          >
-                            Disposition
-                          </Link>
-                        ) : (
-                          <span className="text-xs text-brand-ink/60">Disposition recorded</span>
-                        )}
+                        <span>
+                          {lot.sku.name} · {lot.batchCode}
+                        </span>
+                        <span className="text-brand-ink/70">{ZONE_LABELS[lot.zone]}</span>
                       </li>
                     ))}
                   </ul>
-                )}
-              </section>
-
-              <section className="rounded-2xl border border-border bg-surface p-4">
-                <h2 className="text-sm font-semibold text-brand-ink">All lots</h2>
-                <ul className="mt-3 space-y-2 text-sm text-brand-ink">
-                  {(
-                    pack.lots as Array<{
-                      id: string;
-                      batchCode: string;
-                      zone: keyof typeof ZONE_LABELS;
-                      sku: { name: string };
-                    }>
-                  ).map((lot) => (
-                    <li
-                      key={lot.id}
-                      className="flex justify-between gap-2 border-b border-border/60 py-2"
-                    >
-                      <span>
-                        {lot.sku.name} · {lot.batchCode}
-                      </span>
-                      <span className="text-brand-ink/70">{ZONE_LABELS[lot.zone]}</span>
-                    </li>
-                  ))}
-                </ul>
-              </section>
+                </CardContent>
+              </Card>
             </>
           ) : null}
         </div>
