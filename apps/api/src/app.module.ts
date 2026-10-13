@@ -10,6 +10,7 @@ import { ClientModule } from "./modules/client/client.module";
 import { DailyReturnModule } from "./modules/daily-return/daily-return.module";
 import { DepotModule } from "./modules/depot/depot.module";
 import { DistributorModule } from "./modules/distributor/distributor.module";
+import { EscalationModule } from "./modules/escalation/escalation.module";
 import { HealthModule } from "./modules/health/health.module";
 import { PrismaModule } from "./modules/prisma/prisma.module";
 import { RecceModule } from "./modules/recce/recce.module";
@@ -42,6 +43,7 @@ import { VisitModule } from "./modules/visit/visit.module";
     RecceModule,
     AssessmentModule,
     DailyReturnModule,
+    EscalationModule,
     UserModule,
   ],
 })

@@ -54,7 +54,7 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
 };
 
 /**
- * Returns a presigned PUT URL for attendance, stock evidence, or signatures when R2 is configured.
+ * Returns a presigned PUT URL for attendance, stock evidence, escalation photos, or signatures when R2 is configured.
  * @summary Presign photo upload
  */
 export const postUploadsPresign = (

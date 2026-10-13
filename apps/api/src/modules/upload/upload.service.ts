@@ -52,6 +52,12 @@ export class UploadService {
     }
   }
 
+  assertEscalationPhotoObjectKey(objectKey: string): void {
+    if (!objectKey.startsWith("escalations/") && !objectKey.startsWith("local/")) {
+      throw new BadRequestException("Evidence objectKey must start with escalations/ or local/");
+    }
+  }
+
   assertSignatureObjectKey(objectKey: string): void {
     if (!objectKey.startsWith("signatures/") && !objectKey.startsWith("local/")) {
       throw new BadRequestException("Signature objectKey must start with signatures/ or local/");
@@ -66,7 +72,8 @@ export class UploadService {
     if (
       input.purpose !== UploadPurpose.attendance_photo &&
       input.purpose !== UploadPurpose.stock_evidence &&
-      input.purpose !== UploadPurpose.signature
+      input.purpose !== UploadPurpose.signature &&
+      input.purpose !== UploadPurpose.escalation_photo
     ) {
       throw new BadRequestException("Unsupported upload purpose");
     }
@@ -84,12 +91,12 @@ export class UploadService {
     }
 
     const ext = extensionForContentType(input.contentType);
-    const prefix =
-      input.purpose === UploadPurpose.stock_evidence
-        ? "stock_evidence"
-        : input.purpose === UploadPurpose.signature
-          ? "signatures"
-          : "attendance";
+    const prefix = {
+      [UploadPurpose.attendance_photo]: "attendance",
+      [UploadPurpose.stock_evidence]: "stock_evidence",
+      [UploadPurpose.signature]: "signatures",
+      [UploadPurpose.escalation_photo]: "escalations",
+    }[input.purpose];
     const objectKey = `${prefix}/${randomUUID()}.${ext}`;
 
     const client = new S3Client({
