@@ -60,6 +60,14 @@ export default function OpsDepotsPage() {
 
   const distributors = distributorsQuery.data ?? [];
   const depots = depotsQuery.data ?? [];
+  const distributorOptions = distributors.map((distributor) => ({
+    value: distributor.id,
+    label: `${distributor.code} — ${distributor.name}`,
+  }));
+  const distributorFilterOptions = [
+    { value: ALL_FILTER, label: "All distributors" },
+    ...distributorOptions,
+  ];
   const distributorId = selectedDistributorId || distributors[0]?.id || "";
   const isLoading = distributorsQuery.isLoading || depotsQuery.isLoading;
   const error = submitError ?? distributorsQuery.error?.message ?? depotsQuery.error?.message;
@@ -108,6 +116,7 @@ export default function OpsDepotsPage() {
         <div className="max-w-md space-y-2">
           <Label>Filter by distributor</Label>
           <Select
+            items={distributorFilterOptions}
             value={filterDistributorId || ALL_FILTER}
             onValueChange={(value) => {
               if (!value) {
@@ -120,10 +129,9 @@ export default function OpsDepotsPage() {
               <SelectValue placeholder="All distributors" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={ALL_FILTER}>All distributors</SelectItem>
-              {distributors.map((distributor) => (
-                <SelectItem key={distributor.id} value={distributor.id}>
-                  {distributor.code} — {distributor.name}
+              {distributorFilterOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -143,6 +151,7 @@ export default function OpsDepotsPage() {
                 <div className="space-y-2 md:col-span-2">
                   <Label>Distributor</Label>
                   <Select
+                    items={distributorOptions}
                     value={distributorId}
                     onValueChange={(value) => {
                       if (value) {
@@ -154,9 +163,9 @@ export default function OpsDepotsPage() {
                       <SelectValue placeholder="Select distributor" />
                     </SelectTrigger>
                     <SelectContent>
-                      {distributors.map((distributor) => (
-                        <SelectItem key={distributor.id} value={distributor.id}>
-                          {distributor.code} — {distributor.name}
+                      {distributorOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
                         </SelectItem>
                       ))}
                     </SelectContent>

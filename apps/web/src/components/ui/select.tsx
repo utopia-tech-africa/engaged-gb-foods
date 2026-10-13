@@ -7,6 +7,12 @@ import * as React from "react";
 
 const Select = SelectPrimitive.Root;
 
+/** One option for `<Select items={...}>` so `<SelectValue />` shows the label, not the raw value. */
+export type SelectOption = { value: string; label: React.ReactNode };
+
+/** Identity helper that types an options array for `<Select items={...}>`. */
+export const selectItems = (options: SelectOption[]): SelectOption[] => options;
+
 function SelectGroup({ className, ...props }: SelectPrimitive.Group.Props) {
   return (
     <SelectPrimitive.Group

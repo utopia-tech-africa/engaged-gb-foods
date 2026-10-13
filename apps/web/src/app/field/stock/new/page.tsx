@@ -52,6 +52,8 @@ const ALL_ZONES: StockZone[] = [
   "released_remaining_on_site",
 ];
 
+const ZONE_OPTIONS = ALL_ZONES.map((value) => ({ value, label: ZONE_LABELS[value] }));
+
 const EVIDENCE_LABELS: Record<StockEvidenceCategory, string> = {
   pack: "Pack photo",
   batch: "Batch label",
@@ -133,6 +135,14 @@ function NewStockLotContent() {
 
   const selectedSku = skus.find((item) => item.id === skuId) ?? null;
   const requiredCategories = requiredEvidenceForZone(zone);
+  const skuOptions = skus.map((sku) => ({
+    value: sku.id,
+    label: `${sku.name}${sku.brand ? ` · ${sku.brand}` : ""} (×${sku.packFactor}/case)`,
+  }));
+  const unitOptions = [
+    { value: "cases", label: selectedSku?.caseUnit ?? "cases" },
+    { value: "loose_packs", label: selectedSku?.looseUnit ?? "loose packs" },
+  ];
 
   const onEvidenceChange =
     (category: StockEvidenceCategory) => (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -269,6 +279,7 @@ function NewStockLotContent() {
           <div className="space-y-2">
             <Label>SKU</Label>
             <Select
+              items={skuOptions}
               value={skuId}
               onValueChange={(value) => {
                 if (value) {
@@ -280,10 +291,9 @@ function NewStockLotContent() {
                 <SelectValue placeholder="Select SKU" />
               </SelectTrigger>
               <SelectContent>
-                {skus.map((sku) => (
-                  <SelectItem key={sku.id} value={sku.id}>
-                    {sku.name}
-                    {sku.brand ? ` · ${sku.brand}` : ""} (×{sku.packFactor}/case)
+                {skuOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -309,6 +319,7 @@ function NewStockLotContent() {
           <div className="space-y-2">
             <Label>Zone</Label>
             <Select
+              items={ZONE_OPTIONS}
               value={zone}
               onValueChange={(value) => {
                 if (value) {
@@ -320,9 +331,9 @@ function NewStockLotContent() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {ALL_ZONES.map((value) => (
-                  <SelectItem key={value} value={value}>
-                    {ZONE_LABELS[value]}
+                {ZONE_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -343,6 +354,7 @@ function NewStockLotContent() {
             <div className="space-y-2">
               <Label>Unit</Label>
               <Select
+                items={unitOptions}
                 value={unit}
                 onValueChange={(value) => {
                   if (value) {
@@ -354,10 +366,11 @@ function NewStockLotContent() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="cases">{selectedSku?.caseUnit ?? "cases"}</SelectItem>
-                  <SelectItem value="loose_packs">
-                    {selectedSku?.looseUnit ?? "loose packs"}
-                  </SelectItem>
+                  {unitOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

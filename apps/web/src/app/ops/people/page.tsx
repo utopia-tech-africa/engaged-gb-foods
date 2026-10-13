@@ -33,6 +33,10 @@ const STATUS_OPTIONS = [
   { value: "active", label: "Active" },
   { value: "inactive", label: "Inactive" },
 ] as const;
+const ROLE_OPTIONS = [
+  { value: ALL_FILTER, label: "All roles" },
+  ...ALL_USER_ROLES.map((role) => ({ value: role, label: USER_ROLE_LABELS[role] })),
+];
 
 export default function OpsPeoplePage() {
   const { accessToken, user: currentUser } = useAuth();
@@ -88,15 +92,18 @@ export default function OpsPeoplePage() {
           </div>
           <div className="w-full space-y-2 sm:w-52">
             <Label>Role</Label>
-            <Select value={roleFilter} onValueChange={(value) => value && setRoleFilter(value)}>
+            <Select
+              items={ROLE_OPTIONS}
+              value={roleFilter}
+              onValueChange={(value) => value && setRoleFilter(value)}
+            >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="All roles" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={ALL_FILTER}>All roles</SelectItem>
-                {ALL_USER_ROLES.map((role) => (
-                  <SelectItem key={role} value={role}>
-                    {USER_ROLE_LABELS[role]}
+                {ROLE_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -104,7 +111,11 @@ export default function OpsPeoplePage() {
           </div>
           <div className="w-full space-y-2 sm:w-44">
             <Label>Status</Label>
-            <Select value={statusFilter} onValueChange={(value) => value && setStatusFilter(value)}>
+            <Select
+              items={STATUS_OPTIONS}
+              value={statusFilter}
+              onValueChange={(value) => value && setStatusFilter(value)}
+            >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="All statuses" />
               </SelectTrigger>
