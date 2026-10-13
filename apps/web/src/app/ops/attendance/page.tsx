@@ -5,9 +5,7 @@ import { useState } from "react";
 import { AttendancePhoto } from "@/components/attendance-photo";
 import { useAuth } from "@/components/auth-provider";
 import { DatePicker } from "@/components/date-picker";
-import { OpsNetworkNav } from "@/components/ops-network-nav";
 import { RequireAuth } from "@/components/require-auth";
-import { ShellFrame } from "@/components/shell-frame";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -39,66 +37,66 @@ export default function OpsAttendancePage() {
 
   return (
     <RequireAuth roles={[...OPS_NETWORK_ROLES, "cluster_supervisor", "regional_supervisor"]}>
-      <ShellFrame title="Attendance" eyebrow="Operations">
-        <div className="space-y-6">
-          <OpsNetworkNav />
-          <div className="max-w-xs space-y-2">
-            <Label htmlFor="attendance-date">Date</Label>
-            <DatePicker id="attendance-date" value={date} onChange={setDate} />
-          </div>
-
-          {loading ? <p className="text-sm text-brand-ink/70">Loading attendance…</p> : null}
-          {error ? <p className="text-sm text-red-600">{error}</p> : null}
-
-          {!loading && !error && sorted.length === 0 ? (
-            <p className="text-sm text-brand-ink/70">No attendance records for this date.</p>
-          ) : null}
-
-          <ul className="space-y-4">
-            {sorted.map((row) => (
-              <li key={row.id}>
-                <Card>
-                  <CardContent className="grid gap-4 md:grid-cols-[120px_1fr]">
-                    {accessToken ? (
-                      <AttendancePhoto
-                        objectKey={row.photoObjectKey}
-                        alt={`${row.user.fullName} attendance`}
-                        className="h-28 w-full rounded-lg object-cover"
-                      />
-                    ) : null}
-                    <div className="space-y-1 text-sm text-brand-ink">
-                      <p className="font-semibold">
-                        {row.user.fullName}
-                        {row.user.staffId ? ` · ${row.user.staffId}` : ""}
-                      </p>
-                      <p>
-                        <span className="text-brand-ink/60">Depot:</span> {row.depot.name} (
-                        {row.depot.code})
-                      </p>
-                      <p>
-                        <span className="text-brand-ink/60">Kind:</span>{" "}
-                        <Badge variant="secondary">
-                          {row.kind === "check_in" ? "Check in" : "Check out"}
-                        </Badge>
-                      </p>
-                      <p>
-                        <span className="text-brand-ink/60">Location:</span> {formatLocation(row)}
-                      </p>
-                      <p>
-                        <span className="text-brand-ink/60">Photo key:</span>{" "}
-                        <code className="text-xs">{row.photoObjectKey}</code>
-                      </p>
-                      <p className="text-xs text-brand-ink/60">
-                        {new Date(row.capturedAt).toLocaleString()}
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-              </li>
-            ))}
-          </ul>
+      <div className="space-y-6">
+        <h1 className="font-display text-3xl font-semibold text-foreground md:text-4xl">
+          Attendance
+        </h1>
+        <div className="max-w-xs space-y-2">
+          <Label htmlFor="attendance-date">Date</Label>
+          <DatePicker id="attendance-date" value={date} onChange={setDate} />
         </div>
-      </ShellFrame>
+
+        {loading ? <p className="text-sm text-brand-ink/70">Loading attendance…</p> : null}
+        {error ? <p className="text-sm text-red-600">{error}</p> : null}
+
+        {!loading && !error && sorted.length === 0 ? (
+          <p className="text-sm text-brand-ink/70">No attendance records for this date.</p>
+        ) : null}
+
+        <ul className="space-y-4">
+          {sorted.map((row) => (
+            <li key={row.id}>
+              <Card>
+                <CardContent className="grid gap-4 md:grid-cols-[120px_1fr]">
+                  {accessToken ? (
+                    <AttendancePhoto
+                      objectKey={row.photoObjectKey}
+                      alt={`${row.user.fullName} attendance`}
+                      className="h-28 w-full rounded-lg object-cover"
+                    />
+                  ) : null}
+                  <div className="space-y-1 text-sm text-brand-ink">
+                    <p className="font-semibold">
+                      {row.user.fullName}
+                      {row.user.staffId ? ` · ${row.user.staffId}` : ""}
+                    </p>
+                    <p>
+                      <span className="text-brand-ink/60">Depot:</span> {row.depot.name} (
+                      {row.depot.code})
+                    </p>
+                    <p>
+                      <span className="text-brand-ink/60">Kind:</span>{" "}
+                      <Badge variant="secondary">
+                        {row.kind === "check_in" ? "Check in" : "Check out"}
+                      </Badge>
+                    </p>
+                    <p>
+                      <span className="text-brand-ink/60">Location:</span> {formatLocation(row)}
+                    </p>
+                    <p>
+                      <span className="text-brand-ink/60">Photo key:</span>{" "}
+                      <code className="text-xs">{row.photoObjectKey}</code>
+                    </p>
+                    <p className="text-xs text-brand-ink/60">
+                      {new Date(row.capturedAt).toLocaleString()}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </li>
+          ))}
+        </ul>
+      </div>
     </RequireAuth>
   );
 }

@@ -3,12 +3,10 @@
 import { useState } from "react";
 
 import { useAuth } from "@/components/auth-provider";
-import { OpsNetworkNav } from "@/components/ops-network-nav";
 import { AssignmentCreateForm } from "@/components/people/assignment-create-form";
 import { AssignmentEndDialog } from "@/components/people/assignment-end-dialog";
 import { AssignmentsTable } from "@/components/people/assignments-table";
 import { RequireAuth } from "@/components/require-auth";
-import { ShellFrame } from "@/components/shell-frame";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -44,47 +42,46 @@ export default function OpsAssignmentsPage() {
 
   return (
     <RequireAuth roles={OPS_PEOPLE_ROLES}>
-      <ShellFrame title="Assignments" eyebrow="Network">
-        <div className="space-y-6">
-          <OpsNetworkNav />
+      <div className="space-y-6">
+        <h1 className="font-display text-3xl font-semibold text-foreground md:text-4xl">
+          Assignments
+        </h1>
+        {writeEnabled ? <AssignmentCreateForm users={fieldUsers} enabled={enabled} /> : null}
 
-          {writeEnabled ? <AssignmentCreateForm users={fieldUsers} enabled={enabled} /> : null}
-
-          <div className="max-w-md space-y-2">
-            <Label>Filter by person</Label>
-            <Select value={userFilter} onValueChange={(value) => value && setUserFilter(value)}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Everyone" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={ALL_FILTER}>Everyone</SelectItem>
-                {fieldUsers.map((user) => (
-                  <SelectItem key={user.id} value={user.id}>
-                    {user.fullName}
-                    {user.staffId ? ` · ${user.staffId}` : ""}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {error ? <p className="text-sm text-danger">{error}</p> : null}
-
-          {assignmentsQuery.isLoading ? (
-            <p className="text-sm text-brand-ink">Loading assignments…</p>
-          ) : (
-            <AssignmentsTable
-              assignments={assignmentsQuery.data ?? []}
-              canWrite={writeEnabled}
-              onEnd={setEnding}
-            />
-          )}
-
-          {ending ? (
-            <AssignmentEndDialog assignment={ending} onClose={() => setEnding(null)} />
-          ) : null}
+        <div className="max-w-md space-y-2">
+          <Label>Filter by person</Label>
+          <Select value={userFilter} onValueChange={(value) => value && setUserFilter(value)}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Everyone" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL_FILTER}>Everyone</SelectItem>
+              {fieldUsers.map((user) => (
+                <SelectItem key={user.id} value={user.id}>
+                  {user.fullName}
+                  {user.staffId ? ` · ${user.staffId}` : ""}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
-      </ShellFrame>
+
+        {error ? <p className="text-sm text-danger">{error}</p> : null}
+
+        {assignmentsQuery.isLoading ? (
+          <p className="text-sm text-brand-ink">Loading assignments…</p>
+        ) : (
+          <AssignmentsTable
+            assignments={assignmentsQuery.data ?? []}
+            canWrite={writeEnabled}
+            onEnd={setEnding}
+          />
+        )}
+
+        {ending ? (
+          <AssignmentEndDialog assignment={ending} onClose={() => setEnding(null)} />
+        ) : null}
+      </div>
     </RequireAuth>
   );
 }

@@ -8,9 +8,7 @@ import { DailyReturnForm } from "@/components/daily-return-form";
 import { DailyReturnNationalCard } from "@/components/daily-return-national-card";
 import { DailyReturnTable } from "@/components/daily-return-table";
 import { DatePicker } from "@/components/date-picker";
-import { OpsNetworkNav } from "@/components/ops-network-nav";
 import { RequireAuth } from "@/components/require-auth";
-import { ShellFrame } from "@/components/shell-frame";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import {
@@ -47,50 +45,47 @@ export default function OpsDailyReturnPage() {
 
   return (
     <RequireAuth roles={OPS_READINESS_ROLES}>
-      <ShellFrame title="Daily regional return" eyebrow="Reporting">
-        <div className="space-y-6">
-          <OpsNetworkNav />
-
-          <div className="max-w-xs space-y-2">
-            <Label htmlFor="daily-date">Return date</Label>
-            <DatePicker id="daily-date" value={date} onChange={setDate} />
-          </div>
-
-          {showNational ? (
-            <DailyReturnNationalCard summary={summary} isLoading={isLoading} />
-          ) : null}
-
-          {canWrite ? (
-            <DailyReturnForm
-              key={formKey}
-              regions={regions}
-              regionId={regionId}
-              onRegionChange={setRegionId}
-              date={date}
-              existing={existing}
-            />
-          ) : null}
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="font-display text-lg">Returns for this date</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                <p className="text-sm text-muted-foreground">Loading…</p>
-              ) : loadError ? (
-                <p className="text-sm text-danger">{loadError.message}</p>
-              ) : (
-                <DailyReturnTable
-                  returns={returns}
-                  canEdit={canWrite}
-                  onEdit={(entry) => setRegionId(entry.regionId)}
-                />
-              )}
-            </CardContent>
-          </Card>
+      <div className="space-y-6">
+        <h1 className="font-display text-3xl font-semibold text-foreground md:text-4xl">
+          Daily regional return
+        </h1>
+        <div className="max-w-xs space-y-2">
+          <Label htmlFor="daily-date">Return date</Label>
+          <DatePicker id="daily-date" value={date} onChange={setDate} />
         </div>
-      </ShellFrame>
+
+        {showNational ? <DailyReturnNationalCard summary={summary} isLoading={isLoading} /> : null}
+
+        {canWrite ? (
+          <DailyReturnForm
+            key={formKey}
+            regions={regions}
+            regionId={regionId}
+            onRegionChange={setRegionId}
+            date={date}
+            existing={existing}
+          />
+        ) : null}
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="font-display text-lg">Returns for this date</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <p className="text-sm text-muted-foreground">Loading…</p>
+            ) : loadError ? (
+              <p className="text-sm text-danger">{loadError.message}</p>
+            ) : (
+              <DailyReturnTable
+                returns={returns}
+                canEdit={canWrite}
+                onEdit={(entry) => setRegionId(entry.regionId)}
+              />
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </RequireAuth>
   );
 }
