@@ -11,6 +11,7 @@ import {
   useState,
 } from "react";
 
+import { ApiError } from "@/lib/api/custom-fetch";
 import * as authApi from "@/lib/auth/api";
 import { clearAuthSession, readAuthSession, writeAuthSession } from "@/lib/auth/storage";
 import type { AuthSession, AuthTokenResponse, AuthUser } from "@/lib/auth/types";
@@ -54,13 +55,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const next = { ...existing, user };
         writeAuthSession(next);
         setSession(next);
-      } catch {
+      } catch (error: unknown) {
+        // Offline (fetch rejected without a response): keep the stored session so the
+        // field PWA stays usable and queued records can sync once the network returns.
+        if (!(error instanceof ApiError)) {
+          setSession(existing);
+          return;
+        }
         try {
           const refreshed = await authApi.refreshSession(existing.refreshToken);
           const next = toSession(refreshed);
           writeAuthSession(next);
           setSession(next);
-        } catch {
+        } catch (refreshError: unknown) {
+          if (!(refreshError instanceof ApiError)) {
+            setSession(existing);
+            return;
+          }
           clearAuthSession();
           queryClient.clear();
           setSession(null);
