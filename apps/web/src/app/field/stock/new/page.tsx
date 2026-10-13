@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
 
 import { useAuth } from "@/components/auth-provider";
 import { DatePicker } from "@/components/date-picker";
@@ -21,6 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useNetworkOnline } from "@/hooks/use-network-online";
 import { useGetMeDepots } from "@/lib/api/generated/assignments/assignments";
 import type {
   StockEvidenceCategory,
@@ -34,6 +36,8 @@ import {
   usePostStockLots,
 } from "@/lib/api/generated/stock-lots/stock-lots";
 import type { UserRole } from "@/lib/auth/types";
+import { enqueueStockLot } from "@/lib/field/field-offline-enqueue";
+import { isNetworkError } from "@/lib/field/field-offline-errors";
 import { requiredEvidenceForZone, ZONE_LABELS } from "@/lib/stock/constants";
 import { uploadPhoto } from "@/lib/uploads";
 import { cn } from "@/lib/utils";
@@ -69,6 +73,7 @@ function NewStockLotContent() {
   const depotId = searchParams.get("depotId");
   const visitId = searchParams.get("visitId");
   const { accessToken } = useAuth();
+  const online = useNetworkOnline();
 
   const queryClient = useQueryClient();
   const enabled = Boolean(accessToken);
@@ -88,16 +93,19 @@ function NewStockLotContent() {
   const [isUploading, setIsUploading] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [success, setSuccess] = useState<StockLotResponseDto | null>(null);
+  const [savedOffline, setSavedOffline] = useState(false);
 
   const skus = skusQuery.data ?? [];
   const skuId = selectedSkuId || skus[0]?.id || "";
   const depot = depotsQuery.data?.find((item) => item.id === depotId) ?? null;
-  const depotError = depotsQuery.error
-    ? depotsQuery.error.message
-    : depotsQuery.isSuccess && !depot
-      ? "Depot not found in your assignments."
-      : null;
-  const error = actionError ?? skusQuery.error?.message ?? depotError;
+  // Offline the cached SKU/depot lists may be unavailable; hide fetch errors while offline.
+  const depotError =
+    depotsQuery.error && online
+      ? depotsQuery.error.message
+      : depotsQuery.isSuccess && !depot
+        ? "Depot not found in your assignments."
+        : null;
+  const error = actionError ?? (online ? skusQuery.error?.message : null) ?? depotError;
   const submitting = isUploading || createStockLot.isPending;
 
   const requestLocation = useCallback(() => {
@@ -141,7 +149,10 @@ function NewStockLotContent() {
     if (!accessToken || submitting || !skuId || !batchCode.trim() || !quantity) {
       return false;
     }
-    if (!visitId && !depot) {
+    if (!visitId && !depotId) {
+      return false;
+    }
+    if (!visitId && !depot && online) {
       return false;
     }
     const qty = Number.parseInt(quantity, 10);
@@ -151,23 +162,46 @@ function NewStockLotContent() {
     return requiredCategories.every((category) => Boolean(evidenceFiles[category]));
   })();
 
-  const uploadEvidence = async (): Promise<
-    { category: StockEvidenceCategory; objectKey: string }[]
-  > => {
+  const selectedEvidence = (): { category: StockEvidenceCategory; file: File }[] => {
     const categoriesToUpload = [
       ...requiredCategories,
       ...(evidenceFiles.position ? (["position"] as const) : []),
     ];
-    const evidence: { category: StockEvidenceCategory; objectKey: string }[] = [];
+    const selected: { category: StockEvidenceCategory; file: File }[] = [];
     for (const category of new Set(categoriesToUpload)) {
       const file = evidenceFiles[category];
-      if (!file) {
-        continue;
+      if (file) {
+        selected.push({ category, file });
       }
-      const objectKey = await uploadPhoto(file, "stock_evidence");
-      evidence.push({ category, objectKey });
     }
-    return evidence;
+    return selected;
+  };
+
+  const lotFields = () => ({
+    ...(visitId ? { visitId } : { depotId: depotId ?? undefined }),
+    skuId,
+    batchCode: batchCode.trim(),
+    ...(expiryDate ? { expiryDate } : {}),
+    zone,
+    quantity: Number.parseInt(quantity, 10),
+    unit,
+    ...(notes.trim() ? { notes: notes.trim() } : {}),
+    ...(geo
+      ? {
+          latitude: geo.latitude,
+          longitude: geo.longitude,
+          accuracyMeters: geo.accuracyMeters,
+        }
+      : {}),
+  });
+
+  const saveOffline = async () => {
+    await enqueueStockLot({ ...lotFields(), evidenceFiles: selectedEvidence() });
+    setSavedOffline(true);
+    toast.success("Saved offline — will sync when online");
+    setTimeout(() => {
+      router.push("/field/stock");
+    }, 1500);
   };
 
   const onSubmit = async () => {
@@ -176,35 +210,34 @@ function NewStockLotContent() {
     }
     setActionError(null);
     try {
+      if (!navigator.onLine) {
+        await saveOffline();
+        return;
+      }
       setIsUploading(true);
-      const evidence = await uploadEvidence().finally(() => setIsUploading(false));
+      const evidence = await Promise.all(
+        selectedEvidence().map(async ({ category, file }) => ({
+          category,
+          objectKey: await uploadPhoto(file, "stock_evidence"),
+        })),
+      ).finally(() => setIsUploading(false));
 
-      const lot = await createStockLot.mutateAsync({
-        data: {
-          ...(visitId ? { visitId } : { depotId: depot?.id }),
-          skuId,
-          batchCode: batchCode.trim(),
-          ...(expiryDate ? { expiryDate } : {}),
-          zone,
-          quantity: Number.parseInt(quantity, 10),
-          unit,
-          ...(notes.trim() ? { notes: notes.trim() } : {}),
-          ...(geo
-            ? {
-                latitude: geo.latitude,
-                longitude: geo.longitude,
-                accuracyMeters: geo.accuracyMeters,
-              }
-            : {}),
-          evidence,
-        },
-      });
+      const lot = await createStockLot.mutateAsync({ data: { ...lotFields(), evidence } });
       setSuccess(lot);
       await queryClient.invalidateQueries({ queryKey: getGetStockLotsQueryKey() });
       setTimeout(() => {
         router.push("/field/stock");
       }, 1200);
     } catch (err: unknown) {
+      if (isNetworkError(err)) {
+        try {
+          await saveOffline();
+          return;
+        } catch {
+          setActionError("Could not save offline on this device.");
+          return;
+        }
+      }
       setActionError(err instanceof Error ? err.message : "Could not save stock lot");
     }
   };
@@ -393,10 +426,15 @@ function NewStockLotContent() {
       {success ? (
         <p className="text-sm font-medium text-green-700">Stock lot saved. Redirecting…</p>
       ) : null}
+      {savedOffline ? (
+        <p className="text-sm font-medium text-amber-800">
+          Saved offline — will sync when online. Redirecting…
+        </p>
+      ) : null}
 
       <Button
         type="button"
-        disabled={!canSubmit}
+        disabled={!canSubmit || savedOffline}
         className="w-full"
         onClick={() => void onSubmit()}
       >

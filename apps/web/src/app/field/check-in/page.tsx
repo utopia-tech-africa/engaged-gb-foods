@@ -3,6 +3,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
 
 import { useAuth } from "@/components/auth-provider";
 import { RequireAuth } from "@/components/require-auth";
@@ -10,6 +11,7 @@ import { ShellFrame } from "@/components/shell-frame";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { useNetworkOnline } from "@/hooks/use-network-online";
 import { useGetMeDepots } from "@/lib/api/generated/assignments/assignments";
 import {
   getGetAttendanceQueryKey,
@@ -18,6 +20,8 @@ import {
 } from "@/lib/api/generated/attendance/attendance";
 import type { AttendanceKind, AttendanceResponseDto } from "@/lib/api/generated/model";
 import type { UserRole } from "@/lib/auth/types";
+import { enqueueAttendance } from "@/lib/field/field-offline-enqueue";
+import { isNetworkError } from "@/lib/field/field-offline-errors";
 import { uploadPhoto } from "@/lib/uploads";
 import { cn } from "@/lib/utils";
 
@@ -43,6 +47,7 @@ function CheckInContent() {
   const searchParams = useSearchParams();
   const depotId = searchParams.get("depotId");
   const { accessToken } = useAuth();
+  const online = useNetworkOnline();
 
   const queryClient = useQueryClient();
   const createAttendance = usePostAttendance();
@@ -58,13 +63,16 @@ function CheckInContent() {
   const [isUploading, setIsUploading] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [success, setSuccess] = useState<AttendanceResponseDto | null>(null);
+  const [savedOffline, setSavedOffline] = useState(false);
 
   const depot = depotsQuery.data?.find((item) => item.id === depotId) ?? null;
-  const depotError = depotsQuery.error
-    ? depotsQuery.error.message
-    : depotsQuery.isSuccess && !depot
-      ? "Depot not found in your assignments."
-      : null;
+  // Offline the assignment list may be unavailable; the depotId in the URL is enough to queue.
+  const depotError =
+    depotsQuery.error && online
+      ? depotsQuery.error.message
+      : depotsQuery.isSuccess && !depot
+        ? "Depot not found in your assignments."
+        : null;
   const error = actionError ?? depotError;
   const submitting = isUploading || createAttendance.isPending;
 
@@ -105,21 +113,31 @@ function CheckInContent() {
     setActionError(null);
   };
 
-  const canSubmit = Boolean(depot && file && accessToken && !submitting);
+  const canSubmit = Boolean(depotId && (depot || !online) && file && accessToken && !submitting);
+
+  const saveOffline = async (targetDepotId: string, photo: File) => {
+    await enqueueAttendance({ depotId: targetDepotId, kind, photo, geo });
+    setSavedOffline(true);
+    toast.success("Saved offline — will sync when online");
+  };
 
   const onSubmit = async () => {
-    if (!depot || !file) {
+    if (!depotId || !file) {
       return;
     }
     setActionError(null);
     try {
+      if (!navigator.onLine) {
+        await saveOffline(depotId, file);
+        return;
+      }
       setIsUploading(true);
       const photoObjectKey = await uploadPhoto(file, "attendance_photo").finally(() =>
         setIsUploading(false),
       );
       const record = await createAttendance.mutateAsync({
         data: {
-          depotId: depot.id,
+          depotId,
           kind,
           photoObjectKey,
           ...(geo
@@ -139,6 +157,15 @@ function CheckInContent() {
         queryClient.invalidateQueries({ queryKey: getGetMeAttendanceTodayQueryKey() }),
       ]);
     } catch (err: unknown) {
+      if (isNetworkError(err)) {
+        try {
+          await saveOffline(depotId, file);
+          return;
+        } catch {
+          setActionError("Could not save offline on this device.");
+          return;
+        }
+      }
       setActionError(err instanceof Error ? err.message : "Check-in failed");
     }
   };
@@ -225,7 +252,20 @@ function CheckInContent() {
 
       {error ? <p className="text-sm text-red-600">{error}</p> : null}
 
-      {success ? (
+      {savedOffline ? (
+        <Card className="border-amber-200 bg-amber-50/80">
+          <CardContent className="text-sm text-amber-950">
+            <p className="font-semibold">Saved offline — will sync when online</p>
+            <p className="mt-2">
+              Your {kind === "check_in" ? "check-in" : "check-out"} and photo are stored on this
+              device and will upload automatically when you reconnect.
+            </p>
+            <Button type="button" className="mt-4" onClick={() => router.push("/field")}>
+              Back to depots
+            </Button>
+          </CardContent>
+        </Card>
+      ) : success ? (
         <Card className="border-green-200 bg-green-50/80">
           <CardContent className="text-sm text-green-900">
             <p className="font-semibold">

@@ -2,10 +2,12 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 
 import { useAuth } from "@/components/auth-provider";
+import { FieldSyncStatus } from "@/components/field-sync-status";
+import { PwaInstallPrompt } from "@/components/pwa-install-prompt";
 import { Button } from "@/components/ui/button";
 
 type ShellFrameProps = {
@@ -17,6 +19,7 @@ type ShellFrameProps = {
 export const ShellFrame = ({ title, eyebrow, children }: ShellFrameProps) => {
   const { user, signOut } = useAuth();
   const router = useRouter();
+  const isFieldRoute = usePathname().startsWith("/field");
 
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-5xl flex-col px-6 py-8 md:px-10">
@@ -35,6 +38,13 @@ export const ShellFrame = ({ title, eyebrow, children }: ShellFrameProps) => {
           <p className="mt-1 text-sm text-brand-ink">{user?.fullName}</p>
         </div>
       </header>
+
+      {isFieldRoute ? (
+        <>
+          <FieldSyncStatus />
+          <PwaInstallPrompt />
+        </>
+      ) : null}
 
       <section className="mt-10 space-y-3">
         <h1 className="font-display text-3xl font-semibold text-foreground md:text-4xl">{title}</h1>
