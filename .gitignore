@@ -13,3 +13,5 @@ apps/api/src/generated
 *.tsbuildinfo
 .pnpm-store
 AGENTS.md
+apps/web/public/sw.js
+apps/web/public/swe-worker*.js
