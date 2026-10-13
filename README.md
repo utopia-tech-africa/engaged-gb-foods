@@ -17,6 +17,8 @@ Field and client platform for the GBfoods nationwide depot sorting and segregati
 - Visit reconciliation: balance by SKU/batch, custodians on held lots, three signatures, close or exception
 - GBfoods disposition on stock lots (`POST /stock-lots/:id/disposition`) with zone lock for release paths
 - Ops visit review: `/ops/visits/[id]`; GBfoods control room: `/client`, `/client/depots/[id]`, `/client/lots/[id]` with overview KPIs, filters, CSV exports, and depot packs
+- Depot recce (`/ops/recce`, `/recces`): checklist, gaps with owner and deadline, optional photo keys, ready/hold decision synced to `Depot.readiness`; a critical gap forces hold
+- Training assessment roster (`/ops/assessment`, `/assessments`, `/users`): safety, quality, and record-keeping must all pass; any fail means not dispatchable
 - GBfoods brand tokens and logo assets
 
 ## Not built yet

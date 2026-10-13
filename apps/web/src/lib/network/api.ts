@@ -44,7 +44,7 @@ export type Depot = {
 
 type JsonRequestInit = Omit<RequestInit, "body"> & { body?: unknown };
 
-const requestJson = async <T>(
+export const requestJson = async <T>(
   accessToken: string,
   path: string,
   init: JsonRequestInit = {},
