@@ -9,6 +9,7 @@ const links = [
   { href: "/ops/stock", label: "Stock" },
   { href: "/ops/recce", label: "Recce" },
   { href: "/ops/assessment", label: "Assessment" },
+  { href: "/ops/daily-return", label: "Daily return" },
 ] as const;
 
 export const OpsNetworkNav = () => (
