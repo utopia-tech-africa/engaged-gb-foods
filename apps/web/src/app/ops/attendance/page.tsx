@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 
 import { AttendancePhoto } from "@/components/attendance-photo";
 import { useAuth } from "@/components/auth-provider";
@@ -11,12 +11,13 @@ import { ShellFrame } from "@/components/shell-frame";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { type AttendanceRecord, fetchAttendanceForDate } from "@/lib/attendance/api";
+import { useGetAttendance } from "@/lib/api/generated/attendance/attendance";
+import type { AttendanceResponseDto } from "@/lib/api/generated/model";
 import { OPS_NETWORK_ROLES } from "@/lib/network/roles";
 
 const todayIso = (): string => new Date().toISOString().slice(0, 10);
 
-const formatLocation = (row: AttendanceRecord): string => {
+const formatLocation = (row: AttendanceResponseDto): string => {
   if (row.latitude === null || row.longitude === null) {
     return "Unavailable";
   }
@@ -27,27 +28,14 @@ const formatLocation = (row: AttendanceRecord): string => {
 export default function OpsAttendancePage() {
   const { accessToken } = useAuth();
   const [date, setDate] = useState(todayIso());
-  const [rows, setRows] = useState<AttendanceRecord[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    data: rows = [],
+    isLoading: loading,
+    error: loadError,
+  } = useGetAttendance({ date }, { query: { enabled: Boolean(accessToken) } });
+  const error = loadError?.message ?? null;
 
-  useEffect(() => {
-    if (!accessToken) {
-      return;
-    }
-    setLoading(true);
-    void fetchAttendanceForDate(accessToken, { date })
-      .then(setRows)
-      .catch((err: unknown) => {
-        setError(err instanceof Error ? err.message : "Could not load attendance");
-      })
-      .finally(() => setLoading(false));
-  }, [accessToken, date]);
-
-  const sorted = useMemo(
-    () => [...rows].sort((a, b) => b.capturedAt.localeCompare(a.capturedAt)),
-    [rows],
-  );
+  const sorted = [...rows].sort((a, b) => b.capturedAt.localeCompare(a.capturedAt));
 
   return (
     <RequireAuth roles={[...OPS_NETWORK_ROLES, "cluster_supervisor", "regional_supervisor"]}>
@@ -73,7 +61,6 @@ export default function OpsAttendancePage() {
                   <CardContent className="grid gap-4 md:grid-cols-[120px_1fr]">
                     {accessToken ? (
                       <AttendancePhoto
-                        accessToken={accessToken}
                         objectKey={row.photoObjectKey}
                         alt={`${row.user.fullName} attendance`}
                         className="h-28 w-full rounded-lg object-cover"

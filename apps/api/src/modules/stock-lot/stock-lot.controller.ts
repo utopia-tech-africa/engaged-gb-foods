@@ -29,6 +29,7 @@ import { CreateDispositionDto } from "./dto/create-disposition.dto";
 import { CreateStockLotDto } from "./dto/create-stock-lot.dto";
 import { ListStockLotsQueryDto } from "./dto/list-stock-lots-query.dto";
 import { PatchStockLotCustodianDto } from "./dto/patch-stock-lot-custodian.dto";
+import { StockLotResponseDto } from "./dto/stock-lot-response.dto";
 import { StockLotService } from "./stock-lot.service";
 
 @ApiTags("Stock lots")
@@ -46,7 +47,7 @@ export class StockLotController {
     description:
       "Creates a stock lot with evidence for a visit or today's visit at an assigned depot.",
   })
-  @ApiCreatedResponse({ description: "Stock lot created" })
+  @ApiCreatedResponse({ description: "Stock lot created", type: StockLotResponseDto })
   postStockLots(@CurrentUser() user: AuthenticatedUser, @Body() body: CreateStockLotDto) {
     return this.stockLotService.createStockLot(user.id, body);
   }
@@ -58,7 +59,7 @@ export class StockLotController {
     summary: "List stock lots",
     description: "Lists stock lots filtered by visit, depot, and/or calendar date.",
   })
-  @ApiOkResponse({ description: "Stock lot list" })
+  @ApiOkResponse({ description: "Stock lot list", type: [StockLotResponseDto] })
   getStockLots(@CurrentUser() user: AuthenticatedUser, @Query() query: ListStockLotsQueryDto) {
     return this.stockLotService.listStockLots(user.id, user.role, {
       visitId: query.visitId,
@@ -74,7 +75,7 @@ export class StockLotController {
     summary: "Get stock lot",
     description: "Returns a single stock lot with SKU, evidence, and visit context.",
   })
-  @ApiOkResponse({ description: "Stock lot detail" })
+  @ApiOkResponse({ description: "Stock lot detail", type: StockLotResponseDto })
   getStockLotsById(@Param("id") id: string) {
     return this.stockLotService.getStockLotById(id);
   }

@@ -17,6 +17,7 @@ import { RolesGuard } from "../../common/guards/roles.guard";
 import type { AuthenticatedUser } from "../../common/types/authenticated-user.type";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { AttendanceService } from "./attendance.service";
+import { AttendanceResponseDto } from "./dto/attendance-response.dto";
 import { CreateAttendanceDto } from "./dto/create-attendance.dto";
 import { ListAttendanceQueryDto } from "./dto/list-attendance-query.dto";
 
@@ -35,7 +36,7 @@ export class AttendanceController {
     description:
       "Stores attendance with photo object key and optional GPS coordinates. Missing GPS is allowed.",
   })
-  @ApiCreatedResponse({ description: "Attendance recorded" })
+  @ApiCreatedResponse({ description: "Attendance recorded", type: AttendanceResponseDto })
   postAttendance(@CurrentUser() user: AuthenticatedUser, @Body() body: CreateAttendanceDto) {
     return this.attendanceService.createAttendance(user.id, body);
   }
@@ -48,7 +49,7 @@ export class AttendanceController {
     description:
       "Supervisors and ops can list attendance for a calendar date with optional filters.",
   })
-  @ApiOkResponse({ description: "Attendance list" })
+  @ApiOkResponse({ description: "Attendance list", type: [AttendanceResponseDto] })
   getAttendance(@Query() query: ListAttendanceQueryDto) {
     return this.attendanceService.listAttendance({
       depotId: query.depotId,
@@ -64,7 +65,10 @@ export class AttendanceController {
     summary: "My attendance today",
     description: "Returns the signed-in field user's attendance events for the current UTC day.",
   })
-  @ApiOkResponse({ description: "Today's attendance for current user" })
+  @ApiOkResponse({
+    description: "Today's attendance for current user",
+    type: [AttendanceResponseDto],
+  })
   getMeAttendanceToday(@CurrentUser() user: AuthenticatedUser) {
     return this.attendanceService.listMyAttendanceToday(user.id);
   }

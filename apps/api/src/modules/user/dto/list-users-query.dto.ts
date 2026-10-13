@@ -3,7 +3,7 @@ import { UserRole } from "@prisma/client";
 import { IsEnum, IsOptional } from "class-validator";
 
 export class ListUsersQueryDto {
-  @ApiPropertyOptional({ enum: UserRole, description: "Filter by role" })
+  @ApiPropertyOptional({ enum: UserRole, enumName: "UserRole", description: "Filter by role" })
   @IsOptional()
   @IsEnum(UserRole)
   role?: UserRole;

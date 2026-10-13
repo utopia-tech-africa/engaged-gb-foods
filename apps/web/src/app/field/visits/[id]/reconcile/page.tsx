@@ -1,8 +1,9 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { useAuth } from "@/components/auth-provider";
 import { RequireAuth } from "@/components/require-auth";
@@ -20,19 +21,22 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type { UserRole } from "@/lib/auth/types";
-import { ZONE_LABELS } from "@/lib/stock/api";
-import { cn } from "@/lib/utils";
+import type { SignatureRole } from "@/lib/api/generated/model";
 import {
-  fetchVisitReconciliation,
-  patchStockLotCustodian,
-  postVisitClose,
-  postVisitSignature,
-  type ReconciliationSnapshot,
-  SIGNATURE_ROLE_LABELS,
-  type SignatureRole,
-  uploadSignatureImage,
-} from "@/lib/visit/api";
+  getGetStockLotsQueryKey,
+  usePatchStockLotsByIdCustodian,
+} from "@/lib/api/generated/stock-lots/stock-lots";
+import {
+  getGetVisitsByIdReconciliationQueryKey,
+  useGetVisitsByIdReconciliation,
+  usePostVisitsByIdClose,
+  usePostVisitsByIdSignatures,
+} from "@/lib/api/generated/visits/visits";
+import type { UserRole } from "@/lib/auth/types";
+import { ZONE_LABELS } from "@/lib/stock/constants";
+import { uploadPhoto } from "@/lib/uploads";
+import { cn } from "@/lib/utils";
+import { SIGNATURE_ROLE_LABELS } from "@/lib/visit/constants";
 
 const FIELD_ROLES: UserRole[] = ["qc", "handler", "cluster_supervisor", "regional_supervisor"];
 
@@ -40,10 +44,9 @@ export default function FieldReconcilePage() {
   const params = useParams<{ id: string }>();
   const visitId = params.id;
   const { accessToken, user } = useAuth();
-  const [snapshot, setSnapshot] = useState<ReconciliationSnapshot | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
+  const queryClient = useQueryClient();
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   const [qcName, setQcName] = useState("");
   const [depotRepName, setDepotRepName] = useState("");
@@ -51,25 +54,39 @@ export default function FieldReconcilePage() {
   const [depotSignatureFile, setDepotSignatureFile] = useState<File | null>(null);
   const [custodianDrafts, setCustodianDrafts] = useState<Record<string, string>>({});
 
-  const reload = useCallback(async () => {
-    if (!accessToken) {
-      return;
-    }
-    setLoading(true);
-    try {
-      const data = await fetchVisitReconciliation(accessToken, visitId);
-      setSnapshot(data);
-      setError(null);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Could not load reconciliation");
-    } finally {
-      setLoading(false);
-    }
-  }, [accessToken, visitId]);
+  const reconciliationQuery = useGetVisitsByIdReconciliation(visitId, {
+    query: { enabled: Boolean(accessToken) },
+  });
+  const postSignature = usePostVisitsByIdSignatures();
+  const patchCustodian = usePatchStockLotsByIdCustodian();
+  const closeVisitMutation = usePostVisitsByIdClose();
 
-  useEffect(() => {
-    void reload();
-  }, [reload]);
+  const snapshot = reconciliationQuery.data;
+  const loading = reconciliationQuery.isLoading;
+  const error = actionError ?? reconciliationQuery.error?.message ?? null;
+  const busy =
+    isUploading ||
+    postSignature.isPending ||
+    patchCustodian.isPending ||
+    closeVisitMutation.isPending;
+
+  const reload = () =>
+    Promise.all([
+      queryClient.invalidateQueries({
+        queryKey: getGetVisitsByIdReconciliationQueryKey(visitId),
+      }),
+      queryClient.invalidateQueries({ queryKey: getGetStockLotsQueryKey() }),
+    ]);
+
+  const runAction = async (action: () => Promise<unknown>, fallbackMessage: string) => {
+    setActionError(null);
+    try {
+      await action();
+      await reload();
+    } catch (err: unknown) {
+      setActionError(err instanceof Error ? err.message : fallbackMessage);
+    }
+  };
 
   useEffect(() => {
     if (user?.fullName && !qcName) {
@@ -78,58 +95,42 @@ export default function FieldReconcilePage() {
   }, [user?.fullName, qcName]);
 
   const submitSignature = async (role: SignatureRole, signerName: string, file: File | null) => {
-    if (!accessToken || !signerName.trim()) {
+    if (!signerName.trim()) {
       return;
     }
-    setBusy(true);
-    try {
+    await runAction(async () => {
       let imageObjectKey: string | undefined;
       if (file) {
-        imageObjectKey = await uploadSignatureImage(accessToken, file);
+        setIsUploading(true);
+        try {
+          imageObjectKey = await uploadPhoto(file, "signature");
+        } finally {
+          setIsUploading(false);
+        }
       }
-      await postVisitSignature(accessToken, visitId, {
-        role,
-        signerName: signerName.trim(),
-        imageObjectKey,
+      await postSignature.mutateAsync({
+        id: visitId,
+        data: { role, signerName: signerName.trim(), imageObjectKey },
       });
-      await reload();
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Could not save signature");
-    } finally {
-      setBusy(false);
-    }
+    }, "Could not save signature");
   };
 
   const saveCustodian = async (lotId: string) => {
     const value = custodianDrafts[lotId]?.trim();
-    if (!accessToken || !value) {
+    if (!value) {
       return;
     }
-    setBusy(true);
-    try {
-      await patchStockLotCustodian(accessToken, lotId, value);
-      await reload();
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Could not save custodian");
-    } finally {
-      setBusy(false);
-    }
+    await runAction(
+      () => patchCustodian.mutateAsync({ id: lotId, data: { custodian: value } }),
+      "Could not save custodian",
+    );
   };
 
-  const closeVisit = async () => {
-    if (!accessToken) {
-      return;
-    }
-    setBusy(true);
-    try {
-      await postVisitClose(accessToken, visitId);
-      await reload();
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Could not close visit");
-    } finally {
-      setBusy(false);
-    }
-  };
+  const closeVisit = () =>
+    runAction(
+      () => closeVisitMutation.mutateAsync({ id: visitId, data: {} }),
+      "Could not close visit",
+    );
 
   return (
     <RequireAuth roles={FIELD_ROLES}>

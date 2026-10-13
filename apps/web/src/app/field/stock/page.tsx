@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
 
 import { useAuth } from "@/components/auth-provider";
 import { RequireAuth } from "@/components/require-auth";
@@ -9,55 +8,32 @@ import { ShellFrame } from "@/components/shell-frame";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { fetchMyDepots, type MyDepot } from "@/lib/attendance/api";
+import { useGetMeDepots } from "@/lib/api/generated/assignments/assignments";
+import type { StockLotResponseDto } from "@/lib/api/generated/model";
+import { useGetStockLots } from "@/lib/api/generated/stock-lots/stock-lots";
 import type { UserRole } from "@/lib/auth/types";
-import { fetchStockLots, type StockLot, ZONE_LABELS } from "@/lib/stock/api";
+import { ZONE_LABELS } from "@/lib/stock/constants";
 import { cn } from "@/lib/utils";
 
 const FIELD_ROLES: UserRole[] = ["qc", "handler", "cluster_supervisor", "regional_supervisor"];
 
 const todayIso = (): string => new Date().toISOString().slice(0, 10);
 
-const formatQty = (lot: StockLot): string => {
+const formatQty = (lot: StockLotResponseDto): string => {
   const unitLabel = lot.unit === "cases" ? lot.sku.caseUnit : lot.sku.looseUnit;
   return `${lot.quantity} ${unitLabel} (${lot.baseQuantity} ${lot.sku.looseUnit} base)`;
 };
 
 export default function FieldStockListPage() {
   const { accessToken } = useAuth();
-  const [depots, setDepots] = useState<MyDepot[]>([]);
-  const [lots, setLots] = useState<StockLot[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const enabled = Boolean(accessToken);
+  const depotsQuery = useGetMeDepots({ query: { enabled } });
+  const lotsQuery = useGetStockLots({ date: todayIso() }, { query: { enabled } });
 
-  useEffect(() => {
-    if (!accessToken) {
-      return;
-    }
-    void fetchMyDepots(accessToken)
-      .then(setDepots)
-      .catch((err: unknown) => {
-        setError(err instanceof Error ? err.message : "Could not load depots");
-      });
-  }, [accessToken]);
-
-  useEffect(() => {
-    if (!accessToken) {
-      return;
-    }
-    setLoading(true);
-    void fetchStockLots(accessToken, { date: todayIso() })
-      .then(setLots)
-      .catch((err: unknown) => {
-        setError(err instanceof Error ? err.message : "Could not load stock lots");
-      })
-      .finally(() => setLoading(false));
-  }, [accessToken]);
-
-  const sorted = useMemo(
-    () => [...lots].sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
-    [lots],
-  );
+  const depots = depotsQuery.data ?? [];
+  const loading = lotsQuery.isLoading;
+  const error = depotsQuery.error?.message ?? lotsQuery.error?.message ?? null;
+  const sorted = [...(lotsQuery.data ?? [])].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
   return (
     <RequireAuth roles={FIELD_ROLES}>

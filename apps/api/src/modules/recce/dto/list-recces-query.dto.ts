@@ -8,7 +8,11 @@ export class ListRecceQueryDto {
   @IsString()
   depotId?: string;
 
-  @ApiPropertyOptional({ enum: RecceDecision, description: "Filter by decision" })
+  @ApiPropertyOptional({
+    enum: RecceDecision,
+    enumName: "RecceDecision",
+    description: "Filter by decision",
+  })
   @IsOptional()
   @IsEnum(RecceDecision)
   decision?: RecceDecision;

@@ -3,7 +3,7 @@ import { SignatureRole } from "@prisma/client";
 import { IsEnum, IsOptional, IsString, MinLength } from "class-validator";
 
 export class CreateVisitSignatureDto {
-  @ApiProperty({ enum: SignatureRole })
+  @ApiProperty({ enum: SignatureRole, enumName: "SignatureRole" })
   @IsEnum(SignatureRole)
   role!: SignatureRole;
 

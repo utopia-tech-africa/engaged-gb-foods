@@ -6,6 +6,7 @@ import { Roles } from "../../common/decorators/roles.decorator";
 import { RolesGuard } from "../../common/guards/roles.guard";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { ListUsersQueryDto } from "./dto/list-users-query.dto";
+import { UserSummaryResponseDto } from "./dto/user-response.dto";
 import { UserService } from "./user.service";
 
 @ApiTags("Users")
@@ -23,7 +24,7 @@ export class UserController {
     description:
       "Lists active users for ops screens such as the assessment roster, optionally filtered by role. Returns no credentials.",
   })
-  @ApiOkResponse({ description: "Active users" })
+  @ApiOkResponse({ description: "Active users", type: [UserSummaryResponseDto] })
   getUsers(@Query() query: ListUsersQueryDto) {
     return this.userService.listUsers({ role: query.role });
   }

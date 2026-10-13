@@ -1,6 +1,7 @@
 "use client";
 
-import { type FormEvent, useCallback, useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { type FormEvent, useState } from "react";
 
 import { useAuth } from "@/components/auth-provider";
 import { OpsNetworkNav } from "@/components/ops-network-nav";
@@ -25,79 +26,70 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type { Distributor, Region } from "@/lib/network/api";
-import * as networkApi from "@/lib/network/api";
+import {
+  getGetDistributorsQueryKey,
+  useGetDistributors,
+  usePostDistributors,
+} from "@/lib/api/generated/distributors/distributors";
+import { useGetRegions } from "@/lib/api/generated/regions/regions";
 import { canWriteNetwork, OPS_NETWORK_ROLES } from "@/lib/network/roles";
 
 const ALL_FILTER = "__all__";
 
 export default function OpsDistributorsPage() {
   const { accessToken, user } = useAuth();
-  const [regions, setRegions] = useState<Region[]>([]);
-  const [distributors, setDistributors] = useState<Distributor[]>([]);
+  const queryClient = useQueryClient();
   const [filterRegionId, setFilterRegionId] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const [name, setName] = useState("");
   const [code, setCode] = useState("");
-  const [regionId, setRegionId] = useState("");
+  const [selectedRegionId, setSelectedRegionId] = useState("");
   const [contactName, setContactName] = useState("");
   const [contactPhone, setContactPhone] = useState("");
 
   const writeEnabled = user ? canWriteNetwork(user.role) : false;
+  const enabled = Boolean(accessToken);
 
-  const loadData = useCallback(async (token: string, regionFilter?: string): Promise<void> => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const [regionList, distributorList] = await Promise.all([
-        networkApi.fetchRegions(token),
-        networkApi.fetchDistributors(token, regionFilter || undefined),
-      ]);
-      setRegions(regionList);
-      setDistributors(distributorList);
-      setRegionId((current) => current || regionList[0]?.id || "");
-    } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : "Unable to load distributors");
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  const regionsQuery = useGetRegions({ query: { enabled } });
+  const distributorsQuery = useGetDistributors(
+    { regionId: filterRegionId || undefined },
+    { query: { enabled } },
+  );
+  const createDistributor = usePostDistributors();
 
-  useEffect(() => {
-    if (!accessToken) {
-      return;
-    }
-    void loadData(accessToken, filterRegionId);
-  }, [accessToken, filterRegionId, loadData]);
+  const regions = regionsQuery.data ?? [];
+  const distributors = distributorsQuery.data ?? [];
+  const regionId = selectedRegionId || regions[0]?.id || "";
+  const isLoading = regionsQuery.isLoading || distributorsQuery.isLoading;
+  const error = submitError ?? regionsQuery.error?.message ?? distributorsQuery.error?.message;
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
     event.preventDefault();
-    if (!accessToken || !writeEnabled) {
+    if (!writeEnabled) {
       return;
     }
 
-    setIsSubmitting(true);
-    setError(null);
+    setSubmitError(null);
     try {
-      await networkApi.createDistributor(accessToken, {
-        name,
-        code,
-        regionId,
-        contactName: contactName || undefined,
-        contactPhone: contactPhone || undefined,
+      await createDistributor.mutateAsync({
+        data: {
+          name,
+          code,
+          regionId,
+          contactName: contactName || undefined,
+          contactPhone: contactPhone || undefined,
+        },
       });
       setName("");
       setCode("");
       setContactName("");
       setContactPhone("");
-      await loadData(accessToken, filterRegionId);
-    } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : "Unable to create distributor");
-    } finally {
-      setIsSubmitting(false);
+      await queryClient.invalidateQueries({ queryKey: getGetDistributorsQueryKey() });
+    } catch (mutationError) {
+      setSubmitError(
+        mutationError instanceof Error ? mutationError.message : "Unable to create distributor",
+      );
     }
   };
 
@@ -170,7 +162,7 @@ export default function OpsDistributorsPage() {
                       value={regionId}
                       onValueChange={(value) => {
                         if (value) {
-                          setRegionId(value);
+                          setSelectedRegionId(value);
                         }
                       }}
                     >
@@ -202,8 +194,12 @@ export default function OpsDistributorsPage() {
                       onChange={(event) => setContactPhone(event.target.value)}
                     />
                   </div>
-                  <Button type="submit" disabled={isSubmitting} className="md:col-span-2 w-fit">
-                    {isSubmitting ? "Saving…" : "Create distributor"}
+                  <Button
+                    type="submit"
+                    disabled={createDistributor.isPending}
+                    className="md:col-span-2 w-fit"
+                  >
+                    {createDistributor.isPending ? "Saving…" : "Create distributor"}
                   </Button>
                 </form>
               </CardContent>

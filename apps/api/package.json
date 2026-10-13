@@ -6,7 +6,7 @@
     "prebuild": "prisma generate --schema prisma/schema.prisma",
     "build": "tsc --project tsconfig.json",
     "dev": "tsx watch src/main.ts",
-    "docs:openapi": "tsx src/scripts/export-openapi.ts",
+    "docs:openapi": "tsc --project tsconfig.json && node dist/scripts/export-openapi.js",
     "start": "node dist/main.js",
     "typecheck": "tsc --project tsconfig.json --noEmit",
     "prisma:generate": "prisma generate --schema prisma/schema.prisma",
