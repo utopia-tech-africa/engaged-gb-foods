@@ -19,3 +19,13 @@ export const READINESS_WRITE_ROLES: UserRole[] = [
 ];
 
 export const canWriteReadiness = (role: UserRole): boolean => READINESS_WRITE_ROLES.includes(role);
+
+/** Matches API write guard for daily returns. */
+export const DAILY_RETURN_WRITE_ROLES: UserRole[] = [
+  "regional_supervisor",
+  "national_ops",
+  "admin",
+];
+
+export const canWriteDailyReturn = (role: UserRole): boolean =>
+  DAILY_RETURN_WRITE_ROLES.includes(role);

@@ -111,6 +111,7 @@ model User {
   recces            Recce[]        @relation("RecceAuthor")
   assessments       Assessment[]   @relation("AssessmentSubject")
   assessmentsGiven  Assessment[]   @relation("AssessmentAssessor")
+  dailyReturnsSubmitted DailyReturn[] @relation("DailyReturnSubmitter")
 
   @@index([role])
   @@index([isActive])
@@ -143,6 +144,7 @@ model Region {
   clusters     Cluster[]
   distributors Distributor[]
   assignments  Assignment[]
+  dailyReturns DailyReturn[]
 
   @@index([isActive])
 }
@@ -470,4 +472,27 @@ model Assessment {
 
   @@index([userId])
   @@index([result])
+}
+
+model DailyReturn {
+  id                 String   @id @default(cuid())
+  regionId           String
+  date               DateTime @db.Date
+  submittedAt        DateTime @default(now())
+  submittedByUserId  String
+  coverageSummary    String
+  stockStatusSummary String
+  variancesSummary   String?
+  incidentsSummary   String?
+  depotsPlanned      Int
+  depotsCompleted    Int
+  depotsException    Int      @default(0)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  region             Region   @relation(fields: [regionId], references: [id], onDelete: Cascade)
+  submittedBy        User     @relation("DailyReturnSubmitter", fields: [submittedByUserId], references: [id], onDelete: Restrict)
+
+  @@unique([regionId, date])
+  @@index([date])
+  @@index([regionId])
 }
