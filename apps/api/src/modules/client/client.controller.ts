@@ -11,6 +11,7 @@ import { ClientService } from "./client.service";
 import { ClientDateQueryDto } from "./dto/client-date-query.dto";
 import { ClientExportQueryDto } from "./dto/client-export-query.dto";
 import { ClientOverviewQueryDto } from "./dto/client-overview-query.dto";
+import { ClientDepotPackResponseDto, ClientOverviewResponseDto } from "./dto/client-response.dto";
 
 @ApiTags("Client")
 @Controller("client")
@@ -27,7 +28,7 @@ export class ClientController {
     description:
       "Returns KPIs and per-depot status for GBfoods reviewers: completion, review queues, holds, and sync delays for a calendar day.",
   })
-  @ApiOkResponse({ description: "Control room overview" })
+  @ApiOkResponse({ description: "Control room overview", type: ClientOverviewResponseDto })
   getClientOverview(@Query() query: ClientOverviewQueryDto) {
     return this.clientService.getOverview({
       date: query.date,
@@ -46,7 +47,7 @@ export class ClientController {
       "Downloads reconciliation lines by depot, SKU, and batch for the selected day and optional region filter.",
   })
   @ApiProduces("text/csv")
-  @ApiOkResponse({ description: "CSV file" })
+  @ApiOkResponse({ description: "CSV file", schema: { type: "string" } })
   @Header("Content-Type", "text/csv; charset=utf-8")
   @Header("Content-Disposition", 'attachment; filename="reconciliation.csv"')
   getClientExportReconciliationCsv(
@@ -68,7 +69,7 @@ export class ClientController {
       "Downloads held-or-rejected lots with custodian and latest disposition for the selected day and optional region.",
   })
   @ApiProduces("text/csv")
-  @ApiOkResponse({ description: "CSV file" })
+  @ApiOkResponse({ description: "CSV file", schema: { type: "string" } })
   @Header("Content-Type", "text/csv; charset=utf-8")
   @Header("Content-Disposition", 'attachment; filename="holds.csv"')
   getClientExportHoldsCsv(@Query() query: ClientExportQueryDto) {
@@ -86,7 +87,7 @@ export class ClientController {
     description:
       "Returns reconciliation snapshots, stock lots, and hold log for one depot on a calendar day (CSV-friendly JSON).",
   })
-  @ApiOkResponse({ description: "Depot pack" })
+  @ApiOkResponse({ description: "Depot pack", type: ClientDepotPackResponseDto })
   getClientDepotsByIdPack(
     @CurrentUser() user: AuthenticatedUser,
     @Param("depotId") depotId: string,

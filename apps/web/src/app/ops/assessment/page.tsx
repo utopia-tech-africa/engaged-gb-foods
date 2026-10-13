@@ -1,7 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { toast } from "sonner";
+import { useState } from "react";
 
 import { AssessmentForm } from "@/components/assessment-form";
 import {
@@ -22,14 +21,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  ASSESSABLE_ROLES,
-  type Assessment,
-  type AssessmentResult,
-  fetchAssessments,
-} from "@/lib/assessment/api";
+import { useGetAssessments } from "@/lib/api/generated/assessments/assessments";
+import type { AssessmentResult } from "@/lib/api/generated/model";
+import { useGetUsers } from "@/lib/api/generated/users/users";
+import { ASSESSABLE_ROLES } from "@/lib/assessment/helpers";
 import { canWriteReadiness, OPS_READINESS_ROLES } from "@/lib/network/roles";
-import { fetchUsers, type UserSummary } from "@/lib/users/api";
 
 type ResultFilter = AssessmentResult | "all";
 
@@ -42,33 +38,19 @@ const FILTER_ITEMS: { value: ResultFilter; label: string }[] = [
 
 export default function OpsAssessmentPage() {
   const { accessToken, user } = useAuth();
-  const [users, setUsers] = useState<UserSummary[]>([]);
-  const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [filter, setFilter] = useState<ResultFilter>("all");
-  const [isLoading, setIsLoading] = useState(true);
+
+  const enabled = Boolean(accessToken);
+  const usersQuery = useGetUsers(undefined, { query: { enabled } });
+  const assessmentsQuery = useGetAssessments(undefined, { query: { enabled } });
 
   const canWrite = user ? canWriteReadiness(user.role) : false;
-
-  const loadData = useCallback(async (token: string): Promise<void> => {
-    try {
-      const [userList, assessmentList] = await Promise.all([
-        fetchUsers(token),
-        fetchAssessments(token),
-      ]);
-      setUsers(userList.filter((candidate) => ASSESSABLE_ROLES.includes(candidate.role)));
-      setAssessments(assessmentList);
-    } catch (loadError) {
-      toast.error(loadError instanceof Error ? loadError.message : "Unable to load roster");
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (accessToken) {
-      void loadData(accessToken);
-    }
-  }, [accessToken, loadData]);
+  const users = (usersQuery.data ?? []).filter((candidate) =>
+    ASSESSABLE_ROLES.includes(candidate.role),
+  );
+  const assessments = assessmentsQuery.data ?? [];
+  const isLoading = usersQuery.isLoading || assessmentsQuery.isLoading;
+  const loadError = usersQuery.error ?? assessmentsQuery.error;
 
   const rows: RosterRow[] = users.map((candidate) => ({
     user: candidate,
@@ -81,13 +63,7 @@ export default function OpsAssessmentPage() {
         <div className="space-y-6">
           <OpsNetworkNav />
 
-          {canWrite && accessToken ? (
-            <AssessmentForm
-              accessToken={accessToken}
-              users={users}
-              onSaved={() => loadData(accessToken)}
-            />
-          ) : null}
+          {canWrite ? <AssessmentForm users={users} /> : null}
 
           <Card>
             <CardHeader>
@@ -115,6 +91,8 @@ export default function OpsAssessmentPage() {
               </div>
               {isLoading ? (
                 <p className="text-sm text-muted-foreground">Loading…</p>
+              ) : loadError ? (
+                <p className="text-sm text-danger">{loadError.message}</p>
               ) : (
                 <AssessmentRosterTable rows={filterRoster(rows, filter)} />
               )}

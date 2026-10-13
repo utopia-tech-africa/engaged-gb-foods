@@ -11,12 +11,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type { DailyReturn } from "@/lib/daily-return/api";
+import type { DailyReturnResponseDto } from "@/lib/api/generated/model";
 
 type DailyReturnTableProps = {
-  returns: DailyReturn[];
+  returns: DailyReturnResponseDto[];
   canEdit: boolean;
-  onEdit: (dailyReturn: DailyReturn) => void;
+  onEdit: (dailyReturn: DailyReturnResponseDto) => void;
 };
 
 export const DailyReturnTable = ({ returns, canEdit, onEdit }: DailyReturnTableProps) => {

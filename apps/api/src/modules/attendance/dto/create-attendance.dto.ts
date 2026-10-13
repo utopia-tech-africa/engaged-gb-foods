@@ -7,7 +7,7 @@ export class CreateAttendanceDto {
   @IsString()
   depotId!: string;
 
-  @ApiProperty({ enum: AttendanceKind })
+  @ApiProperty({ enum: AttendanceKind, enumName: "AttendanceKind" })
   @IsEnum(AttendanceKind)
   kind!: AttendanceKind;
 

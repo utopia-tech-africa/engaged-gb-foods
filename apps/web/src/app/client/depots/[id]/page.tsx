@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
 
 import { useAuth } from "@/components/auth-provider";
 import { RequireAuth } from "@/components/require-auth";
@@ -17,11 +16,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { type ClientDepotPack, fetchClientDepotPack, formatSyncTime } from "@/lib/client/api";
+import { useGetClientDepotsByIdPack } from "@/lib/api/generated/client/client";
+import { formatSyncTime } from "@/lib/client/format";
 import { CLIENT_CONTROL_ROLES } from "@/lib/client/roles";
-import { ZONE_LABELS } from "@/lib/stock/api";
+import { ZONE_LABELS } from "@/lib/stock/constants";
 import { cn } from "@/lib/utils";
-import type { ReconciliationSnapshot } from "@/lib/visit/api";
 
 const todayIso = (): string => new Date().toISOString().slice(0, 10);
 
@@ -31,31 +30,16 @@ export default function ClientDepotPackPage() {
   const depotId = params.id;
   const date = searchParams.get("date") ?? todayIso();
   const { accessToken } = useAuth();
-  const [pack, setPack] = useState<ClientDepotPack | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
-    if (!accessToken) {
-      return;
-    }
-    setLoading(true);
-    try {
-      const data = await fetchClientDepotPack(accessToken, depotId, date);
-      setPack(data);
-      setError(null);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Could not load depot pack");
-    } finally {
-      setLoading(false);
-    }
-  }, [accessToken, depotId, date]);
-
-  useEffect(() => {
-    void load();
-  }, [load]);
-
-  const reconciliations = (pack?.reconciliations ?? []) as ReconciliationSnapshot[];
+  const packQuery = useGetClientDepotsByIdPack(
+    depotId,
+    { date },
+    { query: { enabled: Boolean(accessToken) } },
+  );
+  const pack = packQuery.data;
+  const loading = packQuery.isLoading;
+  const error = packQuery.error?.message ?? null;
+  const reconciliations = pack?.reconciliations ?? [];
 
   return (
     <RequireAuth roles={CLIENT_CONTROL_ROLES}>
@@ -194,14 +178,7 @@ export default function ClientDepotPackPage() {
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-2 text-sm text-brand-ink">
-                    {(
-                      pack.lots as Array<{
-                        id: string;
-                        batchCode: string;
-                        zone: keyof typeof ZONE_LABELS;
-                        sku: { name: string };
-                      }>
-                    ).map((lot) => (
+                    {pack.lots.map((lot) => (
                       <li
                         key={lot.id}
                         className="flex justify-between gap-2 border-b border-border/60 py-2"

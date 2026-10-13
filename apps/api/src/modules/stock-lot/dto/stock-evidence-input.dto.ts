@@ -3,7 +3,7 @@ import { StockEvidenceCategory } from "@prisma/client";
 import { IsEnum, IsString, MinLength } from "class-validator";
 
 export class StockEvidenceInputDto {
-  @ApiProperty({ enum: StockEvidenceCategory })
+  @ApiProperty({ enum: StockEvidenceCategory, enumName: "StockEvidenceCategory" })
   @IsEnum(StockEvidenceCategory)
   category!: StockEvidenceCategory;
 

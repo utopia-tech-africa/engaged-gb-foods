@@ -13,6 +13,7 @@ import { Roles } from "../../common/decorators/roles.decorator";
 import { RolesGuard } from "../../common/guards/roles.guard";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { CreateSkuDto } from "./dto/create-sku.dto";
+import { SkuResponseDto } from "./dto/sku-response.dto";
 import { SkuService } from "./sku.service";
 
 @ApiTags("Skus")
@@ -29,7 +30,7 @@ export class SkuController {
     summary: "List SKUs",
     description: "Returns active product SKUs for stock capture and ops.",
   })
-  @ApiOkResponse({ description: "SKU list" })
+  @ApiOkResponse({ description: "SKU list", type: [SkuResponseDto] })
   getSkus() {
     return this.skuService.listSkus();
   }
@@ -41,7 +42,7 @@ export class SkuController {
     summary: "Create SKU",
     description: "Creates a product SKU. Restricted to admin and national ops.",
   })
-  @ApiCreatedResponse({ description: "SKU created" })
+  @ApiCreatedResponse({ description: "SKU created", type: SkuResponseDto })
   postSkus(@Body() body: CreateSkuDto) {
     return this.skuService.createSku(body);
   }

@@ -1,5 +1,6 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { type FormEvent, useState } from "react";
 import { toast } from "sonner";
 
@@ -17,16 +18,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import type { Depot } from "@/lib/network/api";
+import type {
+  DepotResponseDto,
+  RecceChecklistResponseDto,
+  RecceDecision,
+  RecceResponseDto,
+} from "@/lib/api/generated/model";
 import {
-  createRecce,
-  type Recce,
-  type RecceChecklist,
-  type RecceDecision,
-  updateRecce,
-} from "@/lib/recce/api";
+  getGetReccesQueryKey,
+  usePatchReccesById,
+  usePostRecces,
+} from "@/lib/api/generated/recces/recces";
 
-type ChecklistFlag = Exclude<keyof RecceChecklist, "stockEstimateNote">;
+type ChecklistFlag = Exclude<keyof RecceChecklistResponseDto, "stockEstimateNote">;
 
 const CHECKLIST_ITEMS: { key: ChecklistFlag; label: string }[] = [
   { key: "access", label: "Access (vehicles and staff)" },
@@ -37,7 +41,7 @@ const CHECKLIST_ITEMS: { key: ChecklistFlag; label: string }[] = [
   { key: "holdingZones", label: "Holding zones possible" },
 ];
 
-const EMPTY_CHECKLIST: RecceChecklist = {
+const EMPTY_CHECKLIST: RecceChecklistResponseDto = {
   access: false,
   stockEstimate: false,
   workspace: false,
@@ -52,23 +56,21 @@ const DECISION_ITEMS = [
 ];
 
 type RecceFormProps = {
-  accessToken: string;
-  depots: Depot[];
+  depots: DepotResponseDto[];
   /** When set the form updates this recce (PATCH); otherwise it creates one. */
-  editing: Recce | null;
-  onSaved: () => Promise<void>;
+  editing: RecceResponseDto | null;
+  onSaved: () => void;
   onCancelEdit: () => void;
 };
 
-export const RecceForm = ({
-  accessToken,
-  depots,
-  editing,
-  onSaved,
-  onCancelEdit,
-}: RecceFormProps) => {
+export const RecceForm = ({ depots, editing, onSaved, onCancelEdit }: RecceFormProps) => {
+  const queryClient = useQueryClient();
+  const createRecce = usePostRecces();
+  const updateRecce = usePatchReccesById();
   const [depotId, setDepotId] = useState(editing?.depotId ?? "");
-  const [checklist, setChecklist] = useState<RecceChecklist>(editing?.checklist ?? EMPTY_CHECKLIST);
+  const [checklist, setChecklist] = useState<RecceChecklistResponseDto>(
+    editing?.checklist ?? EMPTY_CHECKLIST,
+  );
   const [decision, setDecision] = useState<RecceDecision>(editing?.decision ?? "hold");
   const [notes, setNotes] = useState(editing?.notes ?? "");
   const [gaps, setGaps] = useState<GapDraft[]>(
@@ -80,7 +82,6 @@ export const RecceForm = ({
       isCritical: gap.isCritical,
     })) ?? [],
   );
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const hasCriticalGap = gaps.some((gap) => gap.isCritical);
   const effectiveDecision: RecceDecision = hasCriticalGap ? "hold" : decision;
@@ -107,22 +108,22 @@ export const RecceForm = ({
       })),
     };
 
-    setIsSubmitting(true);
     try {
       if (editing) {
-        await updateRecce(accessToken, editing.id, body);
+        await updateRecce.mutateAsync({ id: editing.id, data: body });
         toast.success("Recce updated");
       } else {
-        await createRecce(accessToken, { depotId, ...body });
+        await createRecce.mutateAsync({ data: { depotId, ...body } });
         toast.success("Recce recorded");
       }
-      await onSaved();
+      await queryClient.invalidateQueries({ queryKey: getGetReccesQueryKey() });
+      onSaved();
     } catch (submitError) {
       toast.error(submitError instanceof Error ? submitError.message : "Unable to save recce");
-    } finally {
-      setIsSubmitting(false);
     }
   };
+
+  const isSubmitting = createRecce.isPending || updateRecce.isPending;
 
   const depotItems = depots.map((depot) => ({
     value: depot.id,

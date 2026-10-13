@@ -1,5 +1,6 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import {
   createContext,
   type ReactNode,
@@ -12,7 +13,7 @@ import {
 
 import * as authApi from "@/lib/auth/api";
 import { clearAuthSession, readAuthSession, writeAuthSession } from "@/lib/auth/storage";
-import type { AuthSession, AuthUser } from "@/lib/auth/types";
+import type { AuthSession, AuthTokenResponse, AuthUser } from "@/lib/auth/types";
 
 type AuthContextValue = {
   user: AuthUser | null;
@@ -36,6 +37,7 @@ const toSession = (payload: {
 });
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const queryClient = useQueryClient();
   const [session, setSession] = useState<AuthSession | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -48,7 +50,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     void (async () => {
       try {
-        const user = await authApi.fetchMe(existing.accessToken);
+        const user = await authApi.fetchMe();
         const next = { ...existing, user };
         writeAuthSession(next);
         setSession(next);
@@ -60,29 +62,37 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setSession(next);
         } catch {
           clearAuthSession();
+          queryClient.clear();
           setSession(null);
         }
       } finally {
         setIsLoading(false);
       }
     })();
-  }, []);
+  }, [queryClient]);
 
-  const signInField = useCallback(async (staffId: string, pin: string) => {
-    const payload = await authApi.signInField(staffId, pin);
-    const next = toSession(payload);
-    writeAuthSession(next);
-    setSession(next);
-    return next.user;
-  }, []);
+  const startSession = useCallback(
+    (payload: AuthTokenResponse): AuthUser => {
+      const next = toSession(payload);
+      // Drop cached data from any previous user before the new token is used.
+      queryClient.clear();
+      writeAuthSession(next);
+      setSession(next);
+      return next.user;
+    },
+    [queryClient],
+  );
 
-  const signInOps = useCallback(async (email: string, password: string) => {
-    const payload = await authApi.signInOps(email, password);
-    const next = toSession(payload);
-    writeAuthSession(next);
-    setSession(next);
-    return next.user;
-  }, []);
+  const signInField = useCallback(
+    async (staffId: string, pin: string) => startSession(await authApi.signInField(staffId, pin)),
+    [startSession],
+  );
+
+  const signInOps = useCallback(
+    async (email: string, password: string) =>
+      startSession(await authApi.signInOps(email, password)),
+    [startSession],
+  );
 
   const signOut = useCallback(async () => {
     const current = readAuthSession();
@@ -94,8 +104,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     }
     clearAuthSession();
+    queryClient.clear();
     setSession(null);
-  }, []);
+  }, [queryClient]);
 
   const value = useMemo<AuthContextValue>(
     () => ({

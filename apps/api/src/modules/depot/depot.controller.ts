@@ -23,6 +23,7 @@ import { RolesGuard } from "../../common/guards/roles.guard";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { DepotService } from "./depot.service";
 import { CreateDepotDto } from "./dto/create-depot.dto";
+import { DepotResponseDto } from "./dto/depot-response.dto";
 import { ListDepotsQueryDto } from "./dto/list-depots-query.dto";
 import { UpdateDepotDto } from "./dto/update-depot.dto";
 
@@ -40,7 +41,7 @@ export class DepotController {
     summary: "List depots",
     description: "Returns depot register entries, optionally filtered by distributor or region id.",
   })
-  @ApiOkResponse({ description: "List of depots" })
+  @ApiOkResponse({ description: "List of depots", type: [DepotResponseDto] })
   getDepots(@Query() query: ListDepotsQueryDto) {
     return this.depotService.listDepots({
       distributorId: query.distributorId,
@@ -55,7 +56,7 @@ export class DepotController {
     summary: "Get depot by id",
     description: "Returns a single depot including optional recce coordinates.",
   })
-  @ApiOkResponse({ description: "Depot details" })
+  @ApiOkResponse({ description: "Depot details", type: DepotResponseDto })
   getDepotsById(@Param("id") id: string) {
     return this.depotService.getDepotById(id);
   }
@@ -68,7 +69,7 @@ export class DepotController {
     description:
       "Creates a depot under a distributor with address and optional recce pin coordinates.",
   })
-  @ApiCreatedResponse({ description: "Depot created" })
+  @ApiCreatedResponse({ description: "Depot created", type: DepotResponseDto })
   postDepots(@Body() body: CreateDepotDto) {
     return this.depotService.createDepot(body);
   }
@@ -80,7 +81,7 @@ export class DepotController {
     summary: "Update depot",
     description: "Updates depot address, contacts, readiness, or recce coordinates.",
   })
-  @ApiOkResponse({ description: "Depot updated" })
+  @ApiOkResponse({ description: "Depot updated", type: DepotResponseDto })
   patchDepots(@Param("id") id: string, @Body() body: UpdateDepotDto) {
     return this.depotService.updateDepot(id, body);
   }

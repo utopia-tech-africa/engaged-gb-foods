@@ -12,12 +12,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type { Recce } from "@/lib/recce/api";
+import type { RecceResponseDto } from "@/lib/api/generated/model";
 
 type RecceTableProps = {
-  recces: Recce[];
+  recces: RecceResponseDto[];
   canEdit: boolean;
-  onEdit: (recce: Recce) => void;
+  onEdit: (recce: RecceResponseDto) => void;
 };
 
 export const RecceTable = ({ recces, canEdit, onEdit }: RecceTableProps) => {

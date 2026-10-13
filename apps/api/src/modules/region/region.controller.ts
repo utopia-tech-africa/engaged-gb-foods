@@ -5,6 +5,7 @@ import { NETWORK_READ_ROLES } from "../../common/constants/network-roles";
 import { Roles } from "../../common/decorators/roles.decorator";
 import { RolesGuard } from "../../common/guards/roles.guard";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
+import { RegionResponseDto } from "./dto/region-response.dto";
 import { RegionService } from "./region.service";
 
 @ApiTags("Regions")
@@ -21,7 +22,7 @@ export class RegionController {
     summary: "List regions",
     description: "Returns Ghana network regions ordered by name for ops and field users.",
   })
-  @ApiOkResponse({ description: "List of regions" })
+  @ApiOkResponse({ description: "List of regions", type: [RegionResponseDto] })
   getRegions() {
     return this.regionService.listRegions();
   }

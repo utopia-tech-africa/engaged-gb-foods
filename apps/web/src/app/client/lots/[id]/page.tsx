@@ -1,8 +1,9 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { useAuth } from "@/components/auth-provider";
 import { RequireAuth } from "@/components/require-auth";
@@ -18,14 +19,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { CLIENT_CONTROL_ROLES } from "@/lib/client/roles";
-import { fetchStockLotById, type StockLot, ZONE_LABELS } from "@/lib/stock/api";
-import { cn } from "@/lib/utils";
+import type { DispositionDecision } from "@/lib/api/generated/model";
 import {
-  DISPOSITION_LABELS,
-  type DispositionDecision,
-  postStockLotDisposition,
-} from "@/lib/visit/api";
+  getGetStockLotsByIdQueryKey,
+  useGetStockLotsById,
+  usePostStockLotsByIdDisposition,
+} from "@/lib/api/generated/stock-lots/stock-lots";
+import { CLIENT_CONTROL_ROLES } from "@/lib/client/roles";
+import { ZONE_LABELS } from "@/lib/stock/constants";
+import { cn } from "@/lib/utils";
+import { DISPOSITION_LABELS } from "@/lib/visit/constants";
 
 const PENDING_ZONES = new Set([
   "held_or_rejected",
@@ -38,43 +41,35 @@ export default function ClientLotDispositionPage() {
   const lotId = params.id;
   const router = useRouter();
   const { accessToken } = useAuth();
-  const [lot, setLot] = useState<StockLot | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [decision, setDecision] = useState<DispositionDecision>("hold");
   const [reason, setReason] = useState("");
-  const [busy, setBusy] = useState(false);
 
-  useEffect(() => {
-    if (!accessToken) {
-      return;
-    }
-    setLoading(true);
-    void fetchStockLotById(accessToken, lotId)
-      .then(setLot)
-      .catch((err: unknown) => {
-        setError(err instanceof Error ? err.message : "Could not load lot");
-      })
-      .finally(() => setLoading(false));
-  }, [accessToken, lotId]);
+  const lotQuery = useGetStockLotsById(lotId, { query: { enabled: Boolean(accessToken) } });
+  const createDisposition = usePostStockLotsByIdDisposition();
+
+  const lot = lotQuery.data;
+  const loading = lotQuery.isLoading;
+  const busy = createDisposition.isPending;
+  const error = submitError ?? lotQuery.error?.message ?? null;
 
   const submit = async () => {
-    if (!accessToken || !reason.trim()) {
-      setError("Reason is required");
+    if (!reason.trim()) {
+      setSubmitError("Reason is required");
       return;
     }
-    setBusy(true);
+    setSubmitError(null);
     try {
-      await postStockLotDisposition(accessToken, lotId, {
-        decision,
-        reason: reason.trim(),
+      await createDisposition.mutateAsync({
+        id: lotId,
+        data: { decision, reason: reason.trim() },
       });
+      await queryClient.invalidateQueries({ queryKey: getGetStockLotsByIdQueryKey(lotId) });
       router.push("/client");
       router.refresh();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Disposition failed");
-    } finally {
-      setBusy(false);
+      setSubmitError(err instanceof Error ? err.message : "Disposition failed");
     }
   };
 

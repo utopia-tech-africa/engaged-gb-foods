@@ -1,8 +1,9 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { useAuth } from "@/components/auth-provider";
 import { OpsNetworkNav } from "@/components/ops-network-nav";
@@ -21,50 +22,43 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { OPS_NETWORK_ROLES } from "@/lib/network/roles";
-import { ZONE_LABELS } from "@/lib/stock/api";
-import { cn } from "@/lib/utils";
 import {
-  fetchVisitReconciliation,
-  postVisitClose,
-  postVisitSignature,
-  type ReconciliationSnapshot,
-  SIGNATURE_ROLE_LABELS,
-  uploadSignatureImage,
-} from "@/lib/visit/api";
+  getGetVisitsByIdReconciliationQueryKey,
+  useGetVisitsByIdReconciliation,
+  usePostVisitsByIdClose,
+  usePostVisitsByIdSignatures,
+} from "@/lib/api/generated/visits/visits";
+import { OPS_NETWORK_ROLES } from "@/lib/network/roles";
+import { ZONE_LABELS } from "@/lib/stock/constants";
+import { uploadPhoto } from "@/lib/uploads";
+import { cn } from "@/lib/utils";
+import { SIGNATURE_ROLE_LABELS } from "@/lib/visit/constants";
 
 export default function OpsVisitDetailPage() {
   const params = useParams<{ id: string }>();
   const visitId = params.id;
   const { accessToken, user } = useAuth();
-  const [snapshot, setSnapshot] = useState<ReconciliationSnapshot | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+  const [actionError, setActionError] = useState<string | null>(null);
   const [supervisorName, setSupervisorName] = useState("");
   const [signatureFile, setSignatureFile] = useState<File | null>(null);
-  const [busy, setBusy] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [exceptionDescription, setExceptionDescription] = useState("");
   const [exceptionOwner, setExceptionOwner] = useState("");
 
-  const reload = useCallback(async () => {
-    if (!accessToken) {
-      return;
-    }
-    setLoading(true);
-    try {
-      const data = await fetchVisitReconciliation(accessToken, visitId);
-      setSnapshot(data);
-      setError(null);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Could not load visit");
-    } finally {
-      setLoading(false);
-    }
-  }, [accessToken, visitId]);
+  const reconciliationQuery = useGetVisitsByIdReconciliation(visitId, {
+    query: { enabled: Boolean(accessToken) },
+  });
+  const postSignature = usePostVisitsByIdSignatures();
+  const closeVisit = usePostVisitsByIdClose();
 
-  useEffect(() => {
-    void reload();
-  }, [reload]);
+  const snapshot = reconciliationQuery.data;
+  const loading = reconciliationQuery.isLoading;
+  const error = actionError ?? reconciliationQuery.error?.message ?? null;
+  const busy = isUploading || postSignature.isPending || closeVisit.isPending;
+
+  const reload = () =>
+    queryClient.invalidateQueries({ queryKey: getGetVisitsByIdReconciliationQueryKey(visitId) });
 
   useEffect(() => {
     if (user?.fullName && !supervisorName) {
@@ -73,25 +67,46 @@ export default function OpsVisitDetailPage() {
   }, [user?.fullName, supervisorName]);
 
   const saveSupervisorSignature = async () => {
-    if (!accessToken || !supervisorName.trim()) {
+    if (!supervisorName.trim()) {
       return;
     }
-    setBusy(true);
+    setActionError(null);
     try {
       let imageObjectKey: string | undefined;
       if (signatureFile) {
-        imageObjectKey = await uploadSignatureImage(accessToken, signatureFile);
+        setIsUploading(true);
+        try {
+          imageObjectKey = await uploadPhoto(signatureFile, "signature");
+        } finally {
+          setIsUploading(false);
+        }
       }
-      await postVisitSignature(accessToken, visitId, {
-        role: "cluster_supervisor",
-        signerName: supervisorName.trim(),
-        imageObjectKey,
+      await postSignature.mutateAsync({
+        id: visitId,
+        data: {
+          role: "cluster_supervisor",
+          signerName: supervisorName.trim(),
+          imageObjectKey,
+        },
       });
       await reload();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Could not save signature");
-    } finally {
-      setBusy(false);
+      setActionError(err instanceof Error ? err.message : "Could not save signature");
+    }
+  };
+
+  const closeWithOpenAction = async () => {
+    setActionError(null);
+    try {
+      await closeVisit.mutateAsync({
+        id: visitId,
+        data: {
+          openActions: [{ description: exceptionDescription, ownerName: exceptionOwner }],
+        },
+      });
+      await reload();
+    } catch (err: unknown) {
+      setActionError(err instanceof Error ? err.message : "Could not close visit");
     }
   };
 
@@ -204,25 +219,7 @@ export default function OpsVisitDetailPage() {
                       variant="outline"
                       className="mt-3"
                       disabled={busy}
-                      onClick={() => {
-                        if (!accessToken) {
-                          return;
-                        }
-                        setBusy(true);
-                        void postVisitClose(accessToken, visitId, {
-                          openActions: [
-                            {
-                              description: exceptionDescription,
-                              ownerName: exceptionOwner,
-                            },
-                          ],
-                        })
-                          .then(() => reload())
-                          .catch((err: unknown) => {
-                            setError(err instanceof Error ? err.message : "Could not close visit");
-                          })
-                          .finally(() => setBusy(false));
-                      }}
+                      onClick={() => void closeWithOpenAction()}
                     >
                       Close with open action
                     </Button>

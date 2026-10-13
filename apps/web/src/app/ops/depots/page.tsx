@@ -1,6 +1,7 @@
 "use client";
 
-import { type FormEvent, useCallback, useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { type FormEvent, useState } from "react";
 
 import { useAuth } from "@/components/auth-provider";
 import { OpsNetworkNav } from "@/components/ops-network-nav";
@@ -26,22 +27,23 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
-import type { Depot, Distributor } from "@/lib/network/api";
-import * as networkApi from "@/lib/network/api";
+import {
+  getGetDepotsQueryKey,
+  useGetDepots,
+  usePostDepots,
+} from "@/lib/api/generated/depots/depots";
+import { useGetDistributors } from "@/lib/api/generated/distributors/distributors";
 import { canWriteNetwork, OPS_NETWORK_ROLES } from "@/lib/network/roles";
 
 const ALL_FILTER = "__all__";
 
 export default function OpsDepotsPage() {
   const { accessToken, user } = useAuth();
-  const [distributors, setDistributors] = useState<Distributor[]>([]);
-  const [depots, setDepots] = useState<Depot[]>([]);
+  const queryClient = useQueryClient();
   const [filterDistributorId, setFilterDistributorId] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const [distributorId, setDistributorId] = useState("");
+  const [selectedDistributorId, setSelectedDistributorId] = useState("");
   const [code, setCode] = useState("");
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
@@ -49,64 +51,52 @@ export default function OpsDepotsPage() {
   const [longitude, setLongitude] = useState("");
 
   const writeEnabled = user ? canWriteNetwork(user.role) : false;
+  const enabled = Boolean(accessToken);
 
-  const loadData = useCallback(async (token: string, distributorFilter?: string): Promise<void> => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const [distributorList, depotList] = await Promise.all([
-        networkApi.fetchDistributors(token),
-        networkApi.fetchDepots(token, {
-          distributorId: distributorFilter || undefined,
-        }),
-      ]);
-      setDistributors(distributorList);
-      setDepots(depotList);
-      setDistributorId((current) => current || distributorList[0]?.id || "");
-    } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : "Unable to load depots");
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  const distributorsQuery = useGetDistributors(undefined, { query: { enabled } });
+  const depotsQuery = useGetDepots(
+    { distributorId: filterDistributorId || undefined },
+    { query: { enabled } },
+  );
+  const createDepot = usePostDepots();
 
-  useEffect(() => {
-    if (!accessToken) {
-      return;
-    }
-    void loadData(accessToken, filterDistributorId);
-  }, [accessToken, filterDistributorId, loadData]);
+  const distributors = distributorsQuery.data ?? [];
+  const depots = depotsQuery.data ?? [];
+  const distributorId = selectedDistributorId || distributors[0]?.id || "";
+  const isLoading = distributorsQuery.isLoading || depotsQuery.isLoading;
+  const error = submitError ?? distributorsQuery.error?.message ?? depotsQuery.error?.message;
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
     event.preventDefault();
-    if (!accessToken || !writeEnabled) {
+    if (!writeEnabled) {
       return;
     }
 
-    setIsSubmitting(true);
-    setError(null);
+    setSubmitError(null);
     try {
       const lat = latitude.trim() ? Number.parseFloat(latitude) : undefined;
       const lng = longitude.trim() ? Number.parseFloat(longitude) : undefined;
 
-      await networkApi.createDepot(accessToken, {
-        distributorId,
-        code,
-        name,
-        address,
-        latitude: Number.isFinite(lat) ? lat : undefined,
-        longitude: Number.isFinite(lng) ? lng : undefined,
+      await createDepot.mutateAsync({
+        data: {
+          distributorId,
+          code,
+          name,
+          address,
+          latitude: Number.isFinite(lat) ? lat : undefined,
+          longitude: Number.isFinite(lng) ? lng : undefined,
+        },
       });
       setCode("");
       setName("");
       setAddress("");
       setLatitude("");
       setLongitude("");
-      await loadData(accessToken, filterDistributorId);
-    } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : "Unable to create depot");
-    } finally {
-      setIsSubmitting(false);
+      await queryClient.invalidateQueries({ queryKey: getGetDepotsQueryKey() });
+    } catch (mutationError) {
+      setSubmitError(
+        mutationError instanceof Error ? mutationError.message : "Unable to create depot",
+      );
     }
   };
 
@@ -160,7 +150,7 @@ export default function OpsDepotsPage() {
                       value={distributorId}
                       onValueChange={(value) => {
                         if (value) {
-                          setDistributorId(value);
+                          setSelectedDistributorId(value);
                         }
                       }}
                     >
@@ -225,8 +215,12 @@ export default function OpsDepotsPage() {
                       placeholder="-0.2057"
                     />
                   </div>
-                  <Button type="submit" disabled={isSubmitting} className="md:col-span-2 w-fit">
-                    {isSubmitting ? "Saving…" : "Create depot"}
+                  <Button
+                    type="submit"
+                    disabled={createDepot.isPending}
+                    className="md:col-span-2 w-fit"
+                  >
+                    {createDepot.isPending ? "Saving…" : "Create depot"}
                   </Button>
                 </form>
               </CardContent>

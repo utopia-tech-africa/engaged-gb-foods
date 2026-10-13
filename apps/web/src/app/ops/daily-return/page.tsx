@@ -1,8 +1,7 @@
 "use client";
 
 import { format } from "date-fns";
-import { useCallback, useEffect, useState } from "react";
-import { toast } from "sonner";
+import { useState } from "react";
 
 import { useAuth } from "@/components/auth-provider";
 import { DailyReturnForm } from "@/components/daily-return-form";
@@ -15,61 +14,33 @@ import { ShellFrame } from "@/components/shell-frame";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import {
-  type DailyReturn,
-  fetchDailyReturns,
-  fetchNationalSummary,
-  type NationalSummary,
-} from "@/lib/daily-return/api";
-import { fetchRegions, type Region } from "@/lib/network/api";
+  useGetDailyReturns,
+  useGetDailyReturnsNationalSummary,
+} from "@/lib/api/generated/daily-returns/daily-returns";
+import { useGetRegions } from "@/lib/api/generated/regions/regions";
 import { canWriteDailyReturn, OPS_NETWORK_ROLES, OPS_READINESS_ROLES } from "@/lib/network/roles";
 
 export default function OpsDailyReturnPage() {
   const { accessToken, user } = useAuth();
-  const [regions, setRegions] = useState<Region[]>([]);
   const [regionId, setRegionId] = useState("");
   const [date, setDate] = useState(() => format(new Date(), "yyyy-MM-dd"));
-  const [returns, setReturns] = useState<DailyReturn[]>([]);
-  const [summary, setSummary] = useState<NationalSummary | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
 
   const canWrite = user ? canWriteDailyReturn(user.role) : false;
   const showNational = user ? OPS_NETWORK_ROLES.includes(user.role) : false;
+  const enabled = Boolean(accessToken) && date !== "";
 
-  useEffect(() => {
-    if (!accessToken) {
-      return;
-    }
-    fetchRegions(accessToken)
-      .then((list) => setRegions(list.filter((region) => region.isActive)))
-      .catch((loadError: unknown) =>
-        toast.error(loadError instanceof Error ? loadError.message : "Unable to load regions"),
-      );
-  }, [accessToken]);
-
-  const loadReturns = useCallback(
-    async (token: string, day: string): Promise<void> => {
-      setIsLoading(true);
-      try {
-        const [list, national] = await Promise.all([
-          fetchDailyReturns(token, { date: day }),
-          showNational ? fetchNationalSummary(token, day) : Promise.resolve(null),
-        ]);
-        setReturns(list);
-        setSummary(national);
-      } catch (loadError) {
-        toast.error(loadError instanceof Error ? loadError.message : "Unable to load returns");
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [showNational],
+  const regionsQuery = useGetRegions({ query: { enabled: Boolean(accessToken) } });
+  const returnsQuery = useGetDailyReturns({ date }, { query: { enabled } });
+  const summaryQuery = useGetDailyReturnsNationalSummary(
+    { date },
+    { query: { enabled: enabled && showNational } },
   );
 
-  useEffect(() => {
-    if (accessToken && date) {
-      void loadReturns(accessToken, date);
-    }
-  }, [accessToken, date, loadReturns]);
+  const regions = (regionsQuery.data ?? []).filter((region) => region.isActive);
+  const returns = returnsQuery.data ?? [];
+  const summary = summaryQuery.data ?? null;
+  const isLoading = returnsQuery.isLoading || (showNational && summaryQuery.isLoading);
+  const loadError = returnsQuery.error ?? summaryQuery.error ?? regionsQuery.error;
 
   const existing = returns.find((entry) => entry.regionId === regionId) ?? null;
   const formKey = `${regionId}|${date}|${existing?.updatedAt ?? "new"}`;
@@ -89,16 +60,14 @@ export default function OpsDailyReturnPage() {
             <DailyReturnNationalCard summary={summary} isLoading={isLoading} />
           ) : null}
 
-          {canWrite && accessToken ? (
+          {canWrite ? (
             <DailyReturnForm
               key={formKey}
-              accessToken={accessToken}
               regions={regions}
               regionId={regionId}
               onRegionChange={setRegionId}
               date={date}
               existing={existing}
-              onSaved={() => loadReturns(accessToken, date)}
             />
           ) : null}
 
@@ -109,6 +78,8 @@ export default function OpsDailyReturnPage() {
             <CardContent>
               {isLoading ? (
                 <p className="text-sm text-muted-foreground">Loading…</p>
+              ) : loadError ? (
+                <p className="text-sm text-danger">{loadError.message}</p>
               ) : (
                 <DailyReturnTable
                   returns={returns}

@@ -16,6 +16,11 @@ import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { CloseVisitDto } from "./dto/close-visit.dto";
 import { CreateVisitSignatureDto } from "./dto/create-visit-signature.dto";
 import { ListVisitsQueryDto } from "./dto/list-visits-query.dto";
+import {
+  ReconciliationSnapshotResponseDto,
+  VisitSignatureResponseDto,
+  VisitSummaryResponseDto,
+} from "./dto/visit-response.dto";
 import { VisitService } from "./visit.service";
 
 @ApiTags("Visits")
@@ -32,7 +37,7 @@ export class VisitController {
     summary: "List visits",
     description: "Lists depot visits for operations and field users within assignment scope.",
   })
-  @ApiOkResponse({ description: "Visit list" })
+  @ApiOkResponse({ description: "Visit list", type: [VisitSummaryResponseDto] })
   getVisits(@CurrentUser() user: AuthenticatedUser, @Query() query: ListVisitsQueryDto) {
     return this.visitService.listVisits(user.id, user.role, {
       depotId: query.depotId,
@@ -49,7 +54,10 @@ export class VisitController {
     description:
       "Derived stock balance by SKU and batch, held-lot custodian gaps, signatures, and close readiness.",
   })
-  @ApiOkResponse({ description: "Reconciliation snapshot" })
+  @ApiOkResponse({
+    description: "Reconciliation snapshot",
+    type: ReconciliationSnapshotResponseDto,
+  })
   getVisitsByIdReconciliation(@CurrentUser() user: AuthenticatedUser, @Param("id") id: string) {
     return this.visitService.getReconciliation(id, user.id, user.role);
   }
@@ -69,7 +77,7 @@ export class VisitController {
     description:
       "Captures QC, cluster supervisor, or depot representative sign-off with optional drawn signature image.",
   })
-  @ApiCreatedResponse({ description: "Signature recorded" })
+  @ApiCreatedResponse({ description: "Signature recorded", type: VisitSignatureResponseDto })
   postVisitsByIdSignatures(
     @CurrentUser() user: AuthenticatedUser,
     @Param("id") id: string,
@@ -93,7 +101,7 @@ export class VisitController {
     description:
       "Completes reconciliation when balanced and signed, or closes as exception with open actions.",
   })
-  @ApiCreatedResponse({ description: "Visit closed" })
+  @ApiCreatedResponse({ description: "Visit closed", type: VisitSummaryResponseDto })
   postVisitsByIdClose(
     @CurrentUser() user: AuthenticatedUser,
     @Param("id") id: string,

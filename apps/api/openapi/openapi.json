@@ -1,0 +1,4670 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/health": {
+      "get": {
+        "description": "Returns process health and a lightweight database connectivity check.",
+        "operationId": "getHealth",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Get API health",
+        "tags": [
+          "Health"
+        ]
+      }
+    },
+    "/auth/field/sign-in": {
+      "post": {
+        "description": "Authenticates a field user and returns an access and refresh token pair.",
+        "operationId": "postAuthFieldSignIn",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FieldSignInDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Field sign-in successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthTokenResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid staff ID or PIN"
+          }
+        },
+        "summary": "Sign in with staff ID and PIN",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/auth/ops/sign-in": {
+      "post": {
+        "description": "Authenticates an operations, quality, admin, or GBfoods reviewer user and returns tokens.",
+        "operationId": "postAuthOpsSignIn",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OpsSignInDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ops sign-in successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthTokenResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid email or password"
+          }
+        },
+        "summary": "Sign in with email and password",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/auth/refresh": {
+      "post": {
+        "description": "Exchanges a valid refresh token for a new access and refresh token pair.",
+        "operationId": "postAuthRefresh",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshTokenDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Tokens refreshed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthTokenResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Refresh access token",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/auth/sign-out": {
+      "post": {
+        "description": "Revokes the refresh token session when it is still valid.",
+        "operationId": "postAuthSignOut",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshTokenDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "summary": "Sign out",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "description": "Returns the authenticated user profile for the bearer access token.",
+        "operationId": "getAuthMe",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Current user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthUserDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get current user",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/client/overview": {
+      "get": {
+        "description": "Returns KPIs and per-depot status for GBfoods reviewers: completion, review queues, holds, and sync delays for a calendar day.",
+        "operationId": "getClientOverview",
+        "parameters": [
+          {
+            "name": "date",
+            "required": false,
+            "in": "query",
+            "description": "Calendar date (UTC day)",
+            "schema": {
+              "example": "2026-10-12",
+              "type": "string"
+            }
+          },
+          {
+            "name": "regionId",
+            "required": false,
+            "in": "query",
+            "description": "Filter depots by region id",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "depotId",
+            "required": false,
+            "in": "query",
+            "description": "Filter depots by depot id",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "reviewStatus",
+            "required": false,
+            "in": "query",
+            "description": "Filter depot rows by GBfoods review status",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "hold",
+                "reviewed"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Control room overview",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientOverviewResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Client control room overview",
+        "tags": [
+          "Client"
+        ]
+      }
+    },
+    "/client/export/reconciliation.csv": {
+      "get": {
+        "description": "Downloads reconciliation lines by depot, SKU, and batch for the selected day and optional region filter.",
+        "operationId": "getClientExportReconciliationCsv",
+        "parameters": [
+          {
+            "name": "date",
+            "required": false,
+            "in": "query",
+            "description": "Calendar date (UTC day)",
+            "schema": {
+              "example": "2026-10-12",
+              "type": "string"
+            }
+          },
+          {
+            "name": "regionId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by region id",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "CSV file",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Export depot reconciliation CSV",
+        "tags": [
+          "Client"
+        ]
+      }
+    },
+    "/client/export/holds.csv": {
+      "get": {
+        "description": "Downloads held-or-rejected lots with custodian and latest disposition for the selected day and optional region.",
+        "operationId": "getClientExportHoldsCsv",
+        "parameters": [
+          {
+            "name": "date",
+            "required": false,
+            "in": "query",
+            "description": "Calendar date (UTC day)",
+            "schema": {
+              "example": "2026-10-12",
+              "type": "string"
+            }
+          },
+          {
+            "name": "regionId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by region id",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "CSV file",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Export quality holds CSV",
+        "tags": [
+          "Client"
+        ]
+      }
+    },
+    "/client/depots/{depotId}/pack": {
+      "get": {
+        "description": "Returns reconciliation snapshots, stock lots, and hold log for one depot on a calendar day (CSV-friendly JSON).",
+        "operationId": "getClientDepotsByIdPack",
+        "parameters": [
+          {
+            "name": "depotId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "date",
+            "required": false,
+            "in": "query",
+            "description": "Calendar date (UTC day)",
+            "schema": {
+              "example": "2026-10-12",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Depot pack",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientDepotPackResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Depot reconciliation pack",
+        "tags": [
+          "Client"
+        ]
+      }
+    },
+    "/visits": {
+      "get": {
+        "description": "Lists depot visits for operations and field users within assignment scope.",
+        "operationId": "getVisits",
+        "parameters": [
+          {
+            "name": "depotId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "date",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": "2026-10-12",
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/VisitStatus"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Visit list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VisitSummaryResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List visits",
+        "tags": [
+          "Visits"
+        ]
+      }
+    },
+    "/visits/{id}/reconciliation": {
+      "get": {
+        "description": "Derived stock balance by SKU and batch, held-lot custodian gaps, signatures, and close readiness.",
+        "operationId": "getVisitsByIdReconciliation",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Reconciliation snapshot",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReconciliationSnapshotResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Visit reconciliation",
+        "tags": [
+          "Visits"
+        ]
+      }
+    },
+    "/visits/{id}/signatures": {
+      "post": {
+        "description": "Captures QC, cluster supervisor, or depot representative sign-off with optional drawn signature image.",
+        "operationId": "postVisitsByIdSignatures",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateVisitSignatureDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Signature recorded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisitSignatureResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Record visit signature",
+        "tags": [
+          "Visits"
+        ]
+      }
+    },
+    "/visits/{id}/close": {
+      "post": {
+        "description": "Completes reconciliation when balanced and signed, or closes as exception with open actions.",
+        "operationId": "postVisitsByIdClose",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CloseVisitDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Visit closed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisitSummaryResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Close visit",
+        "tags": [
+          "Visits"
+        ]
+      }
+    },
+    "/uploads/presign": {
+      "post": {
+        "description": "Returns a presigned PUT URL for attendance, stock evidence, or signatures when R2 is configured.",
+        "operationId": "postUploadsPresign",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PresignUploadDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Presigned upload details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PresignedUploadResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Presign photo upload",
+        "tags": [
+          "Uploads"
+        ]
+      }
+    },
+    "/uploads/local": {
+      "post": {
+        "description": "Writes the file to apps/api/.uploads when R2 is not configured. Returns objectKey local/…",
+        "operationId": "postUploadsLocal",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Local object key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LocalUploadResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Local dev photo upload",
+        "tags": [
+          "Uploads"
+        ]
+      }
+    },
+    "/uploads/local/raw": {
+      "post": {
+        "description": "Alternative local upload using raw body and Content-Type header.",
+        "operationId": "postUploadsLocalRaw",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "Local object key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LocalUploadResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Local dev raw body upload",
+        "tags": [
+          "Uploads"
+        ]
+      }
+    },
+    "/uploads/content": {
+      "get": {
+        "description": "Redirects to R2 public URL or streams a local dev file by objectKey.",
+        "operationId": "getUploadsContent",
+        "parameters": [
+          {
+            "name": "objectKey",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "File content"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Stream or redirect uploaded content",
+        "tags": [
+          "Uploads"
+        ]
+      }
+    },
+    "/regions": {
+      "get": {
+        "description": "Returns Ghana network regions ordered by name for ops and field users.",
+        "operationId": "getRegions",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "List of regions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RegionResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List regions",
+        "tags": [
+          "Regions"
+        ]
+      }
+    },
+    "/distributors": {
+      "get": {
+        "description": "Returns distributors for the network register, optionally filtered by region id.",
+        "operationId": "getDistributors",
+        "parameters": [
+          {
+            "name": "regionId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by region id",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of distributors",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DistributorResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List distributors",
+        "tags": [
+          "Distributors"
+        ]
+      },
+      "post": {
+        "description": "Creates a distributor under a region for national operations or admin users.",
+        "operationId": "postDistributors",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDistributorDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Distributor created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DistributorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create distributor",
+        "tags": [
+          "Distributors"
+        ]
+      }
+    },
+    "/distributors/{id}": {
+      "patch": {
+        "description": "Updates distributor contact details, cluster link, or active flag.",
+        "operationId": "patchDistributors",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDistributorDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Distributor updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DistributorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update distributor",
+        "tags": [
+          "Distributors"
+        ]
+      }
+    },
+    "/depots": {
+      "get": {
+        "description": "Returns depot register entries, optionally filtered by distributor or region id.",
+        "operationId": "getDepots",
+        "parameters": [
+          {
+            "name": "distributorId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by distributor id",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "regionId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by region id (via distributor)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of depots",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DepotResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List depots",
+        "tags": [
+          "Depots"
+        ]
+      },
+      "post": {
+        "description": "Creates a depot under a distributor with address and optional recce pin coordinates.",
+        "operationId": "postDepots",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDepotDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Depot created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DepotResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create depot",
+        "tags": [
+          "Depots"
+        ]
+      }
+    },
+    "/depots/{id}": {
+      "get": {
+        "description": "Returns a single depot including optional recce coordinates.",
+        "operationId": "getDepotsById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Depot details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DepotResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get depot by id",
+        "tags": [
+          "Depots"
+        ]
+      },
+      "patch": {
+        "description": "Updates depot address, contacts, readiness, or recce coordinates.",
+        "operationId": "patchDepots",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDepotDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Depot updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DepotResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update depot",
+        "tags": [
+          "Depots"
+        ]
+      }
+    },
+    "/assignments/me/depots": {
+      "get": {
+        "description": "Returns active depots within the user's assignment scope for field check-in.",
+        "operationId": "getMeDepots",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Depots assigned to current user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MyDepotResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List my assigned depots",
+        "tags": [
+          "Assignments"
+        ]
+      }
+    },
+    "/assignments": {
+      "get": {
+        "description": "Returns user network assignments with scope and effective dates.",
+        "operationId": "getAssignments",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "List of assignments"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List assignments",
+        "tags": [
+          "Assignments"
+        ]
+      },
+      "post": {
+        "description": "Assigns a field user (typically QC) to a distributor, cluster, or region scope.",
+        "operationId": "postAssignments",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAssignmentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Assignment created"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create assignment",
+        "tags": [
+          "Assignments"
+        ]
+      }
+    },
+    "/attendance": {
+      "post": {
+        "description": "Stores attendance with photo object key and optional GPS coordinates. Missing GPS is allowed.",
+        "operationId": "postAttendance",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAttendanceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Attendance recorded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttendanceResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Record check-in or check-out",
+        "tags": [
+          "Attendance"
+        ]
+      },
+      "get": {
+        "description": "Supervisors and ops can list attendance for a calendar date with optional filters.",
+        "operationId": "getAttendance",
+        "parameters": [
+          {
+            "name": "depotId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by depot id",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "date",
+            "required": true,
+            "in": "query",
+            "description": "Calendar date (YYYY-MM-DD)",
+            "schema": {
+              "example": "2026-10-12",
+              "type": "string"
+            }
+          },
+          {
+            "name": "userId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by user id",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Attendance list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AttendanceResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List attendance records",
+        "tags": [
+          "Attendance"
+        ]
+      }
+    },
+    "/me/attendance/today": {
+      "get": {
+        "description": "Returns the signed-in field user's attendance events for the current UTC day.",
+        "operationId": "getMeAttendanceToday",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Today's attendance for current user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AttendanceResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "My attendance today",
+        "tags": [
+          "Attendance"
+        ]
+      }
+    },
+    "/skus": {
+      "get": {
+        "description": "Returns active product SKUs for stock capture and ops.",
+        "operationId": "getSkus",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "SKU list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SkuResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List SKUs",
+        "tags": [
+          "Skus"
+        ]
+      },
+      "post": {
+        "description": "Creates a product SKU. Restricted to admin and national ops.",
+        "operationId": "postSkus",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSkuDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "SKU created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkuResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create SKU",
+        "tags": [
+          "Skus"
+        ]
+      }
+    },
+    "/stock-lots": {
+      "post": {
+        "description": "Creates a stock lot with evidence for a visit or today's visit at an assigned depot.",
+        "operationId": "postStockLots",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateStockLotDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Stock lot created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StockLotResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Capture stock lot",
+        "tags": [
+          "Stock lots"
+        ]
+      },
+      "get": {
+        "description": "Lists stock lots filtered by visit, depot, and/or calendar date.",
+        "operationId": "getStockLots",
+        "parameters": [
+          {
+            "name": "visitId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "depotId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "date",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": "2026-10-12",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Stock lot list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StockLotResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List stock lots",
+        "tags": [
+          "Stock lots"
+        ]
+      }
+    },
+    "/stock-lots/{id}": {
+      "get": {
+        "description": "Returns a single stock lot with SKU, evidence, and visit context.",
+        "operationId": "getStockLotsById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Stock lot detail",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StockLotResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get stock lot",
+        "tags": [
+          "Stock lots"
+        ]
+      }
+    },
+    "/stock-lots/{id}/disposition": {
+      "post": {
+        "description": "GBfoods reviewer records release, hold, reject, or repack approval; updates lot zone and appends a disposition movement.",
+        "operationId": "postStockLotsByIdDisposition",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDispositionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Disposition recorded"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Record GBfoods disposition",
+        "tags": [
+          "Stock lots"
+        ]
+      }
+    },
+    "/stock-lots/{id}/custodian": {
+      "patch": {
+        "description": "Field or supervisor assigns custodian name for held or rejected stock lots.",
+        "operationId": "patchStockLotsByIdCustodian",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchStockLotCustodianDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Custodian updated"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Set held lot custodian",
+        "tags": [
+          "Stock lots"
+        ]
+      }
+    },
+    "/recces": {
+      "get": {
+        "description": "Lists depot recces with gaps and evidence, newest first, optionally filtered by depot or decision.",
+        "operationId": "getRecces",
+        "parameters": [
+          {
+            "name": "depotId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by depot id",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "decision",
+            "required": false,
+            "in": "query",
+            "description": "Filter by decision",
+            "schema": {
+              "$ref": "#/components/schemas/RecceDecision"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Recce list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RecceResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List recces",
+        "tags": [
+          "Recces"
+        ]
+      },
+      "post": {
+        "description": "Records a depot recce with checklist, gaps, and optional photo keys. A critical gap forces a hold decision. The depot readiness is synced to the latest recce decision.",
+        "operationId": "postRecces",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRecceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Recce created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecceResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create recce",
+        "tags": [
+          "Recces"
+        ]
+      }
+    },
+    "/recces/{id}": {
+      "get": {
+        "description": "Returns a single recce with checklist, gaps, evidence, depot, and author.",
+        "operationId": "getReccesById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Recce detail",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecceResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get recce by id",
+        "tags": [
+          "Recces"
+        ]
+      },
+      "patch": {
+        "description": "Updates checklist, decision, notes, or replaces gaps and evidence. A critical gap still forces a hold decision. The depot readiness is re-synced to its latest recce.",
+        "operationId": "patchReccesById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateRecceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Recce updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecceResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update recce",
+        "tags": [
+          "Recces"
+        ]
+      }
+    },
+    "/assessments": {
+      "get": {
+        "description": "Lists the latest training assessment per user with a dispatchable flag. Filter by user or pass/fail result. Set history=true to list every assessment.",
+        "operationId": "getAssessments",
+        "parameters": [
+          {
+            "name": "userId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by assessed user id",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "result",
+            "required": false,
+            "in": "query",
+            "description": "Filter by result",
+            "schema": {
+              "$ref": "#/components/schemas/AssessmentResult"
+            }
+          },
+          {
+            "name": "history",
+            "required": false,
+            "in": "query",
+            "description": "Return every assessment instead of only the latest per user",
+            "schema": {
+              "default": false,
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Assessment roster",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AssessmentResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List assessments",
+        "tags": [
+          "Assessments"
+        ]
+      },
+      "post": {
+        "description": "Records a safety, quality, and record-keeping assessment for a field user. All three must pass for a pass result and dispatch eligibility; otherwise the result is fail. Each submission becomes the user's latest assessment.",
+        "operationId": "postAssessments",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAssessmentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Assessment recorded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssessmentResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Record assessment",
+        "tags": [
+          "Assessments"
+        ]
+      }
+    },
+    "/assessments/{id}": {
+      "get": {
+        "description": "Returns a single assessment with the assessed user and assessor.",
+        "operationId": "getAssessmentsById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Assessment detail",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssessmentResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get assessment by id",
+        "tags": [
+          "Assessments"
+        ]
+      }
+    },
+    "/daily-returns": {
+      "get": {
+        "description": "Lists regional daily returns, newest first, optionally filtered by region and by a single day.",
+        "operationId": "getDailyReturns",
+        "parameters": [
+          {
+            "name": "regionId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by region id",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "date",
+            "required": false,
+            "in": "query",
+            "description": "Only returns for this day",
+            "schema": {
+              "example": "2026-10-13",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Daily return list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DailyReturnResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List daily returns",
+        "tags": [
+          "Daily returns"
+        ]
+      },
+      "post": {
+        "description": "Submits the daily return for a region and date. If one already exists for that region and date it is updated instead (upsert). Depot counts not supplied are derived from active depots and that day's visits in the region.",
+        "operationId": "postDailyReturns",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDailyReturnDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Daily return created or updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DailyReturnResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Submit daily return",
+        "tags": [
+          "Daily returns"
+        ]
+      }
+    },
+    "/daily-returns/national/summary": {
+      "get": {
+        "description": "Aggregates the regional daily returns for a day: how many active regions have submitted, national depot totals, and a per-region breakdown including regions still outstanding.",
+        "operationId": "getDailyReturnsNationalSummary",
+        "parameters": [
+          {
+            "name": "date",
+            "required": false,
+            "in": "query",
+            "description": "Defaults to today (UTC)",
+            "schema": {
+              "example": "2026-10-13",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "National summary for the day",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NationalSummaryResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "National daily return summary",
+        "tags": [
+          "Daily returns"
+        ]
+      }
+    },
+    "/daily-returns/{id}": {
+      "get": {
+        "description": "Returns a single regional daily return with region and submitter.",
+        "operationId": "getDailyReturnsById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Daily return detail",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DailyReturnResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get daily return by id",
+        "tags": [
+          "Daily returns"
+        ]
+      },
+      "patch": {
+        "description": "Updates summaries or depot counts on an existing daily return. Region and date cannot change.",
+        "operationId": "patchDailyReturnsById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDailyReturnDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Daily return updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DailyReturnResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update daily return",
+        "tags": [
+          "Daily returns"
+        ]
+      }
+    },
+    "/users": {
+      "get": {
+        "description": "Lists active users for ops screens such as the assessment roster, optionally filtered by role. Returns no credentials.",
+        "operationId": "getUsers",
+        "parameters": [
+          {
+            "name": "role",
+            "required": false,
+            "in": "query",
+            "description": "Filter by role",
+            "schema": {
+              "$ref": "#/components/schemas/UserRole"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Active users",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserSummaryResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List users",
+        "tags": [
+          "Users"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "GBfoods Stock Control API",
+    "description": "Field and client API for the GBfoods nationwide depot sorting and segregation programme.",
+    "version": "0.1.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "securitySchemes": {
+      "bearer": {
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "type": "http"
+      }
+    },
+    "schemas": {
+      "FieldSignInDto": {
+        "type": "object",
+        "properties": {
+          "staffId": {
+            "type": "string",
+            "example": "BTL-0031",
+            "description": "Staff ID printed on the field photo ID card"
+          },
+          "pin": {
+            "type": "string",
+            "example": "2468",
+            "description": "Four to six digit PIN"
+          }
+        },
+        "required": [
+          "staffId",
+          "pin"
+        ]
+      },
+      "UserRole": {
+        "type": "string",
+        "enum": [
+          "qc",
+          "handler",
+          "cluster_supervisor",
+          "regional_supervisor",
+          "national_ops",
+          "national_quality",
+          "admin",
+          "gbfoods_reviewer"
+        ]
+      },
+      "AuthUserDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "staffId": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "role": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UserRole"
+              }
+            ]
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "fullName",
+          "staffId",
+          "email",
+          "phone",
+          "role",
+          "isActive"
+        ]
+      },
+      "AuthTokenResponseDto": {
+        "type": "object",
+        "properties": {
+          "user": {
+            "$ref": "#/components/schemas/AuthUserDto"
+          },
+          "accessToken": {
+            "type": "string"
+          },
+          "refreshToken": {
+            "type": "string"
+          },
+          "expiresIn": {
+            "type": "number",
+            "example": 900,
+            "description": "Access token lifetime in seconds"
+          }
+        },
+        "required": [
+          "user",
+          "accessToken",
+          "refreshToken",
+          "expiresIn"
+        ]
+      },
+      "OpsSignInDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "admin@gbfoods.local"
+          },
+          "password": {
+            "type": "string",
+            "example": "ChangeMe123!"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
+      "RefreshTokenDto": {
+        "type": "object",
+        "properties": {
+          "refreshToken": {
+            "type": "string",
+            "description": "Opaque refresh token returned at sign-in"
+          }
+        },
+        "required": [
+          "refreshToken"
+        ]
+      },
+      "ClientReviewStatus": {
+        "type": "string",
+        "enum": [
+          "pending",
+          "hold",
+          "reviewed"
+        ]
+      },
+      "ClientOverviewDepotDto": {
+        "type": "object",
+        "properties": {
+          "depotId": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "regionName": {
+            "type": "string"
+          },
+          "visitStatus": {
+            "type": "string",
+            "nullable": true
+          },
+          "coverage": {
+            "type": "number"
+          },
+          "reviewStatus": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ClientReviewStatus"
+              }
+            ]
+          },
+          "lastSyncedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "openHolds": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "depotId",
+          "code",
+          "name",
+          "regionName",
+          "visitStatus",
+          "coverage",
+          "reviewStatus",
+          "lastSyncedAt",
+          "openHolds"
+        ]
+      },
+      "ClientOverviewResponseDto": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string"
+          },
+          "lastSyncAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "depotsComplete": {
+            "type": "number"
+          },
+          "depotsTotal": {
+            "type": "number"
+          },
+          "recordsToReview": {
+            "type": "number"
+          },
+          "qualityHolds": {
+            "type": "number"
+          },
+          "depotsWithSyncDelay": {
+            "type": "number"
+          },
+          "depots": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ClientOverviewDepotDto"
+            }
+          }
+        },
+        "required": [
+          "date",
+          "lastSyncAt",
+          "depotsComplete",
+          "depotsTotal",
+          "recordsToReview",
+          "qualityHolds",
+          "depotsWithSyncDelay",
+          "depots"
+        ]
+      },
+      "ClientPackDepotDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "regionName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name",
+          "regionName"
+        ]
+      },
+      "ClientPackVisitDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "lastSyncedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "status",
+          "lastSyncedAt"
+        ]
+      },
+      "VisitDepotDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name"
+        ]
+      },
+      "VisitQcUserDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "staffId": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "fullName",
+          "staffId"
+        ]
+      },
+      "SignatureRole": {
+        "type": "string",
+        "enum": [
+          "qc",
+          "cluster_supervisor",
+          "depot_representative"
+        ]
+      },
+      "VisitSignatureResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "visitId": {
+            "type": "string"
+          },
+          "role": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SignatureRole"
+              }
+            ]
+          },
+          "signerName": {
+            "type": "string"
+          },
+          "imageObjectKey": {
+            "type": "string",
+            "nullable": true
+          },
+          "signedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "signedByUserId": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "visitId",
+          "role",
+          "signerName",
+          "imageObjectKey",
+          "signedAt",
+          "signedByUserId"
+        ]
+      },
+      "VisitSummaryResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "type": "string"
+          },
+          "reconciledAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "depot": {
+            "$ref": "#/components/schemas/VisitDepotDto"
+          },
+          "qcUser": {
+            "$ref": "#/components/schemas/VisitQcUserDto"
+          },
+          "signatures": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VisitSignatureResponseDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "date",
+          "status",
+          "reconciledAt",
+          "depot",
+          "qcUser"
+        ]
+      },
+      "ReconciliationLineDto": {
+        "type": "object",
+        "properties": {
+          "skuId": {
+            "type": "string"
+          },
+          "batchCode": {
+            "type": "string"
+          },
+          "skuName": {
+            "type": "string"
+          },
+          "opening": {
+            "type": "number"
+          },
+          "inward": {
+            "type": "number"
+          },
+          "outward": {
+            "type": "number"
+          },
+          "closingByZone": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number"
+            }
+          },
+          "closingTotal": {
+            "type": "number"
+          },
+          "variance": {
+            "type": "number"
+          },
+          "lotIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "skuId",
+          "batchCode",
+          "skuName",
+          "opening",
+          "inward",
+          "outward",
+          "closingByZone",
+          "closingTotal",
+          "variance",
+          "lotIds"
+        ]
+      },
+      "HeldLotWithoutCustodianDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "skuId": {
+            "type": "string"
+          },
+          "batchCode": {
+            "type": "string"
+          },
+          "skuName": {
+            "type": "string"
+          },
+          "baseQuantity": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "skuId",
+          "batchCode",
+          "skuName",
+          "baseQuantity"
+        ]
+      },
+      "ReconciliationSnapshotResponseDto": {
+        "type": "object",
+        "properties": {
+          "visit": {
+            "$ref": "#/components/schemas/VisitSummaryResponseDto"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReconciliationLineDto"
+            }
+          },
+          "heldLotsWithoutCustodian": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HeldLotWithoutCustodianDto"
+            }
+          },
+          "signatures": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VisitSignatureResponseDto"
+            }
+          },
+          "missingSignatures": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SignatureRole"
+            }
+          },
+          "canClose": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "visit",
+          "lines",
+          "heldLotsWithoutCustodian",
+          "signatures",
+          "missingSignatures",
+          "canClose"
+        ]
+      },
+      "StockZone": {
+        "type": "string",
+        "enum": [
+          "unexamined",
+          "conforming_pending_release",
+          "recoverable_pending_approval",
+          "held_or_rejected",
+          "released_remaining_on_site"
+        ]
+      },
+      "StockUnit": {
+        "type": "string",
+        "enum": [
+          "cases",
+          "loose_packs"
+        ]
+      },
+      "SkuResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "brand": {
+            "type": "string",
+            "nullable": true
+          },
+          "packFactor": {
+            "type": "number"
+          },
+          "caseUnit": {
+            "type": "string"
+          },
+          "looseUnit": {
+            "type": "string"
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "brand",
+          "packFactor",
+          "caseUnit",
+          "looseUnit",
+          "isActive"
+        ]
+      },
+      "StockEvidenceCategory": {
+        "type": "string",
+        "enum": [
+          "pack",
+          "batch",
+          "defect",
+          "position"
+        ]
+      },
+      "StockEvidenceResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "category": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StockEvidenceCategory"
+              }
+            ]
+          },
+          "objectKey": {
+            "type": "string"
+          },
+          "capturedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "category",
+          "objectKey",
+          "capturedAt"
+        ]
+      },
+      "StockLotDepotDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name"
+        ]
+      },
+      "StockLotVisitDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "type": "string"
+          },
+          "depot": {
+            "$ref": "#/components/schemas/StockLotDepotDto"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "date",
+          "status",
+          "depot"
+        ]
+      },
+      "StockLotCreatorDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "staffId": {
+            "type": "string",
+            "nullable": true
+          },
+          "role": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "fullName",
+          "staffId",
+          "role"
+        ]
+      },
+      "StockLotResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "visitId": {
+            "type": "string"
+          },
+          "skuId": {
+            "type": "string"
+          },
+          "batchCode": {
+            "type": "string"
+          },
+          "expiryDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "zone": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StockZone"
+              }
+            ]
+          },
+          "quantity": {
+            "type": "number"
+          },
+          "unit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StockUnit"
+              }
+            ]
+          },
+          "baseQuantity": {
+            "type": "number"
+          },
+          "custodian": {
+            "type": "string",
+            "nullable": true
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          },
+          "latitude": {
+            "type": "number",
+            "nullable": true
+          },
+          "longitude": {
+            "type": "number",
+            "nullable": true
+          },
+          "accuracyMeters": {
+            "type": "number",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "sku": {
+            "$ref": "#/components/schemas/SkuResponseDto"
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StockEvidenceResponseDto"
+            }
+          },
+          "visit": {
+            "$ref": "#/components/schemas/StockLotVisitDto"
+          },
+          "createdBy": {
+            "$ref": "#/components/schemas/StockLotCreatorDto"
+          }
+        },
+        "required": [
+          "id",
+          "visitId",
+          "skuId",
+          "batchCode",
+          "expiryDate",
+          "zone",
+          "quantity",
+          "unit",
+          "baseQuantity",
+          "custodian",
+          "notes",
+          "latitude",
+          "longitude",
+          "accuracyMeters",
+          "createdAt",
+          "sku",
+          "evidence",
+          "visit",
+          "createdBy"
+        ]
+      },
+      "ClientPackHoldDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "visitCode": {
+            "type": "string"
+          },
+          "skuName": {
+            "type": "string"
+          },
+          "batchCode": {
+            "type": "string"
+          },
+          "baseQuantity": {
+            "type": "number"
+          },
+          "custodian": {
+            "type": "string",
+            "nullable": true
+          },
+          "pendingDisposition": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "visitCode",
+          "skuName",
+          "batchCode",
+          "baseQuantity",
+          "custodian",
+          "pendingDisposition"
+        ]
+      },
+      "ClientDepotPackResponseDto": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string"
+          },
+          "depot": {
+            "$ref": "#/components/schemas/ClientPackDepotDto"
+          },
+          "visits": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ClientPackVisitDto"
+            }
+          },
+          "reconciliations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReconciliationSnapshotResponseDto"
+            }
+          },
+          "lots": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StockLotResponseDto"
+            }
+          },
+          "holds": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ClientPackHoldDto"
+            }
+          }
+        },
+        "required": [
+          "date",
+          "depot",
+          "visits",
+          "reconciliations",
+          "lots",
+          "holds"
+        ]
+      },
+      "VisitStatus": {
+        "type": "string",
+        "enum": [
+          "scheduled",
+          "in_progress",
+          "complete",
+          "exception"
+        ]
+      },
+      "CreateVisitSignatureDto": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SignatureRole"
+              }
+            ]
+          },
+          "signerName": {
+            "type": "string",
+            "example": "Ama Mensah"
+          },
+          "imageObjectKey": {
+            "type": "string",
+            "description": "Drawn signature image object key from uploads"
+          }
+        },
+        "required": [
+          "role",
+          "signerName"
+        ]
+      },
+      "VisitOpenActionInputDto": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string",
+            "example": "Re-count batch LOT-12 in bay 3"
+          },
+          "ownerName": {
+            "type": "string",
+            "example": "Cluster supervisor"
+          },
+          "dueAt": {
+            "type": "string",
+            "example": "2026-10-15"
+          },
+          "acceptedByGBfoods": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "required": [
+          "description",
+          "ownerName"
+        ]
+      },
+      "CloseVisitDto": {
+        "type": "object",
+        "properties": {
+          "openActions": {
+            "description": "When provided, closes the visit as exception with tracked open actions",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VisitOpenActionInputDto"
+            }
+          }
+        }
+      },
+      "UploadPurpose": {
+        "type": "string",
+        "enum": [
+          "attendance_photo",
+          "stock_evidence",
+          "signature"
+        ]
+      },
+      "PresignUploadDto": {
+        "type": "object",
+        "properties": {
+          "contentType": {
+            "type": "string",
+            "example": "image/jpeg"
+          },
+          "contentLength": {
+            "type": "number",
+            "example": 120000,
+            "maximum": 5242880
+          },
+          "purpose": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UploadPurpose"
+              }
+            ]
+          }
+        },
+        "required": [
+          "contentType",
+          "contentLength",
+          "purpose"
+        ]
+      },
+      "PresignedUploadResponseDto": {
+        "type": "object",
+        "properties": {
+          "uploadUrl": {
+            "type": "string"
+          },
+          "objectKey": {
+            "type": "string"
+          },
+          "method": {
+            "type": "string",
+            "enum": [
+              "PUT"
+            ]
+          }
+        },
+        "required": [
+          "uploadUrl",
+          "objectKey",
+          "method"
+        ]
+      },
+      "LocalUploadResponseDto": {
+        "type": "object",
+        "properties": {
+          "objectKey": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "objectKey"
+        ]
+      },
+      "RegionResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name",
+          "slug",
+          "isActive",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "DistributorResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "regionId": {
+            "type": "string"
+          },
+          "clusterId": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "contactName": {
+            "type": "string",
+            "nullable": true
+          },
+          "contactPhone": {
+            "type": "string",
+            "nullable": true
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "regionId",
+          "clusterId",
+          "name",
+          "code",
+          "contactName",
+          "contactPhone",
+          "isActive",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "CreateDistributorDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Accra Fresh Distributors Ltd"
+          },
+          "code": {
+            "type": "string",
+            "example": "GA-ACC-01"
+          },
+          "regionId": {
+            "type": "string",
+            "description": "Region cuid"
+          },
+          "clusterId": {
+            "type": "string",
+            "description": "Cluster cuid"
+          },
+          "contactName": {
+            "type": "string",
+            "example": "Ama Osei"
+          },
+          "contactPhone": {
+            "type": "string",
+            "example": "0244123456"
+          },
+          "isActive": {
+            "type": "boolean",
+            "default": true
+          }
+        },
+        "required": [
+          "name",
+          "code",
+          "regionId"
+        ]
+      },
+      "UpdateDistributorDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "regionId": {
+            "type": "string"
+          },
+          "clusterId": {
+            "type": "object"
+          },
+          "contactName": {
+            "type": "object"
+          },
+          "contactPhone": {
+            "type": "object"
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        }
+      },
+      "DepotReadiness": {
+        "type": "string",
+        "enum": [
+          "unknown",
+          "ready",
+          "hold"
+        ]
+      },
+      "DepotResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "distributorId": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string"
+          },
+          "latitude": {
+            "type": "number",
+            "nullable": true
+          },
+          "longitude": {
+            "type": "number",
+            "nullable": true
+          },
+          "contactName": {
+            "type": "string",
+            "nullable": true
+          },
+          "contactPhone": {
+            "type": "string",
+            "nullable": true
+          },
+          "openingHours": {
+            "type": "string",
+            "nullable": true
+          },
+          "readiness": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DepotReadiness"
+              }
+            ]
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "distributorId",
+          "code",
+          "name",
+          "address",
+          "latitude",
+          "longitude",
+          "contactName",
+          "contactPhone",
+          "openingHours",
+          "readiness",
+          "isActive",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "CreateDepotDto": {
+        "type": "object",
+        "properties": {
+          "distributorId": {
+            "type": "string",
+            "description": "Distributor cuid"
+          },
+          "code": {
+            "type": "string",
+            "example": "GA-ACC-D01"
+          },
+          "name": {
+            "type": "string",
+            "example": "Tema Main Depot"
+          },
+          "address": {
+            "type": "string",
+            "example": "12 Industrial Area, Tema"
+          },
+          "latitude": {
+            "type": "number",
+            "description": "Optional recce latitude (no geofence)"
+          },
+          "longitude": {
+            "type": "number",
+            "description": "Optional recce longitude (no geofence)"
+          },
+          "contactName": {
+            "type": "string"
+          },
+          "contactPhone": {
+            "type": "string"
+          },
+          "openingHours": {
+            "type": "string",
+            "example": "Mon–Sat 08:00–17:00"
+          },
+          "readiness": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DepotReadiness"
+              }
+            ]
+          },
+          "isActive": {
+            "type": "boolean",
+            "default": true
+          }
+        },
+        "required": [
+          "distributorId",
+          "code",
+          "name",
+          "address"
+        ]
+      },
+      "UpdateDepotDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string"
+          },
+          "latitude": {
+            "type": "object"
+          },
+          "longitude": {
+            "type": "object"
+          },
+          "contactName": {
+            "type": "object"
+          },
+          "contactPhone": {
+            "type": "object"
+          },
+          "openingHours": {
+            "type": "object"
+          },
+          "readiness": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DepotReadiness"
+              }
+            ]
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        }
+      },
+      "MyDepotResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "distributorId": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string"
+          },
+          "latitude": {
+            "type": "number",
+            "nullable": true
+          },
+          "longitude": {
+            "type": "number",
+            "nullable": true
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "distributorId",
+          "code",
+          "name",
+          "address",
+          "latitude",
+          "longitude",
+          "isActive"
+        ]
+      },
+      "CreateAssignmentDto": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "description": "User cuid (typically a QC)"
+          },
+          "distributorId": {
+            "type": "string",
+            "description": "Distributor cuid"
+          },
+          "clusterId": {
+            "type": "string",
+            "description": "Cluster cuid"
+          },
+          "regionId": {
+            "type": "string",
+            "description": "Region cuid"
+          },
+          "effectiveFrom": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Defaults to now when omitted"
+          },
+          "effectiveTo": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "userId"
+        ]
+      },
+      "AttendanceKind": {
+        "type": "string",
+        "enum": [
+          "check_in",
+          "check_out"
+        ]
+      },
+      "CreateAttendanceDto": {
+        "type": "object",
+        "properties": {
+          "depotId": {
+            "type": "string",
+            "description": "Depot cuid"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AttendanceKind"
+              }
+            ]
+          },
+          "photoObjectKey": {
+            "type": "string",
+            "example": "local/abc.jpg or attendance/uuid.jpg"
+          },
+          "latitude": {
+            "type": "number",
+            "description": "GPS latitude when available"
+          },
+          "longitude": {
+            "type": "number",
+            "description": "GPS longitude when available"
+          },
+          "accuracyMeters": {
+            "type": "number",
+            "description": "GPS accuracy in meters when available"
+          }
+        },
+        "required": [
+          "depotId",
+          "kind",
+          "photoObjectKey"
+        ]
+      },
+      "AttendanceUserDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "staffId": {
+            "type": "string",
+            "nullable": true
+          },
+          "role": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "fullName",
+          "staffId",
+          "role"
+        ]
+      },
+      "AttendanceDepotDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name"
+        ]
+      },
+      "AttendanceVisitDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "status"
+        ]
+      },
+      "AttendanceResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "visitId": {
+            "type": "string",
+            "nullable": true
+          },
+          "userId": {
+            "type": "string"
+          },
+          "depotId": {
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AttendanceKind"
+              }
+            ]
+          },
+          "photoObjectKey": {
+            "type": "string"
+          },
+          "latitude": {
+            "type": "number",
+            "nullable": true
+          },
+          "longitude": {
+            "type": "number",
+            "nullable": true
+          },
+          "accuracyMeters": {
+            "type": "number",
+            "nullable": true
+          },
+          "capturedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "user": {
+            "$ref": "#/components/schemas/AttendanceUserDto"
+          },
+          "depot": {
+            "$ref": "#/components/schemas/AttendanceDepotDto"
+          },
+          "visit": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AttendanceVisitDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "visitId",
+          "userId",
+          "depotId",
+          "kind",
+          "photoObjectKey",
+          "latitude",
+          "longitude",
+          "accuracyMeters",
+          "capturedAt",
+          "createdAt",
+          "user",
+          "depot",
+          "visit"
+        ]
+      },
+      "CreateSkuDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Gino Tomato Mix"
+          },
+          "brand": {
+            "type": "string",
+            "example": "Gino"
+          },
+          "packFactor": {
+            "type": "number",
+            "example": 24,
+            "default": 1
+          },
+          "caseUnit": {
+            "type": "string",
+            "example": "case"
+          },
+          "looseUnit": {
+            "type": "string",
+            "example": "sachet"
+          },
+          "isActive": {
+            "type": "boolean",
+            "default": true
+          }
+        },
+        "required": [
+          "name",
+          "caseUnit",
+          "looseUnit"
+        ]
+      },
+      "StockEvidenceInputDto": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StockEvidenceCategory"
+              }
+            ]
+          },
+          "objectKey": {
+            "type": "string",
+            "example": "stock_evidence/uuid.jpg"
+          }
+        },
+        "required": [
+          "category",
+          "objectKey"
+        ]
+      },
+      "CreateStockLotDto": {
+        "type": "object",
+        "properties": {
+          "visitId": {
+            "type": "string",
+            "description": "Existing visit id when known"
+          },
+          "depotId": {
+            "type": "string",
+            "description": "Depot id; resolves or creates today's visit for the current user"
+          },
+          "skuId": {
+            "type": "string"
+          },
+          "batchCode": {
+            "type": "string",
+            "example": "LOT-2026-0412"
+          },
+          "expiryDate": {
+            "type": "string",
+            "example": "2026-12-31"
+          },
+          "zone": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StockZone"
+              }
+            ]
+          },
+          "quantity": {
+            "type": "number",
+            "example": 10
+          },
+          "unit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StockUnit"
+              }
+            ]
+          },
+          "notes": {
+            "type": "string"
+          },
+          "latitude": {
+            "type": "number"
+          },
+          "longitude": {
+            "type": "number"
+          },
+          "accuracyMeters": {
+            "type": "number"
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StockEvidenceInputDto"
+            }
+          }
+        },
+        "required": [
+          "skuId",
+          "batchCode",
+          "zone",
+          "quantity",
+          "unit",
+          "evidence"
+        ]
+      },
+      "DispositionDecision": {
+        "type": "string",
+        "enum": [
+          "release",
+          "hold",
+          "reject",
+          "approve_repack"
+        ]
+      },
+      "CreateDispositionDto": {
+        "type": "object",
+        "properties": {
+          "decision": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DispositionDecision"
+              }
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "example": "Meets release criteria after QC review"
+          }
+        },
+        "required": [
+          "decision",
+          "reason"
+        ]
+      },
+      "PatchStockLotCustodianDto": {
+        "type": "object",
+        "properties": {
+          "custodian": {
+            "type": "string",
+            "example": "Depot storekeeper · Kwame"
+          }
+        },
+        "required": [
+          "custodian"
+        ]
+      },
+      "RecceDecision": {
+        "type": "string",
+        "enum": [
+          "ready",
+          "hold"
+        ]
+      },
+      "RecceChecklistResponseDto": {
+        "type": "object",
+        "properties": {
+          "access": {
+            "type": "boolean"
+          },
+          "stockEstimate": {
+            "type": "boolean"
+          },
+          "stockEstimateNote": {
+            "type": "string"
+          },
+          "workspace": {
+            "type": "boolean"
+          },
+          "power": {
+            "type": "boolean"
+          },
+          "signal": {
+            "type": "boolean"
+          },
+          "holdingZones": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "access",
+          "stockEstimate",
+          "workspace",
+          "power",
+          "signal",
+          "holdingZones"
+        ]
+      },
+      "RecceDepotDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "readiness": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DepotReadiness"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name",
+          "readiness"
+        ]
+      },
+      "RecceAuthorDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "fullName",
+          "role"
+        ]
+      },
+      "RecceGapResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "recceId": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "ownerName": {
+            "type": "string"
+          },
+          "dueAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "isCritical": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "recceId",
+          "description",
+          "ownerName",
+          "dueAt",
+          "isCritical",
+          "createdAt"
+        ]
+      },
+      "RecceEvidenceResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "recceId": {
+            "type": "string"
+          },
+          "objectKey": {
+            "type": "string"
+          },
+          "capturedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "recceId",
+          "objectKey",
+          "capturedAt",
+          "createdAt"
+        ]
+      },
+      "RecceResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "depotId": {
+            "type": "string"
+          },
+          "checklist": {
+            "$ref": "#/components/schemas/RecceChecklistResponseDto"
+          },
+          "decision": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RecceDecision"
+              }
+            ]
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          },
+          "authorUserId": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "depot": {
+            "$ref": "#/components/schemas/RecceDepotDto"
+          },
+          "author": {
+            "$ref": "#/components/schemas/RecceAuthorDto"
+          },
+          "gaps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecceGapResponseDto"
+            }
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecceEvidenceResponseDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "depotId",
+          "checklist",
+          "decision",
+          "notes",
+          "authorUserId",
+          "createdAt",
+          "updatedAt",
+          "depot",
+          "author",
+          "gaps",
+          "evidence"
+        ]
+      },
+      "RecceChecklistDto": {
+        "type": "object",
+        "properties": {
+          "access": {
+            "type": "boolean",
+            "description": "Vehicle and staff access is safe and workable"
+          },
+          "stockEstimate": {
+            "type": "boolean",
+            "description": "Stock volume has been estimated"
+          },
+          "stockEstimateNote": {
+            "type": "string",
+            "example": "About 400 cases, mostly Gino tomato mix"
+          },
+          "workspace": {
+            "type": "boolean",
+            "description": "Workspace for sorting is available"
+          },
+          "power": {
+            "type": "boolean",
+            "description": "Power is available on site"
+          },
+          "signal": {
+            "type": "boolean",
+            "description": "Mobile signal is adequate"
+          },
+          "holdingZones": {
+            "type": "boolean",
+            "description": "Holding zones can be set up"
+          }
+        },
+        "required": [
+          "access",
+          "stockEstimate",
+          "workspace",
+          "power",
+          "signal",
+          "holdingZones"
+        ]
+      },
+      "RecceGapInputDto": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string",
+            "example": "Loading bay gate is locked after 17:00"
+          },
+          "ownerName": {
+            "type": "string",
+            "example": "Depot manager"
+          },
+          "dueAt": {
+            "type": "string",
+            "example": "2026-10-20"
+          },
+          "isCritical": {
+            "type": "boolean",
+            "description": "A critical access or safety gap blocks a ready decision"
+          }
+        },
+        "required": [
+          "description",
+          "ownerName",
+          "isCritical"
+        ]
+      },
+      "CreateRecceDto": {
+        "type": "object",
+        "properties": {
+          "depotId": {
+            "type": "string"
+          },
+          "checklist": {
+            "$ref": "#/components/schemas/RecceChecklistDto"
+          },
+          "decision": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RecceDecision"
+              }
+            ]
+          },
+          "notes": {
+            "type": "string"
+          },
+          "gaps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecceGapInputDto"
+            }
+          },
+          "evidenceKeys": {
+            "description": "R2 object keys of optional recce photos; capture time is stamped by the API",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "depotId",
+          "checklist",
+          "decision"
+        ]
+      },
+      "UpdateRecceDto": {
+        "type": "object",
+        "properties": {
+          "checklist": {
+            "$ref": "#/components/schemas/RecceChecklistDto"
+          },
+          "decision": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RecceDecision"
+              }
+            ]
+          },
+          "notes": {
+            "type": "string"
+          },
+          "gaps": {
+            "description": "When provided, replaces all existing gaps",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecceGapInputDto"
+            }
+          },
+          "evidenceKeys": {
+            "description": "When provided, replaces evidence; existing keys keep their capture time",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "AssessmentResult": {
+        "type": "string",
+        "enum": [
+          "pass",
+          "fail",
+          "pending"
+        ]
+      },
+      "AssessmentUserDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "staffId": {
+            "type": "string",
+            "nullable": true
+          },
+          "role": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UserRole"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "fullName",
+          "staffId",
+          "role"
+        ]
+      },
+      "AssessmentAssessorDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "role": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UserRole"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "fullName",
+          "role"
+        ]
+      },
+      "AssessmentResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "safetyPass": {
+            "type": "boolean"
+          },
+          "qualityPass": {
+            "type": "boolean"
+          },
+          "recordsPass": {
+            "type": "boolean"
+          },
+          "result": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AssessmentResult"
+              }
+            ]
+          },
+          "dispatchable": {
+            "type": "boolean"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          },
+          "assessedByUserId": {
+            "type": "string"
+          },
+          "assessedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "user": {
+            "$ref": "#/components/schemas/AssessmentUserDto"
+          },
+          "assessedBy": {
+            "$ref": "#/components/schemas/AssessmentAssessorDto"
+          }
+        },
+        "required": [
+          "id",
+          "userId",
+          "safetyPass",
+          "qualityPass",
+          "recordsPass",
+          "result",
+          "dispatchable",
+          "notes",
+          "assessedByUserId",
+          "assessedAt",
+          "createdAt",
+          "updatedAt",
+          "user",
+          "assessedBy"
+        ]
+      },
+      "CreateAssessmentDto": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "description": "Field user being assessed (qc, handler, or cluster_supervisor)"
+          },
+          "safetyPass": {
+            "type": "boolean",
+            "description": "Mandatory safety step passed"
+          },
+          "qualityPass": {
+            "type": "boolean",
+            "description": "Mandatory quality step passed"
+          },
+          "recordsPass": {
+            "type": "boolean",
+            "description": "Mandatory record-keeping step passed"
+          },
+          "notes": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "userId",
+          "safetyPass",
+          "qualityPass",
+          "recordsPass"
+        ]
+      },
+      "DailyReturnRegionDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name"
+        ]
+      },
+      "DailyReturnSubmitterDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "fullName",
+          "role"
+        ]
+      },
+      "DailyReturnResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "regionId": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "submittedByUserId": {
+            "type": "string"
+          },
+          "coverageSummary": {
+            "type": "string"
+          },
+          "stockStatusSummary": {
+            "type": "string"
+          },
+          "variancesSummary": {
+            "type": "string",
+            "nullable": true
+          },
+          "incidentsSummary": {
+            "type": "string",
+            "nullable": true
+          },
+          "depotsPlanned": {
+            "type": "number"
+          },
+          "depotsCompleted": {
+            "type": "number"
+          },
+          "depotsException": {
+            "type": "number"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "region": {
+            "$ref": "#/components/schemas/DailyReturnRegionDto"
+          },
+          "submittedBy": {
+            "$ref": "#/components/schemas/DailyReturnSubmitterDto"
+          }
+        },
+        "required": [
+          "id",
+          "regionId",
+          "date",
+          "submittedAt",
+          "submittedByUserId",
+          "coverageSummary",
+          "stockStatusSummary",
+          "variancesSummary",
+          "incidentsSummary",
+          "depotsPlanned",
+          "depotsCompleted",
+          "depotsException",
+          "createdAt",
+          "updatedAt",
+          "region",
+          "submittedBy"
+        ]
+      },
+      "DailyReturnTotalsDto": {
+        "type": "object",
+        "properties": {
+          "depotsPlanned": {
+            "type": "number"
+          },
+          "depotsCompleted": {
+            "type": "number"
+          },
+          "depotsException": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "depotsPlanned",
+          "depotsCompleted",
+          "depotsException"
+        ]
+      },
+      "NationalSummaryRowDto": {
+        "type": "object",
+        "properties": {
+          "region": {
+            "$ref": "#/components/schemas/DailyReturnRegionDto"
+          },
+          "submitted": {
+            "type": "boolean"
+          },
+          "return": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DailyReturnResponseDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "region",
+          "submitted",
+          "return"
+        ]
+      },
+      "NationalSummaryResponseDto": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string"
+          },
+          "regionsSubmitted": {
+            "type": "number"
+          },
+          "regionsTotal": {
+            "type": "number"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/DailyReturnTotalsDto"
+          },
+          "returns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NationalSummaryRowDto"
+            }
+          }
+        },
+        "required": [
+          "date",
+          "regionsSubmitted",
+          "regionsTotal",
+          "totals",
+          "returns"
+        ]
+      },
+      "CreateDailyReturnDto": {
+        "type": "object",
+        "properties": {
+          "regionId": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string",
+            "example": "2026-10-13"
+          },
+          "coverageSummary": {
+            "type": "string",
+            "description": "Depot coverage summary for the day"
+          },
+          "stockStatusSummary": {
+            "type": "string",
+            "description": "Stock status summary for the day"
+          },
+          "variancesSummary": {
+            "type": "string"
+          },
+          "incidentsSummary": {
+            "type": "string"
+          },
+          "depotsPlanned": {
+            "type": "number",
+            "description": "Defaults to the active depots in the region"
+          },
+          "depotsCompleted": {
+            "type": "number",
+            "description": "Defaults to complete visits in the region that day"
+          },
+          "depotsException": {
+            "type": "number",
+            "description": "Defaults to exception visits in the region that day"
+          }
+        },
+        "required": [
+          "regionId",
+          "date",
+          "coverageSummary",
+          "stockStatusSummary"
+        ]
+      },
+      "UpdateDailyReturnDto": {
+        "type": "object",
+        "properties": {
+          "coverageSummary": {
+            "type": "string"
+          },
+          "stockStatusSummary": {
+            "type": "string"
+          },
+          "variancesSummary": {
+            "type": "string"
+          },
+          "incidentsSummary": {
+            "type": "string"
+          },
+          "depotsPlanned": {
+            "type": "number"
+          },
+          "depotsCompleted": {
+            "type": "number"
+          },
+          "depotsException": {
+            "type": "number"
+          }
+        }
+      },
+      "UserSummaryResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "staffId": {
+            "type": "string",
+            "nullable": true
+          },
+          "role": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UserRole"
+              }
+            ]
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "fullName",
+          "staffId",
+          "role",
+          "isActive"
+        ]
+      }
+    }
+  }
+}
