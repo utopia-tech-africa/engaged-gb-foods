@@ -13,7 +13,7 @@ export class ListVisitsQueryDto {
   @IsDateString()
   date?: string;
 
-  @ApiPropertyOptional({ enum: VisitStatus })
+  @ApiPropertyOptional({ enum: VisitStatus, enumName: "VisitStatus" })
   @IsOptional()
   @IsEnum(VisitStatus)
   status?: VisitStatus;

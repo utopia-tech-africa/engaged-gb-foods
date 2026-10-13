@@ -1,5 +1,6 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { type FormEvent, useState } from "react";
 import { toast } from "sonner";
 
@@ -16,8 +17,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { createAssessment, deriveAssessmentResult } from "@/lib/assessment/api";
-import type { UserSummary } from "@/lib/users/api";
+import {
+  getGetAssessmentsQueryKey,
+  usePostAssessments,
+} from "@/lib/api/generated/assessments/assessments";
+import type { UserSummaryResponseDto } from "@/lib/api/generated/model";
+import { deriveAssessmentResult } from "@/lib/assessment/helpers";
 
 type StepKey = "safetyPass" | "qualityPass" | "recordsPass";
 
@@ -28,12 +33,12 @@ const STEPS: { key: StepKey; label: string }[] = [
 ];
 
 type AssessmentFormProps = {
-  accessToken: string;
-  users: UserSummary[];
-  onSaved: () => Promise<void>;
+  users: UserSummaryResponseDto[];
 };
 
-export const AssessmentForm = ({ accessToken, users, onSaved }: AssessmentFormProps) => {
+export const AssessmentForm = ({ users }: AssessmentFormProps) => {
+  const queryClient = useQueryClient();
+  const createAssessment = usePostAssessments();
   const [userId, setUserId] = useState("");
   const [steps, setSteps] = useState<Record<StepKey, boolean>>({
     safetyPass: false,
@@ -41,7 +46,6 @@ export const AssessmentForm = ({ accessToken, users, onSaved }: AssessmentFormPr
     recordsPass: false,
   });
   const [notes, setNotes] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const result = deriveAssessmentResult(steps);
   const userItems = users.map((user) => ({
@@ -56,18 +60,17 @@ export const AssessmentForm = ({ accessToken, users, onSaved }: AssessmentFormPr
       return;
     }
 
-    setIsSubmitting(true);
     try {
-      await createAssessment(accessToken, { userId, ...steps, notes: notes.trim() || undefined });
+      await createAssessment.mutateAsync({
+        data: { userId, ...steps, notes: notes.trim() || undefined },
+      });
       toast.success(result === "pass" ? "Passed: user can be dispatched" : "Failed: user blocked");
       setUserId("");
       setSteps({ safetyPass: false, qualityPass: false, recordsPass: false });
       setNotes("");
-      await onSaved();
+      await queryClient.invalidateQueries({ queryKey: getGetAssessmentsQueryKey() });
     } catch (submitError) {
       toast.error(submitError instanceof Error ? submitError.message : "Unable to save assessment");
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -124,8 +127,8 @@ export const AssessmentForm = ({ accessToken, users, onSaved }: AssessmentFormPr
           </div>
 
           <div className="flex items-center gap-3">
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Saving…" : "Record assessment"}
+            <Button type="submit" disabled={createAssessment.isPending}>
+              {createAssessment.isPending ? "Saving…" : "Record assessment"}
             </Button>
             <Badge variant={result === "pass" ? "default" : "destructive"}>
               {result === "pass" ? "Will pass: dispatchable" : "Will fail: not dispatchable"}

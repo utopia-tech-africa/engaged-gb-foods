@@ -2,21 +2,15 @@
 
 import { useEffect, useState } from "react";
 
-import { fetchPhotoObjectUrl } from "@/lib/attendance/api";
+import { fetchPhotoObjectUrl } from "@/lib/uploads";
 
 type AttendancePhotoProps = {
-  accessToken: string;
   objectKey: string;
   alt: string;
   className?: string;
 };
 
-export const AttendancePhoto = ({
-  accessToken,
-  objectKey,
-  alt,
-  className,
-}: AttendancePhotoProps) => {
+export const AttendancePhoto = ({ objectKey, alt, className }: AttendancePhotoProps) => {
   const [src, setSrc] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -24,7 +18,7 @@ export const AttendancePhoto = ({
     let objectUrl: string | null = null;
     let cancelled = false;
 
-    void fetchPhotoObjectUrl(accessToken, objectKey)
+    void fetchPhotoObjectUrl(objectKey)
       .then((url) => {
         if (cancelled) {
           URL.revokeObjectURL(url);
@@ -45,7 +39,7 @@ export const AttendancePhoto = ({
         URL.revokeObjectURL(objectUrl);
       }
     };
-  }, [accessToken, objectKey]);
+  }, [objectKey]);
 
   if (error) {
     return <p className="text-xs text-red-600">{error}</p>;

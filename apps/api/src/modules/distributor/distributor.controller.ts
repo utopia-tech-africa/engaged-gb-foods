@@ -23,6 +23,7 @@ import { RolesGuard } from "../../common/guards/roles.guard";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { DistributorService } from "./distributor.service";
 import { CreateDistributorDto } from "./dto/create-distributor.dto";
+import { DistributorResponseDto } from "./dto/distributor-response.dto";
 import { ListDistributorsQueryDto } from "./dto/list-distributors-query.dto";
 import { UpdateDistributorDto } from "./dto/update-distributor.dto";
 
@@ -42,7 +43,7 @@ export class DistributorController {
     summary: "List distributors",
     description: "Returns distributors for the network register, optionally filtered by region id.",
   })
-  @ApiOkResponse({ description: "List of distributors" })
+  @ApiOkResponse({ description: "List of distributors", type: [DistributorResponseDto] })
   getDistributors(@Query() query: ListDistributorsQueryDto) {
     return this.distributorService.listDistributors(query.regionId);
   }
@@ -54,7 +55,7 @@ export class DistributorController {
     summary: "Create distributor",
     description: "Creates a distributor under a region for national operations or admin users.",
   })
-  @ApiCreatedResponse({ description: "Distributor created" })
+  @ApiCreatedResponse({ description: "Distributor created", type: DistributorResponseDto })
   postDistributors(@Body() body: CreateDistributorDto) {
     return this.distributorService.createDistributor(body);
   }
@@ -66,7 +67,7 @@ export class DistributorController {
     summary: "Update distributor",
     description: "Updates distributor contact details, cluster link, or active flag.",
   })
-  @ApiOkResponse({ description: "Distributor updated" })
+  @ApiOkResponse({ description: "Distributor updated", type: DistributorResponseDto })
   patchDistributors(@Param("id") id: string, @Body() body: UpdateDistributorDto) {
     return this.distributorService.updateDistributor(id, body);
   }

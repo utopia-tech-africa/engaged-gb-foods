@@ -1,5 +1,6 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { type FormEvent, useState } from "react";
 import { toast } from "sonner";
 
@@ -15,18 +16,21 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { type DailyReturn, submitDailyReturn, updateDailyReturn } from "@/lib/daily-return/api";
-import type { Region } from "@/lib/network/api";
+import {
+  getGetDailyReturnsNationalSummaryQueryKey,
+  getGetDailyReturnsQueryKey,
+  usePatchDailyReturnsById,
+  usePostDailyReturns,
+} from "@/lib/api/generated/daily-returns/daily-returns";
+import type { DailyReturnResponseDto, RegionResponseDto } from "@/lib/api/generated/model";
 
 type DailyReturnFormProps = {
-  accessToken: string;
-  regions: Region[];
+  regions: RegionResponseDto[];
   regionId: string;
   onRegionChange: (regionId: string) => void;
   date: string;
   /** The return already filed for this region and date, if any. */
-  existing: DailyReturn | null;
-  onSaved: () => Promise<void>;
+  existing: DailyReturnResponseDto | null;
 };
 
 const toCount = (value: string): number | undefined => {
@@ -63,14 +67,15 @@ const CountField = ({
 
 /** Remount with a new `key` whenever the region, date, or existing return changes. */
 export const DailyReturnForm = ({
-  accessToken,
   regions,
   regionId,
   onRegionChange,
   date,
   existing,
-  onSaved,
 }: DailyReturnFormProps) => {
+  const queryClient = useQueryClient();
+  const submitDailyReturn = usePostDailyReturns();
+  const updateDailyReturn = usePatchDailyReturnsById();
   const [planned, setPlanned] = useState(countText(existing?.depotsPlanned));
   const [completed, setCompleted] = useState(countText(existing?.depotsCompleted));
   const [exception, setException] = useState(countText(existing?.depotsException));
@@ -78,7 +83,6 @@ export const DailyReturnForm = ({
   const [stockStatus, setStockStatus] = useState(existing?.stockStatusSummary ?? "");
   const [variances, setVariances] = useState(existing?.variancesSummary ?? "");
   const [incidents, setIncidents] = useState(existing?.incidentsSummary ?? "");
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const regionItems = regions.map((region) => ({ value: region.id, label: region.name }));
 
@@ -103,22 +107,24 @@ export const DailyReturnForm = ({
       depotsException: toCount(exception),
     };
 
-    setIsSubmitting(true);
     try {
       if (existing) {
-        await updateDailyReturn(accessToken, existing.id, body);
+        await updateDailyReturn.mutateAsync({ id: existing.id, data: body });
         toast.success("Daily return updated");
       } else {
-        await submitDailyReturn(accessToken, { regionId, date, ...body });
+        await submitDailyReturn.mutateAsync({ data: { regionId, date, ...body } });
         toast.success("Daily return submitted");
       }
-      await onSaved();
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: getGetDailyReturnsQueryKey() }),
+        queryClient.invalidateQueries({ queryKey: getGetDailyReturnsNationalSummaryQueryKey() }),
+      ]);
     } catch (submitError) {
       toast.error(submitError instanceof Error ? submitError.message : "Unable to save return");
-    } finally {
-      setIsSubmitting(false);
     }
   };
+
+  const isSubmitting = submitDailyReturn.isPending || updateDailyReturn.isPending;
 
   return (
     <Card>

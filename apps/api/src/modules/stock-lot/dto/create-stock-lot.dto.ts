@@ -47,7 +47,7 @@ export class CreateStockLotDto {
   @IsDateString()
   expiryDate?: string;
 
-  @ApiProperty({ enum: StockZone })
+  @ApiProperty({ enum: StockZone, enumName: "StockZone" })
   @IsEnum(StockZone)
   zone!: StockZone;
 
@@ -56,7 +56,7 @@ export class CreateStockLotDto {
   @Min(1)
   quantity!: number;
 
-  @ApiProperty({ enum: StockUnit })
+  @ApiProperty({ enum: StockUnit, enumName: "StockUnit" })
   @IsEnum(StockUnit)
   unit!: StockUnit;
 

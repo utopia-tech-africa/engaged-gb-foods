@@ -33,6 +33,7 @@ import { Roles } from "../../common/decorators/roles.decorator";
 import { RolesGuard } from "../../common/guards/roles.guard";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { MAX_ATTENDANCE_PHOTO_BYTES, PresignUploadDto } from "./dto/presign-upload.dto";
+import { LocalUploadResponseDto, PresignedUploadResponseDto } from "./dto/upload-response.dto";
 import { UploadService } from "./upload.service";
 
 @ApiTags("Uploads")
@@ -50,7 +51,7 @@ export class UploadController {
     description:
       "Returns a presigned PUT URL for attendance, stock evidence, or signatures when R2 is configured.",
   })
-  @ApiCreatedResponse({ description: "Presigned upload details" })
+  @ApiCreatedResponse({ description: "Presigned upload details", type: PresignedUploadResponseDto })
   postUploadsPresign(@Body() body: PresignUploadDto) {
     return this.uploadService.createPresignedUpload(body);
   }
@@ -73,7 +74,7 @@ export class UploadController {
     description:
       "Writes the file to apps/api/.uploads when R2 is not configured. Returns objectKey local/…",
   })
-  @ApiCreatedResponse({ description: "Local object key" })
+  @ApiCreatedResponse({ description: "Local object key", type: LocalUploadResponseDto })
   async postUploadsLocal(
     @UploadedFile() file: { buffer: Buffer; mimetype: string; size: number } | undefined,
   ) {
@@ -94,7 +95,7 @@ export class UploadController {
     summary: "Local dev raw body upload",
     description: "Alternative local upload using raw body and Content-Type header.",
   })
-  @ApiCreatedResponse({ description: "Local object key" })
+  @ApiCreatedResponse({ description: "Local object key", type: LocalUploadResponseDto })
   async postUploadsLocalRaw(@Req() req: Request) {
     const contentType = req.headers["content-type"] ?? "application/octet-stream";
     const chunks: Buffer[] = [];

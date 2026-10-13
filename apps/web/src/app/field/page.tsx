@@ -1,14 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
 
 import { useAuth } from "@/components/auth-provider";
 import { RequireAuth } from "@/components/require-auth";
 import { ShellFrame } from "@/components/shell-frame";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { fetchMyDepots, type MyDepot } from "@/lib/attendance/api";
+import { useGetMeDepots } from "@/lib/api/generated/assignments/assignments";
 import type { UserRole } from "@/lib/auth/types";
 import { cn } from "@/lib/utils";
 
@@ -16,21 +15,10 @@ const FIELD_ROLES: UserRole[] = ["qc", "handler", "cluster_supervisor", "regiona
 
 export default function FieldHomePage() {
   const { user, accessToken } = useAuth();
-  const [depots, setDepots] = useState<MyDepot[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (!accessToken) {
-      return;
-    }
-    void fetchMyDepots(accessToken)
-      .then(setDepots)
-      .catch((err: unknown) => {
-        setError(err instanceof Error ? err.message : "Could not load depots");
-      })
-      .finally(() => setLoading(false));
-  }, [accessToken]);
+  const depotsQuery = useGetMeDepots({ query: { enabled: Boolean(accessToken) } });
+  const depots = depotsQuery.data ?? [];
+  const loading = depotsQuery.isLoading;
+  const error = depotsQuery.error?.message ?? null;
 
   return (
     <RequireAuth roles={FIELD_ROLES}>

@@ -15,6 +15,7 @@ import { RolesGuard } from "../../common/guards/roles.guard";
 import type { AuthenticatedUser } from "../../common/types/authenticated-user.type";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { AssessmentService } from "./assessment.service";
+import { AssessmentResponseDto } from "./dto/assessment-response.dto";
 import { CreateAssessmentDto } from "./dto/create-assessment.dto";
 import { ListAssessmentsQueryDto } from "./dto/list-assessments-query.dto";
 
@@ -33,7 +34,7 @@ export class AssessmentController {
     description:
       "Lists the latest training assessment per user with a dispatchable flag. Filter by user or pass/fail result. Set history=true to list every assessment.",
   })
-  @ApiOkResponse({ description: "Assessment roster" })
+  @ApiOkResponse({ description: "Assessment roster", type: [AssessmentResponseDto] })
   getAssessments(@Query() query: ListAssessmentsQueryDto) {
     return this.assessmentService.listAssessments({
       userId: query.userId,
@@ -49,7 +50,7 @@ export class AssessmentController {
     summary: "Get assessment by id",
     description: "Returns a single assessment with the assessed user and assessor.",
   })
-  @ApiOkResponse({ description: "Assessment detail" })
+  @ApiOkResponse({ description: "Assessment detail", type: AssessmentResponseDto })
   getAssessmentsById(@Param("id") id: string) {
     return this.assessmentService.getAssessmentById(id);
   }
@@ -62,7 +63,7 @@ export class AssessmentController {
     description:
       "Records a safety, quality, and record-keeping assessment for a field user. All three must pass for a pass result and dispatch eligibility; otherwise the result is fail. Each submission becomes the user's latest assessment.",
   })
-  @ApiCreatedResponse({ description: "Assessment recorded" })
+  @ApiCreatedResponse({ description: "Assessment recorded", type: AssessmentResponseDto })
   postAssessments(@CurrentUser() user: AuthenticatedUser, @Body() body: CreateAssessmentDto) {
     return this.assessmentService.createAssessment(user.id, body);
   }
