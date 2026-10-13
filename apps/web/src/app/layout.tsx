@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Manrope, Sora } from "next/font/google";
 import type { ReactNode } from "react";
 
@@ -21,9 +21,21 @@ const display = Sora({
 export const metadata: Metadata = {
   title: "GBfoods Stock Control",
   description: "Nationwide depot sorting and segregation for GBfoods Ghana.",
+  applicationName: "GBfoods Stock Control",
+  manifest: "/manifest.webmanifest",
   icons: {
     icon: "/favicon.svg",
+    apple: "/apple-touch-icon.png",
   },
+  appleWebApp: {
+    capable: true,
+    title: "GB Stock",
+    statusBarStyle: "default",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#fe5000",
 };
 
 type RootLayoutProps = {

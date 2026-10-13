@@ -4,6 +4,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { type ReactNode, useState } from "react";
 
 import { AuthProvider } from "@/components/auth-provider";
+import { FieldOfflineSyncListener } from "@/components/field-offline-sync-listener";
+import { PwaProvider } from "@/components/pwa-provider";
 
 type ProvidersProps = {
   children: ReactNode;
@@ -24,7 +26,12 @@ export const Providers = ({ children }: ProvidersProps) => {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>{children}</AuthProvider>
+      <AuthProvider>
+        <PwaProvider>
+          <FieldOfflineSyncListener />
+          {children}
+        </PwaProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 };
