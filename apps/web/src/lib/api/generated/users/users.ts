@@ -6,23 +6,29 @@
  * OpenAPI spec version: 0.1.0
  */
 import {
+  useMutation,
   useQuery
 } from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
   DefinedUseQueryResult,
+  MutationFunction,
   QueryClient,
   QueryFunction,
   QueryKey,
   UndefinedInitialDataOptions,
+  UseMutationOptions,
+  UseMutationResult,
   UseQueryOptions,
   UseQueryResult
 } from '@tanstack/react-query';
 
 import type {
+  CreateUserDto,
   GetUsersParams,
-  UserSummaryResponseDto
+  UpdateUserDto,
+  UserResponseDto
 } from '../model';
 
 import { customFetch } from '../../custom-fetch';
@@ -47,7 +53,7 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
 };
 
 /**
- * Lists active users for ops screens such as the assessment roster, optionally filtered by role. Returns no credentials.
+ * Lists users for ops screens, optionally filtered by role, active flag, or a search term on name, staff ID, or email. Omit isActive to include inactive users. Returns no credentials.
  * @summary List users
  */
 export const getUsers = (
@@ -56,7 +62,7 @@ export const getUsers = (
 ) => {
 
 
-      return customFetch<UserSummaryResponseDto[]>(
+      return customFetch<UserResponseDto[]>(
       {url: `/users`, method: 'GET',
         params, signal
     },
@@ -140,3 +146,233 @@ export function useGetUsers<TData = Awaited<ReturnType<typeof getUsers>>, TError
 
 
 
+/**
+ * Creates a user. Field roles (qc, handler, cluster_supervisor, regional_supervisor) need a staff ID and PIN. Desk roles (admin, national_ops, national_quality, gbfoods_reviewer) need an email and password.
+ * @summary Create user
+ */
+export const postUsers = (
+    createUserDto: CreateUserDto,
+ signal?: AbortSignal
+) => {
+
+
+      return customFetch<UserResponseDto>(
+      {url: `/users`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: createUserDto, signal
+    },
+      );
+    }
+
+
+
+
+export const getPostUsersMutationKey = () => ['postUsers'] as const;
+
+export const getPostUsersMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postUsers>>, TError,PostUsersMutationVariables, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof postUsers>>, TError,PostUsersMutationVariables, TContext> => {
+
+const mutationKey = getPostUsersMutationKey();
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postUsers>>, PostUsersMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  postUsers(data,)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostUsersMutationResult = NonNullable<Awaited<ReturnType<typeof postUsers>>>
+    export type PostUsersMutationBody = CreateUserDto
+    export type PostUsersMutationError = ErrorType<unknown>
+    export type PostUsersMutationVariables = {data: CreateUserDto}
+
+    /**
+ * @summary Create user
+ */
+export const usePostUsers = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postUsers>>, TError,PostUsersMutationVariables, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postUsers>>,
+        TError,
+        PostUsersMutationVariables,
+        TContext
+      > => {
+      return useMutation(getPostUsersMutationOptions(options), queryClient);
+    }
+    /**
+ * Returns a single user profile. Never includes PIN or password hashes.
+ * @summary Get user by id
+ */
+export const getUsersById = (
+    id: string,
+ signal?: AbortSignal
+) => {
+
+
+      return customFetch<UserResponseDto>(
+      {url: `/users/${id}`, method: 'GET', signal
+    },
+      );
+    }
+
+
+
+
+export const getGetUsersByIdQueryKey = (id: string,) => {
+    return [
+    `/users/${id}`
+    ] as const;
+    }
+
+
+export const getGetUsersByIdQueryOptions = <TData = Awaited<ReturnType<typeof getUsersById>>, TError = ErrorType<unknown>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsersById>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetUsersByIdQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getUsersById>>> = ({ signal }) => getUsersById(id, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getUsersById>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetUsersByIdQueryResult = NonNullable<Awaited<ReturnType<typeof getUsersById>>>
+export type GetUsersByIdQueryError = ErrorType<unknown>
+
+
+export function useGetUsersById<TData = Awaited<ReturnType<typeof getUsersById>>, TError = ErrorType<unknown>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsersById>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getUsersById>>,
+          TError,
+          Awaited<ReturnType<typeof getUsersById>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetUsersById<TData = Awaited<ReturnType<typeof getUsersById>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsersById>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getUsersById>>,
+          TError,
+          Awaited<ReturnType<typeof getUsersById>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetUsersById<TData = Awaited<ReturnType<typeof getUsersById>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsersById>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get user by id
+ */
+
+export function useGetUsersById<TData = Awaited<ReturnType<typeof getUsersById>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsersById>>, TError, TData>>, }
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetUsersByIdQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+/**
+ * Updates profile fields or the active flag. Send pin or password to reset credentials; resetting a PIN also clears the lock. Deactivating or resetting credentials signs the user out of existing sessions.
+ * @summary Update user
+ */
+export const patchUsersById = (
+    id: string,
+    updateUserDto: UpdateUserDto,
+ signal?: AbortSignal
+) => {
+
+
+      return customFetch<UserResponseDto>(
+      {url: `/users/${id}`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: updateUserDto, signal
+    },
+      );
+    }
+
+
+
+
+export const getPatchUsersByIdMutationKey = () => ['patchUsersById'] as const;
+
+export const getPatchUsersByIdMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof patchUsersById>>, TError,PatchUsersByIdMutationVariables, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof patchUsersById>>, TError,PatchUsersByIdMutationVariables, TContext> => {
+
+const mutationKey = getPatchUsersByIdMutationKey();
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof patchUsersById>>, PatchUsersByIdMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  patchUsersById(id,data,)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PatchUsersByIdMutationResult = NonNullable<Awaited<ReturnType<typeof patchUsersById>>>
+    export type PatchUsersByIdMutationBody = UpdateUserDto
+    export type PatchUsersByIdMutationError = ErrorType<unknown>
+    export type PatchUsersByIdMutationVariables = {id: string;data: UpdateUserDto}
+
+    /**
+ * @summary Update user
+ */
+export const usePatchUsersById = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof patchUsersById>>, TError,PatchUsersByIdMutationVariables, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof patchUsersById>>,
+        TError,
+        PatchUsersByIdMutationVariables,
+        TContext
+      > => {
+      return useMutation(getPatchUsersByIdMutationOptions(options), queryClient);
+    }

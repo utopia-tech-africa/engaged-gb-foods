@@ -1,9 +1,11 @@
 import { BadRequestException, Inject, Injectable, NotFoundException } from "@nestjs/common";
-import type { Assignment, Depot, Prisma } from "@prisma/client";
+import type { Depot, Prisma } from "@prisma/client";
 
 import { PrismaService } from "../prisma/prisma.service";
 import { activeAssignmentWhere, depotScopeFromAssignments } from "./assignment-depots.helper";
+import type { AssignmentResponseDto } from "./dto/assignment-response.dto";
 import type { CreateAssignmentDto } from "./dto/create-assignment.dto";
+import type { UpdateAssignmentDto } from "./dto/update-assignment.dto";
 
 export type AssignmentWithRelations = Prisma.AssignmentGetPayload<{
   include: {
@@ -13,6 +15,21 @@ export type AssignmentWithRelations = Prisma.AssignmentGetPayload<{
     region: { select: { id: true; name: true; code: true } };
   };
 }>;
+
+const assignmentInclude = {
+  user: { select: { id: true, fullName: true, staffId: true, role: true } },
+  distributor: { select: { id: true, name: true, code: true } },
+  cluster: { select: { id: true, name: true, code: true } },
+  region: { select: { id: true, name: true, code: true } },
+} satisfies Prisma.AssignmentInclude;
+
+const toAssignmentResponse = (assignment: AssignmentWithRelations): AssignmentResponseDto => ({
+  ...assignment,
+  effectiveFrom: assignment.effectiveFrom.toISOString(),
+  effectiveTo: assignment.effectiveTo?.toISOString() ?? null,
+  createdAt: assignment.createdAt.toISOString(),
+  updatedAt: assignment.updatedAt.toISOString(),
+});
 
 @Injectable()
 export class AssignmentService {
@@ -33,19 +50,35 @@ export class AssignmentService {
     });
   }
 
-  async listAssignments(): Promise<AssignmentWithRelations[]> {
-    return this.prisma.assignment.findMany({
+  async listAssignments(userId?: string): Promise<AssignmentResponseDto[]> {
+    const assignments = await this.prisma.assignment.findMany({
+      where: userId ? { userId } : undefined,
       orderBy: [{ effectiveFrom: "desc" }],
-      include: {
-        user: { select: { id: true, fullName: true, staffId: true, role: true } },
-        distributor: { select: { id: true, name: true, code: true } },
-        cluster: { select: { id: true, name: true, code: true } },
-        region: { select: { id: true, name: true, code: true } },
-      },
+      include: assignmentInclude,
     });
+    return assignments.map(toAssignmentResponse);
   }
 
-  async createAssignment(dto: CreateAssignmentDto): Promise<Assignment> {
+  async endAssignment(id: string, dto: UpdateAssignmentDto): Promise<AssignmentResponseDto> {
+    const existing = await this.prisma.assignment.findUnique({ where: { id } });
+    if (!existing) {
+      throw new NotFoundException("Assignment not found");
+    }
+
+    const effectiveTo = dto.effectiveTo ?? new Date();
+    if (effectiveTo < existing.effectiveFrom) {
+      throw new BadRequestException("effectiveTo cannot be before effectiveFrom");
+    }
+
+    const updated = await this.prisma.assignment.update({
+      where: { id },
+      data: { effectiveTo },
+      include: assignmentInclude,
+    });
+    return toAssignmentResponse(updated);
+  }
+
+  async createAssignment(dto: CreateAssignmentDto): Promise<AssignmentResponseDto> {
     const scopeCount = [dto.distributorId, dto.clusterId, dto.regionId].filter(Boolean).length;
     if (scopeCount !== 1) {
       throw new BadRequestException("Provide exactly one of distributorId, clusterId, or regionId");
@@ -81,7 +114,12 @@ export class AssignmentService {
 
     const effectiveFrom = dto.effectiveFrom ?? new Date();
 
-    return this.prisma.assignment.create({
+    if (dto.effectiveTo && dto.effectiveTo < effectiveFrom) {
+      throw new BadRequestException("effectiveTo cannot be before effectiveFrom");
+    }
+
+    const created = await this.prisma.assignment.create({
+      include: assignmentInclude,
       data: {
         userId: dto.userId,
         distributorId: dto.distributorId ?? null,
@@ -91,5 +129,6 @@ export class AssignmentService {
         effectiveTo: dto.effectiveTo ?? null,
       },
     });
+    return toAssignmentResponse(created);
   }
 }

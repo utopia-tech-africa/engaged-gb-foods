@@ -25,8 +25,11 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  AssignmentResponseDto,
   CreateAssignmentDto,
-  MyDepotResponseDto
+  GetAssignmentsParams,
+  MyDepotResponseDto,
+  UpdateAssignmentDto
 } from '../model';
 
 import { customFetch } from '../../custom-fetch';
@@ -144,17 +147,18 @@ export function useGetMeDepots<TData = Awaited<ReturnType<typeof getMeDepots>>, 
 
 
 /**
- * Returns user network assignments with scope and effective dates.
+ * Returns user network assignments with scope and effective dates, optionally filtered by user.
  * @summary List assignments
  */
 export const getAssignments = (
-
+    params?: GetAssignmentsParams,
  signal?: AbortSignal
 ) => {
 
 
-      return customFetch<void>(
-      {url: `/assignments`, method: 'GET', signal
+      return customFetch<AssignmentResponseDto[]>(
+      {url: `/assignments`, method: 'GET',
+        params, signal
     },
       );
     }
@@ -162,23 +166,23 @@ export const getAssignments = (
 
 
 
-export const getGetAssignmentsQueryKey = () => {
+export const getGetAssignmentsQueryKey = (params?: GetAssignmentsParams,) => {
     return [
-    `/assignments`
+    `/assignments`, ...(params ? [params] : [])
     ] as const;
     }
 
 
-export const getGetAssignmentsQueryOptions = <TData = Awaited<ReturnType<typeof getAssignments>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAssignments>>, TError, TData>>, }
+export const getGetAssignmentsQueryOptions = <TData = Awaited<ReturnType<typeof getAssignments>>, TError = ErrorType<unknown>>(params?: GetAssignmentsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAssignments>>, TError, TData>>, }
 ) => {
 
 const {query: queryOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetAssignmentsQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getGetAssignmentsQueryKey(params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAssignments>>> = ({ signal }) => getAssignments(signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAssignments>>> = ({ signal }) => getAssignments(params, signal);
 
 
 
@@ -192,7 +196,7 @@ export type GetAssignmentsQueryError = ErrorType<unknown>
 
 
 export function useGetAssignments<TData = Awaited<ReturnType<typeof getAssignments>>, TError = ErrorType<unknown>>(
-  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAssignments>>, TError, TData>> & Pick<
+ params: undefined |  GetAssignmentsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAssignments>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getAssignments>>,
           TError,
@@ -202,7 +206,7 @@ export function useGetAssignments<TData = Awaited<ReturnType<typeof getAssignmen
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetAssignments<TData = Awaited<ReturnType<typeof getAssignments>>, TError = ErrorType<unknown>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAssignments>>, TError, TData>> & Pick<
+ params?: GetAssignmentsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAssignments>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getAssignments>>,
           TError,
@@ -212,7 +216,7 @@ export function useGetAssignments<TData = Awaited<ReturnType<typeof getAssignmen
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetAssignments<TData = Awaited<ReturnType<typeof getAssignments>>, TError = ErrorType<unknown>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAssignments>>, TError, TData>>, }
+ params?: GetAssignmentsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAssignments>>, TError, TData>>, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -220,11 +224,11 @@ export function useGetAssignments<TData = Awaited<ReturnType<typeof getAssignmen
  */
 
 export function useGetAssignments<TData = Awaited<ReturnType<typeof getAssignments>>, TError = ErrorType<unknown>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAssignments>>, TError, TData>>, }
+ params?: GetAssignmentsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAssignments>>, TError, TData>>, }
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getGetAssignmentsQueryOptions(options)
+  const queryOptions = getGetAssignmentsQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -246,7 +250,7 @@ export const postAssignments = (
 ) => {
 
 
-      return customFetch<void>(
+      return customFetch<AssignmentResponseDto>(
       {url: `/assignments`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: createAssignmentDto, signal
@@ -303,4 +307,73 @@ export const usePostAssignments = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getPostAssignmentsMutationOptions(options), queryClient);
+    }
+    /**
+ * Sets the effective end date of an assignment (defaults to now), which removes the scope from the user's depot list once the date has passed.
+ * @summary End assignment
+ */
+export const patchAssignmentsById = (
+    id: string,
+    updateAssignmentDto: UpdateAssignmentDto,
+ signal?: AbortSignal
+) => {
+
+
+      return customFetch<AssignmentResponseDto>(
+      {url: `/assignments/${id}`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: updateAssignmentDto, signal
+    },
+      );
+    }
+
+
+
+
+export const getPatchAssignmentsByIdMutationKey = () => ['patchAssignmentsById'] as const;
+
+export const getPatchAssignmentsByIdMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof patchAssignmentsById>>, TError,PatchAssignmentsByIdMutationVariables, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof patchAssignmentsById>>, TError,PatchAssignmentsByIdMutationVariables, TContext> => {
+
+const mutationKey = getPatchAssignmentsByIdMutationKey();
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof patchAssignmentsById>>, PatchAssignmentsByIdMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  patchAssignmentsById(id,data,)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PatchAssignmentsByIdMutationResult = NonNullable<Awaited<ReturnType<typeof patchAssignmentsById>>>
+    export type PatchAssignmentsByIdMutationBody = UpdateAssignmentDto
+    export type PatchAssignmentsByIdMutationError = ErrorType<unknown>
+    export type PatchAssignmentsByIdMutationVariables = {id: string;data: UpdateAssignmentDto}
+
+    /**
+ * @summary End assignment
+ */
+export const usePatchAssignmentsById = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof patchAssignmentsById>>, TError,PatchAssignmentsByIdMutationVariables, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof patchAssignmentsById>>,
+        TError,
+        PatchAssignmentsByIdMutationVariables,
+        TContext
+      > => {
+      return useMutation(getPatchAssignmentsByIdMutationOptions(options), queryClient);
     }

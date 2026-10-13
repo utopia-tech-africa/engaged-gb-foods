@@ -5,6 +5,8 @@ const links = [
   { href: "/ops/regions", label: "Regions" },
   { href: "/ops/distributors", label: "Distributors" },
   { href: "/ops/depots", label: "Depots" },
+  { href: "/ops/people", label: "People" },
+  { href: "/ops/assignments", label: "Assignments" },
   { href: "/ops/attendance", label: "Attendance" },
   { href: "/ops/stock", label: "Stock" },
   { href: "/ops/recce", label: "Recce" },

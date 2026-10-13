@@ -18,6 +18,7 @@ Field and client platform for the GBfoods nationwide depot sorting and segregati
 - GBfoods disposition on stock lots (`POST /stock-lots/:id/disposition`) with zone lock for release paths
 - Ops visit review: `/ops/visits/[id]`; GBfoods control room: `/client`, `/client/depots/[id]`, `/client/lots/[id]` with overview KPIs, filters, CSV exports, and depot packs
 - Depot recce (`/ops/recce`, `/recces`): checklist, gaps with owner and deadline, optional photo keys, ready/hold decision synced to `Depot.readiness`; a critical gap forces hold
+- People and assignments (`/ops/people`, `/ops/assignments`; API `/users`, `/assignments`, `/clusters`): admin and national ops create, edit, deactivate users and reset PINs (field roles) or passwords (desk roles); field roles need staff ID + PIN, desk roles need email + password; assign field users to a distributor, cluster, or region with dates and end assignments. Credential hashes are never returned. Deactivating or resetting credentials revokes the user's sessions
 - Training assessment roster (`/ops/assessment`, `/assessments`, `/users`): safety, quality, and record-keeping must all pass; any fail means not dispatchable
 - Field exceptions and escalations (`/field/escalations/new`, `/ops/escalations`, `/escalations`): trigger, note, and photos create a timestamped escalation; ops list open items and update status, owner, due date, and written record. Raising one does not change the visit status. Online only for now
 - GBfoods brand tokens and logo assets

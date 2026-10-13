@@ -12,4 +12,12 @@ export type GetUsersParams = {
  * Filter by role
  */
 role?: UserRole;
+/**
+ * Filter by active flag. Omit to return active and inactive users.
+ */
+isActive?: boolean;
+/**
+ * Case-insensitive search on name, staff ID, or email
+ */
+q?: string;
 };

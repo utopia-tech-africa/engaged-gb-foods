@@ -41,7 +41,7 @@ export default function OpsAssessmentPage() {
   const [filter, setFilter] = useState<ResultFilter>("all");
 
   const enabled = Boolean(accessToken);
-  const usersQuery = useGetUsers(undefined, { query: { enabled } });
+  const usersQuery = useGetUsers({ isActive: true }, { query: { enabled } });
   const assessmentsQuery = useGetAssessments(undefined, { query: { enabled } });
 
   const canWrite = user ? canWriteReadiness(user.role) : false;

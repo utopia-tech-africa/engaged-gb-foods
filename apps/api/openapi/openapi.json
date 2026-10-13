@@ -718,6 +718,47 @@
         ]
       }
     },
+    "/clusters": {
+      "get": {
+        "description": "Returns clusters ordered by name, optionally filtered by region.",
+        "operationId": "getClusters",
+        "parameters": [
+          {
+            "name": "regionId",
+            "required": false,
+            "in": "query",
+            "description": "Only clusters in this region cuid",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of clusters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ClusterResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List clusters",
+        "tags": [
+          "Clusters"
+        ]
+      }
+    },
     "/regions": {
       "get": {
         "description": "Returns Ghana network regions ordered by name for ops and field users.",
@@ -1074,12 +1115,32 @@
     },
     "/assignments": {
       "get": {
-        "description": "Returns user network assignments with scope and effective dates.",
+        "description": "Returns user network assignments with scope and effective dates, optionally filtered by user.",
         "operationId": "getAssignments",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "userId",
+            "required": false,
+            "in": "query",
+            "description": "Only assignments for this user cuid",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
-            "description": "List of assignments"
+            "description": "List of assignments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AssignmentResponseDto"
+                  }
+                }
+              }
+            }
           }
         },
         "security": [
@@ -1108,7 +1169,14 @@
         },
         "responses": {
           "201": {
-            "description": "Assignment created"
+            "description": "Assignment created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssignmentResponseDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -1117,6 +1185,53 @@
           }
         ],
         "summary": "Create assignment",
+        "tags": [
+          "Assignments"
+        ]
+      }
+    },
+    "/assignments/{id}": {
+      "patch": {
+        "description": "Sets the effective end date of an assignment (defaults to now), which removes the scope from the user's depot list once the date has passed.",
+        "operationId": "patchAssignmentsById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAssignmentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Assignment updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssignmentResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "End assignment",
         "tags": [
           "Assignments"
         ]
@@ -2213,7 +2328,7 @@
     },
     "/users": {
       "get": {
-        "description": "Lists active users for ops screens such as the assessment roster, optionally filtered by role. Returns no credentials.",
+        "description": "Lists users for ops screens, optionally filtered by role, active flag, or a search term on name, staff ID, or email. Omit isActive to include inactive users. Returns no credentials.",
         "operationId": "getUsers",
         "parameters": [
           {
@@ -2224,17 +2339,35 @@
             "schema": {
               "$ref": "#/components/schemas/UserRole"
             }
+          },
+          {
+            "name": "isActive",
+            "required": false,
+            "in": "query",
+            "description": "Filter by active flag. Omit to return active and inactive users.",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "description": "Case-insensitive search on name, staff ID, or email",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
           "200": {
-            "description": "Active users",
+            "description": "Matching users",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/UserSummaryResponseDto"
+                    "$ref": "#/components/schemas/UserResponseDto"
                   }
                 }
               }
@@ -2247,6 +2380,124 @@
           }
         ],
         "summary": "List users",
+        "tags": [
+          "Users"
+        ]
+      },
+      "post": {
+        "description": "Creates a user. Field roles (qc, handler, cluster_supervisor, regional_supervisor) need a staff ID and PIN. Desk roles (admin, national_ops, national_quality, gbfoods_reviewer) need an email and password.",
+        "operationId": "postUsers",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateUserDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create user",
+        "tags": [
+          "Users"
+        ]
+      }
+    },
+    "/users/{id}": {
+      "get": {
+        "description": "Returns a single user profile. Never includes PIN or password hashes.",
+        "operationId": "getUsersById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User profile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get user by id",
+        "tags": [
+          "Users"
+        ]
+      },
+      "patch": {
+        "description": "Updates profile fields or the active flag. Send pin or password to reset credentials; resetting a PIN also clears the lock. Deactivating or resetting credentials signs the user out of existing sessions.",
+        "operationId": "patchUsersById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update user",
         "tags": [
           "Users"
         ]
@@ -3284,6 +3535,34 @@
           "objectKey"
         ]
       },
+      "ClusterResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "regionId": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "supervisorUserId": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "regionId",
+          "code",
+          "name",
+          "supervisorUserId"
+        ]
+      },
       "RegionResponseDto": {
         "type": "object",
         "properties": {
@@ -3649,6 +3928,138 @@
           "isActive"
         ]
       },
+      "AssignmentUserDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "staffId": {
+            "type": "string",
+            "nullable": true
+          },
+          "role": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UserRole"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "fullName",
+          "staffId",
+          "role"
+        ]
+      },
+      "AssignmentScopeDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "code"
+        ]
+      },
+      "AssignmentResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "distributorId": {
+            "type": "string",
+            "nullable": true
+          },
+          "clusterId": {
+            "type": "string",
+            "nullable": true
+          },
+          "regionId": {
+            "type": "string",
+            "nullable": true
+          },
+          "effectiveFrom": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "effectiveTo": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "user": {
+            "$ref": "#/components/schemas/AssignmentUserDto"
+          },
+          "distributor": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AssignmentScopeDto"
+              }
+            ]
+          },
+          "cluster": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AssignmentScopeDto"
+              }
+            ]
+          },
+          "region": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AssignmentScopeDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "userId",
+          "distributorId",
+          "clusterId",
+          "regionId",
+          "effectiveFrom",
+          "effectiveTo",
+          "createdAt",
+          "updatedAt",
+          "user",
+          "distributor",
+          "cluster",
+          "region"
+        ]
+      },
       "CreateAssignmentDto": {
         "type": "object",
         "properties": {
@@ -3681,6 +4092,16 @@
         "required": [
           "userId"
         ]
+      },
+      "UpdateAssignmentDto": {
+        "type": "object",
+        "properties": {
+          "effectiveTo": {
+            "format": "date-time",
+            "type": "string",
+            "description": "End date for the assignment. Defaults to now when omitted."
+          }
+        }
       },
       "AttendanceKind": {
         "type": "string",
@@ -5050,7 +5471,7 @@
           }
         }
       },
-      "UserSummaryResponseDto": {
+      "UserResponseDto": {
         "type": "object",
         "properties": {
           "id": {
@@ -5063,6 +5484,14 @@
             "type": "string",
             "nullable": true
           },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
           "role": {
             "allOf": [
               {
@@ -5072,15 +5501,122 @@
           },
           "isActive": {
             "type": "boolean"
+          },
+          "hasPin": {
+            "type": "boolean",
+            "description": "True when a field PIN has been set"
+          },
+          "hasPassword": {
+            "type": "boolean",
+            "description": "True when a desk password has been set"
+          },
+          "lockedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
           }
         },
         "required": [
           "id",
           "fullName",
           "staffId",
+          "email",
+          "phone",
           "role",
-          "isActive"
+          "isActive",
+          "hasPin",
+          "hasPassword",
+          "lockedAt",
+          "createdAt",
+          "updatedAt"
         ]
+      },
+      "CreateUserDto": {
+        "type": "object",
+        "properties": {
+          "fullName": {
+            "type": "string",
+            "example": "Ama Mensah"
+          },
+          "role": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UserRole"
+              }
+            ]
+          },
+          "staffId": {
+            "type": "string",
+            "example": "BTL-0031",
+            "description": "Required for field roles"
+          },
+          "email": {
+            "type": "string",
+            "example": "ama@gbfoods.local",
+            "description": "Required for desk roles"
+          },
+          "phone": {
+            "type": "string",
+            "example": "+233201234567"
+          },
+          "pin": {
+            "type": "string",
+            "example": "2468",
+            "description": "Four to six digits. Required for field roles"
+          },
+          "password": {
+            "type": "string",
+            "description": "At least 8 characters. Required for desk roles"
+          },
+          "isActive": {
+            "type": "boolean",
+            "default": true
+          }
+        },
+        "required": [
+          "fullName",
+          "role"
+        ]
+      },
+      "UpdateUserDto": {
+        "type": "object",
+        "properties": {
+          "fullName": {
+            "type": "string"
+          },
+          "staffId": {
+            "type": "string",
+            "description": "Field roles only; cannot be cleared"
+          },
+          "email": {
+            "type": "string",
+            "description": "Desk roles only; cannot be cleared"
+          },
+          "phone": {
+            "type": "string",
+            "description": "Send an empty string to clear the phone number"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "pin": {
+            "type": "string",
+            "example": "2468",
+            "description": "Resets the field PIN, clears the lock and failed attempts"
+          },
+          "password": {
+            "type": "string",
+            "description": "Resets the desk password (at least 8 characters)"
+          }
+        }
       }
     }
   }

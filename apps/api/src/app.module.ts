@@ -7,6 +7,7 @@ import { AssignmentModule } from "./modules/assignment/assignment.module";
 import { AttendanceModule } from "./modules/attendance/attendance.module";
 import { AuthModule } from "./modules/auth/auth.module";
 import { ClientModule } from "./modules/client/client.module";
+import { ClusterModule } from "./modules/cluster/cluster.module";
 import { DailyReturnModule } from "./modules/daily-return/daily-return.module";
 import { DepotModule } from "./modules/depot/depot.module";
 import { DistributorModule } from "./modules/distributor/distributor.module";
@@ -31,6 +32,7 @@ import { VisitModule } from "./modules/visit/visit.module";
     HealthModule,
     AuthModule,
     ClientModule,
+    ClusterModule,
     RegionModule,
     DistributorModule,
     DepotModule,
