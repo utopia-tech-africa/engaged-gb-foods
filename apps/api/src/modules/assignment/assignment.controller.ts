@@ -1,4 +1,14 @@
-import { Body, Controller, Get, Inject, Post, UseGuards } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Get,
+  Inject,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from "@nestjs/common";
 import {
   ApiBearerAuth,
   ApiCreatedResponse,
@@ -15,8 +25,11 @@ import { RolesGuard } from "../../common/guards/roles.guard";
 import type { AuthenticatedUser } from "../../common/types/authenticated-user.type";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { AssignmentService } from "./assignment.service";
+import { AssignmentResponseDto } from "./dto/assignment-response.dto";
 import { CreateAssignmentDto } from "./dto/create-assignment.dto";
+import { ListAssignmentsQueryDto } from "./dto/list-assignments-query.dto";
 import { MyDepotResponseDto } from "./dto/my-depot-response.dto";
+import { UpdateAssignmentDto } from "./dto/update-assignment.dto";
 
 @ApiTags("Assignments")
 @Controller("assignments")
@@ -42,11 +55,12 @@ export class AssignmentController {
   @ApiOperation({
     operationId: "getAssignments",
     summary: "List assignments",
-    description: "Returns user network assignments with scope and effective dates.",
+    description:
+      "Returns user network assignments with scope and effective dates, optionally filtered by user.",
   })
-  @ApiOkResponse({ description: "List of assignments" })
-  getAssignments() {
-    return this.assignmentService.listAssignments();
+  @ApiOkResponse({ description: "List of assignments", type: [AssignmentResponseDto] })
+  getAssignments(@Query() query: ListAssignmentsQueryDto) {
+    return this.assignmentService.listAssignments(query.userId);
   }
 
   @Post()
@@ -56,8 +70,21 @@ export class AssignmentController {
     summary: "Create assignment",
     description: "Assigns a field user (typically QC) to a distributor, cluster, or region scope.",
   })
-  @ApiCreatedResponse({ description: "Assignment created" })
+  @ApiCreatedResponse({ description: "Assignment created", type: AssignmentResponseDto })
   postAssignments(@Body() body: CreateAssignmentDto) {
     return this.assignmentService.createAssignment(body);
+  }
+
+  @Patch(":id")
+  @Roles(...NETWORK_WRITE_ROLES)
+  @ApiOperation({
+    operationId: "patchAssignmentsById",
+    summary: "End assignment",
+    description:
+      "Sets the effective end date of an assignment (defaults to now), which removes the scope from the user's depot list once the date has passed.",
+  })
+  @ApiOkResponse({ description: "Assignment updated", type: AssignmentResponseDto })
+  patchAssignmentsById(@Param("id") id: string, @Body() body: UpdateAssignmentDto) {
+    return this.assignmentService.endAssignment(id, body);
   }
 }

@@ -29,3 +29,6 @@ export const DAILY_RETURN_WRITE_ROLES: UserRole[] = [
 
 export const canWriteDailyReturn = (role: UserRole): boolean =>
   DAILY_RETURN_WRITE_ROLES.includes(role);
+
+/** Ops pages for people and assignments (viewing). Matches API read guard for users. */
+export const OPS_PEOPLE_ROLES: UserRole[] = OPS_READINESS_ROLES;

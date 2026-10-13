@@ -3,6 +3,7 @@ export * from './assignments/assignments';
 export * from './attendance/attendance';
 export * from './auth/auth';
 export * from './client/client';
+export * from './clusters/clusters';
 export * from './daily-returns/daily-returns';
 export * from './depots/depots';
 export * from './distributors/distributors';
