@@ -68,6 +68,17 @@ enum DispositionDecision {
   approve_repack
 }
 
+enum RecceDecision {
+  ready
+  hold
+}
+
+enum AssessmentResult {
+  pass
+  fail
+  pending
+}
+
 enum SignatureRole {
   qc
   cluster_supervisor
@@ -97,6 +108,10 @@ model User {
   stockLotsCreated  StockLot[]     @relation("StockLotCreatedBy")
   dispositions      Disposition[]
   visitSignatures   VisitSignature[] @relation("VisitSignatureSignedBy")
+  recces            Recce[]        @relation("RecceAuthor")
+  assessments       Assessment[]   @relation("AssessmentSubject")
+  assessmentsGiven  Assessment[]   @relation("AssessmentAssessor")
+  dailyReturnsSubmitted DailyReturn[] @relation("DailyReturnSubmitter")
 
   @@index([role])
   @@index([isActive])
@@ -129,6 +144,7 @@ model Region {
   clusters     Cluster[]
   distributors Distributor[]
   assignments  Assignment[]
+  dailyReturns DailyReturn[]
 
   @@index([isActive])
 }
@@ -190,6 +206,7 @@ model Depot {
   distributor    Distributor    @relation(fields: [distributorId], references: [id], onDelete: Cascade)
   visits         Visit[]
   attendances    Attendance[]
+  recces         Recce[]
 
   @@unique([distributorId, code])
   @@index([distributorId])
@@ -392,4 +409,90 @@ model VisitOpenAction {
   visit             Visit     @relation(fields: [visitId], references: [id], onDelete: Cascade)
 
   @@index([visitId])
+}
+
+model Recce {
+  id           String          @id @default(cuid())
+  depotId      String
+  /// { access, stockEstimate, workspace, power, signal, holdingZones: boolean; stockEstimateNote?: string }
+  checklist    Json
+  decision     RecceDecision
+  notes        String?
+  authorUserId String
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  depot        Depot           @relation(fields: [depotId], references: [id], onDelete: Cascade)
+  author       User            @relation("RecceAuthor", fields: [authorUserId], references: [id], onDelete: Restrict)
+  gaps         RecceGap[]
+  evidence     RecceEvidence[]
+
+  @@index([depotId])
+  @@index([decision])
+}
+
+model RecceGap {
+  id          String    @id @default(cuid())
+  recceId     String
+  description String
+  ownerName   String
+  dueAt       DateTime?
+  isCritical  Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  recce       Recce     @relation(fields: [recceId], references: [id], onDelete: Cascade)
+
+  @@index([recceId])
+}
+
+model RecceEvidence {
+  id         String   @id @default(cuid())
+  recceId    String
+  objectKey  String
+  capturedAt DateTime
+  createdAt  DateTime @default(now())
+  recce      Recce    @relation(fields: [recceId], references: [id], onDelete: Cascade)
+
+  @@index([recceId])
+}
+
+model Assessment {
+  id               String           @id @default(cuid())
+  userId           String
+  safetyPass       Boolean
+  qualityPass      Boolean
+  recordsPass      Boolean
+  /// Derived: all three mandatory steps true -> pass, otherwise fail.
+  result           AssessmentResult
+  notes            String?
+  assessedByUserId String
+  assessedAt       DateTime         @default(now())
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  user             User             @relation("AssessmentSubject", fields: [userId], references: [id], onDelete: Cascade)
+  assessedBy       User             @relation("AssessmentAssessor", fields: [assessedByUserId], references: [id], onDelete: Restrict)
+
+  @@index([userId])
+  @@index([result])
+}
+
+model DailyReturn {
+  id                 String   @id @default(cuid())
+  regionId           String
+  date               DateTime @db.Date
+  submittedAt        DateTime @default(now())
+  submittedByUserId  String
+  coverageSummary    String
+  stockStatusSummary String
+  variancesSummary   String?
+  incidentsSummary   String?
+  depotsPlanned      Int
+  depotsCompleted    Int
+  depotsException    Int      @default(0)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  region             Region   @relation(fields: [regionId], references: [id], onDelete: Cascade)
+  submittedBy        User     @relation("DailyReturnSubmitter", fields: [submittedByUserId], references: [id], onDelete: Restrict)
+
+  @@unique([regionId, date])
+  @@index([date])
+  @@index([regionId])
 }
