@@ -11,6 +11,7 @@ import {
   Select,
   SelectContent,
   SelectItem,
+  type SelectOption,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -31,7 +32,9 @@ import {
 } from "@/lib/users/assignments";
 import { USER_ROLE_LABELS } from "@/lib/users/roles";
 
-type ScopeOption = { id: string; label: string };
+const SCOPE_TYPE_OPTIONS = (Object.keys(SCOPE_TYPE_LABELS) as AssignmentScopeType[]).map(
+  (type) => ({ value: type, label: SCOPE_TYPE_LABELS[type] }),
+);
 
 type AssignmentCreateFormProps = {
   users: UserResponseDto[];
@@ -52,21 +55,25 @@ export const AssignmentCreateForm = ({ users, enabled }: AssignmentCreateFormPro
   const clustersQuery = useGetClusters(undefined, { query: { enabled } });
   const regionsQuery = useGetRegions({ query: { enabled } });
 
-  const scopeOptions: Record<AssignmentScopeType, ScopeOption[]> = {
+  const scopeOptions: Record<AssignmentScopeType, SelectOption[]> = {
     distributor: (distributorsQuery.data ?? []).map((item) => ({
-      id: item.id,
+      value: item.id,
       label: `${item.code} — ${item.name}`,
     })),
     cluster: (clustersQuery.data ?? []).map((item) => ({
-      id: item.id,
+      value: item.id,
       label: `${item.code} — ${item.name}`,
     })),
     region: (regionsQuery.data ?? []).map((item) => ({
-      id: item.id,
+      value: item.id,
       label: `${item.code} — ${item.name}`,
     })),
   };
   const options = scopeOptions[scopeType];
+  const userOptions = users.map((user) => ({
+    value: user.id,
+    label: `${user.fullName} · ${USER_ROLE_LABELS[user.role]}${user.staffId ? ` · ${user.staffId}` : ""}`,
+  }));
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
     event.preventDefault();
@@ -105,15 +112,18 @@ export const AssignmentCreateForm = ({ users, enabled }: AssignmentCreateFormPro
         <form onSubmit={(event) => void onSubmit(event)} className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
             <Label>Person</Label>
-            <Select value={userId} onValueChange={(value) => value && setUserId(value)}>
+            <Select
+              items={userOptions}
+              value={userId}
+              onValueChange={(value) => value && setUserId(value)}
+            >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select person" />
               </SelectTrigger>
               <SelectContent>
-                {users.map((user) => (
-                  <SelectItem key={user.id} value={user.id}>
-                    {user.fullName} · {USER_ROLE_LABELS[user.role]}
-                    {user.staffId ? ` · ${user.staffId}` : ""}
+                {userOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -122,6 +132,7 @@ export const AssignmentCreateForm = ({ users, enabled }: AssignmentCreateFormPro
           <div className="space-y-2">
             <Label>Scope type</Label>
             <Select
+              items={SCOPE_TYPE_OPTIONS}
               value={scopeType}
               onValueChange={(value) => {
                 if (value && isScopeType(value)) {
@@ -134,9 +145,9 @@ export const AssignmentCreateForm = ({ users, enabled }: AssignmentCreateFormPro
                 <SelectValue placeholder="Select scope type" />
               </SelectTrigger>
               <SelectContent>
-                {(Object.keys(SCOPE_TYPE_LABELS) as AssignmentScopeType[]).map((type) => (
-                  <SelectItem key={type} value={type}>
-                    {SCOPE_TYPE_LABELS[type]}
+                {SCOPE_TYPE_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -144,13 +155,17 @@ export const AssignmentCreateForm = ({ users, enabled }: AssignmentCreateFormPro
           </div>
           <div className="space-y-2 md:col-span-2">
             <Label>{SCOPE_TYPE_LABELS[scopeType]}</Label>
-            <Select value={scopeId} onValueChange={(value) => value && setScopeId(value)}>
+            <Select
+              items={options}
+              value={scopeId}
+              onValueChange={(value) => value && setScopeId(value)}
+            >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder={`Select ${SCOPE_TYPE_LABELS[scopeType].toLowerCase()}`} />
               </SelectTrigger>
               <SelectContent>
                 {options.map((option) => (
-                  <SelectItem key={option.id} value={option.id}>
+                  <SelectItem key={option.value} value={option.value}>
                     {option.label}
                   </SelectItem>
                 ))}

@@ -58,6 +58,8 @@ export default function OpsDistributorsPage() {
 
   const regions = regionsQuery.data ?? [];
   const distributors = distributorsQuery.data ?? [];
+  const regionOptions = regions.map((region) => ({ value: region.id, label: region.name }));
+  const regionFilterOptions = [{ value: ALL_FILTER, label: "All regions" }, ...regionOptions];
   const regionId = selectedRegionId || regions[0]?.id || "";
   const isLoading = regionsQuery.isLoading || distributorsQuery.isLoading;
   const error = submitError ?? regionsQuery.error?.message ?? distributorsQuery.error?.message;
@@ -103,6 +105,7 @@ export default function OpsDistributorsPage() {
         <div className="max-w-md space-y-2">
           <Label>Filter by region</Label>
           <Select
+            items={regionFilterOptions}
             value={filterRegionId || ALL_FILTER}
             onValueChange={(value) => {
               if (!value) {
@@ -115,10 +118,9 @@ export default function OpsDistributorsPage() {
               <SelectValue placeholder="All regions" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={ALL_FILTER}>All regions</SelectItem>
-              {regions.map((region) => (
-                <SelectItem key={region.id} value={region.id}>
-                  {region.name}
+              {regionFilterOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -157,6 +159,7 @@ export default function OpsDistributorsPage() {
                 <div className="space-y-2">
                   <Label>Region</Label>
                   <Select
+                    items={regionOptions}
                     value={regionId}
                     onValueChange={(value) => {
                       if (value) {
@@ -168,9 +171,9 @@ export default function OpsDistributorsPage() {
                       <SelectValue placeholder="Select region" />
                     </SelectTrigger>
                     <SelectContent>
-                      {regions.map((region) => (
-                        <SelectItem key={region.id} value={region.id}>
-                          {region.name}
+                      {regionOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
                         </SelectItem>
                       ))}
                     </SelectContent>

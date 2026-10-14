@@ -30,6 +30,11 @@ import { ZONE_LABELS } from "@/lib/stock/constants";
 import { cn } from "@/lib/utils";
 import { DISPOSITION_LABELS } from "@/lib/visit/constants";
 
+const DECISION_OPTIONS = (Object.keys(DISPOSITION_LABELS) as DispositionDecision[]).map((key) => ({
+  value: key,
+  label: DISPOSITION_LABELS[key],
+}));
+
 const PENDING_ZONES = new Set([
   "held_or_rejected",
   "recoverable_pending_approval",
@@ -104,6 +109,7 @@ export default function ClientLotDispositionPage() {
               <div className="space-y-2">
                 <Label>Decision</Label>
                 <Select
+                  items={DECISION_OPTIONS}
                   value={decision}
                   onValueChange={(value) => {
                     if (value) {
@@ -115,9 +121,9 @@ export default function ClientLotDispositionPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {(Object.keys(DISPOSITION_LABELS) as DispositionDecision[]).map((key) => (
-                      <SelectItem key={key} value={key}>
-                        {DISPOSITION_LABELS[key]}
+                    {DECISION_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
                       </SelectItem>
                     ))}
                   </SelectContent>

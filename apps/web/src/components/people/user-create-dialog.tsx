@@ -26,6 +26,11 @@ import { getGetUsersQueryKey, usePostUsers } from "@/lib/api/generated/users/use
 import type { UserRole } from "@/lib/auth/types";
 import { ALL_USER_ROLES, isFieldUserRole, isUserRole, USER_ROLE_LABELS } from "@/lib/users/roles";
 
+const ROLE_OPTIONS = ALL_USER_ROLES.map((value) => ({
+  value,
+  label: USER_ROLE_LABELS[value],
+}));
+
 export const UserCreateDialog = () => {
   const queryClient = useQueryClient();
   const createUser = usePostUsers();
@@ -94,6 +99,7 @@ export const UserCreateDialog = () => {
           <div className="space-y-2">
             <Label>Role</Label>
             <Select
+              items={ROLE_OPTIONS}
               value={role}
               onValueChange={(value) => {
                 if (value && isUserRole(value)) {
@@ -105,9 +111,9 @@ export const UserCreateDialog = () => {
                 <SelectValue placeholder="Select role" />
               </SelectTrigger>
               <SelectContent>
-                {ALL_USER_ROLES.map((value) => (
-                  <SelectItem key={value} value={value}>
-                    {USER_ROLE_LABELS[value]}
+                {ROLE_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
                   </SelectItem>
                 ))}
               </SelectContent>

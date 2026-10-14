@@ -37,6 +37,14 @@ import { cn } from "@/lib/utils";
 
 const ALL_FILTER = "__all__";
 
+const REVIEW_STATUS_OPTIONS = [
+  { value: ALL_FILTER, label: "All statuses" },
+  ...(Object.keys(REVIEW_STATUS_LABELS) as ClientReviewStatus[]).map((key) => ({
+    value: key,
+    label: REVIEW_STATUS_LABELS[key],
+  })),
+];
+
 const todayIso = (): string => new Date().toISOString().slice(0, 10);
 
 const visitStatusLabel = (status: string | null): string => {
@@ -78,6 +86,10 @@ export default function ClientControlRoomPage() {
 
   const overview = overviewQuery.data;
   const regions = regionsQuery.data ?? [];
+  const regionOptions = [
+    { value: ALL_FILTER, label: "All regions" },
+    ...regions.map((region) => ({ value: region.id, label: region.name })),
+  ];
   const loading = overviewQuery.isLoading;
   const error = exportError ?? overviewQuery.error?.message ?? null;
 
@@ -142,6 +154,7 @@ export default function ClientControlRoomPage() {
               <div className="min-w-[12rem] space-y-2">
                 <Label>Region</Label>
                 <Select
+                  items={regionOptions}
                   value={regionId || ALL_FILTER}
                   onValueChange={(value) => {
                     if (!value) {
@@ -154,10 +167,9 @@ export default function ClientControlRoomPage() {
                     <SelectValue placeholder="All regions" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value={ALL_FILTER}>All regions</SelectItem>
-                    {regions.map((region) => (
-                      <SelectItem key={region.id} value={region.id}>
-                        {region.name}
+                    {regionOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -166,6 +178,7 @@ export default function ClientControlRoomPage() {
               <div className="min-w-[12rem] space-y-2">
                 <Label>Review status</Label>
                 <Select
+                  items={REVIEW_STATUS_OPTIONS}
                   value={reviewStatus || ALL_FILTER}
                   onValueChange={(value) => {
                     if (!value) {
@@ -178,10 +191,9 @@ export default function ClientControlRoomPage() {
                     <SelectValue placeholder="All statuses" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value={ALL_FILTER}>All statuses</SelectItem>
-                    {(Object.keys(REVIEW_STATUS_LABELS) as ClientReviewStatus[]).map((key) => (
-                      <SelectItem key={key} value={key}>
-                        {REVIEW_STATUS_LABELS[key]}
+                    {REVIEW_STATUS_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
                       </SelectItem>
                     ))}
                   </SelectContent>

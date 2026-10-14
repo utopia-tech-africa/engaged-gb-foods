@@ -38,6 +38,13 @@ export default function OpsAssignmentsPage() {
   );
 
   const fieldUsers = (usersQuery.data ?? []).filter((user) => FIELD_USER_ROLES.includes(user.role));
+  const userOptions = [
+    { value: ALL_FILTER, label: "Everyone" },
+    ...fieldUsers.map((user) => ({
+      value: user.id,
+      label: `${user.fullName}${user.staffId ? ` · ${user.staffId}` : ""}`,
+    })),
+  ];
   const error = usersQuery.error?.message ?? assignmentsQuery.error?.message;
 
   return (
@@ -50,16 +57,18 @@ export default function OpsAssignmentsPage() {
 
         <div className="max-w-md space-y-2">
           <Label>Filter by person</Label>
-          <Select value={userFilter} onValueChange={(value) => value && setUserFilter(value)}>
+          <Select
+            items={userOptions}
+            value={userFilter}
+            onValueChange={(value) => value && setUserFilter(value)}
+          >
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Everyone" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={ALL_FILTER}>Everyone</SelectItem>
-              {fieldUsers.map((user) => (
-                <SelectItem key={user.id} value={user.id}>
-                  {user.fullName}
-                  {user.staffId ? ` · ${user.staffId}` : ""}
+              {userOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
                 </SelectItem>
               ))}
             </SelectContent>
