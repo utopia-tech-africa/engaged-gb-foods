@@ -6,6 +6,7 @@ export * from './client/client';
 export * from './clusters/clusters';
 export * from './daily-returns/daily-returns';
 export * from './depots/depots';
+export * from './dispatches/dispatches';
 export * from './distributors/distributors';
 export * from './escalations/escalations';
 export * from './health/health';

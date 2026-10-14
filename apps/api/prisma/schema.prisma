@@ -113,6 +113,9 @@ model User {
   assessmentsGiven  Assessment[]   @relation("AssessmentAssessor")
   dailyReturnsSubmitted DailyReturn[] @relation("DailyReturnSubmitter")
   escalationsReported Escalation[] @relation("EscalationReporter")
+  dispatchDaysCreated DispatchDay[] @relation("DispatchDayCreator")
+  dispatchDaysFrozen  DispatchDay[] @relation("DispatchDayFreezer")
+  dispatchSlots       DispatchSlot[] @relation("DispatchSlotQc")
 
   @@index([role])
   @@index([isActive])
@@ -162,6 +165,7 @@ model Cluster {
   supervisorUser   User?          @relation("ClusterSupervisor", fields: [supervisorUserId], references: [id], onDelete: SetNull)
   distributors     Distributor[]
   assignments      Assignment[]
+  dispatchDays     DispatchDay[]
 
   @@unique([regionId, code])
   @@index([regionId])
@@ -209,6 +213,7 @@ model Depot {
   attendances    Attendance[]
   recces         Recce[]
   escalations    Escalation[]
+  dispatchSlots  DispatchSlot[]
 
   @@unique([distributorId, code])
   @@index([distributorId])
@@ -256,6 +261,7 @@ model Visit {
   signatures   VisitSignature[]
   openActions  VisitOpenAction[]
   escalations  Escalation[]
+  dispatchSlot DispatchSlot?
 
   @@unique([depotId, qcUserId, date])
   @@index([depotId])
@@ -547,4 +553,51 @@ model EscalationEvidence {
   escalation   Escalation @relation(fields: [escalationId], references: [id], onDelete: Cascade)
 
   @@index([escalationId])
+}
+
+enum DispatchStatus {
+  draft
+  frozen
+}
+
+model DispatchDay {
+  id              String         @id @default(cuid())
+  clusterId       String
+  date            DateTime       @db.Date
+  status          DispatchStatus @default(draft)
+  notes           String?
+  createdByUserId String
+  frozenAt        DateTime?
+  frozenByUserId  String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  cluster         Cluster        @relation(fields: [clusterId], references: [id], onDelete: Cascade)
+  createdBy       User           @relation("DispatchDayCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  frozenBy        User?          @relation("DispatchDayFreezer", fields: [frozenByUserId], references: [id], onDelete: SetNull)
+  slots           DispatchSlot[]
+
+  @@unique([clusterId, date])
+  @@index([date])
+  @@index([clusterId])
+  @@index([status])
+}
+
+model DispatchSlot {
+  id            String      @id @default(cuid())
+  dispatchDayId String
+  depotId       String
+  qcUserId      String
+  sortOrder     Int         @default(0)
+  visitId       String?     @unique
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  dispatchDay   DispatchDay @relation(fields: [dispatchDayId], references: [id], onDelete: Cascade)
+  depot         Depot       @relation(fields: [depotId], references: [id], onDelete: Cascade)
+  qcUser        User        @relation("DispatchSlotQc", fields: [qcUserId], references: [id], onDelete: Restrict)
+  visit         Visit?      @relation(fields: [visitId], references: [id], onDelete: SetNull)
+
+  @@unique([dispatchDayId, depotId])
+  @@index([dispatchDayId])
+  @@index([depotId])
+  @@index([qcUserId])
 }

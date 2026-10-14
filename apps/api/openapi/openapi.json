@@ -2150,6 +2150,278 @@
         ]
       }
     },
+    "/dispatches": {
+      "get": {
+        "description": "Lists next-day route plans per cluster, optionally filtered by date, cluster, and draft/frozen status.",
+        "operationId": "getDispatches",
+        "parameters": [
+          {
+            "name": "date",
+            "required": false,
+            "in": "query",
+            "description": "Filter by calendar day (YYYY-MM-DD)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "clusterId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by cluster id",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/DispatchStatus"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dispatch day list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DispatchDayResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List dispatch days",
+        "tags": [
+          "Dispatches"
+        ]
+      },
+      "post": {
+        "description": "Creates a draft route for a cluster and date. Depots must be recce-ready and QCs must have a passing assessment and an active assignment covering the depot.",
+        "operationId": "postDispatches",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDispatchDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Draft dispatch created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DispatchDayResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create draft dispatch",
+        "tags": [
+          "Dispatches"
+        ]
+      }
+    },
+    "/dispatches/candidates": {
+      "get": {
+        "description": "Returns depots in a cluster with suggested dispatchable QCs for a visit day. Depots on hold or without a passed assessment are returned with a block reason.",
+        "operationId": "getDispatchesCandidates",
+        "parameters": [
+          {
+            "name": "date",
+            "required": true,
+            "in": "query",
+            "description": "Visit day to plan (YYYY-MM-DD)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "clusterId",
+            "required": true,
+            "in": "query",
+            "description": "Cluster to plan within",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "excludeDispatchId",
+            "required": false,
+            "in": "query",
+            "description": "When set, exclude depots already on this draft (for editing)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Candidate depots for the cluster and day",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DispatchCandidateResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List dispatch candidates",
+        "tags": [
+          "Dispatches"
+        ]
+      }
+    },
+    "/dispatches/{id}": {
+      "get": {
+        "description": "Returns a dispatch plan with cluster, slots, QC, and linked visits after freeze.",
+        "operationId": "getDispatchesById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dispatch day detail",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DispatchDayResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get dispatch day by id",
+        "tags": [
+          "Dispatches"
+        ]
+      },
+      "patch": {
+        "description": "Replaces notes and/or slots on a draft dispatch. Frozen plans cannot be edited.",
+        "operationId": "patchDispatchesById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDispatchDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Draft dispatch updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DispatchDayResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update draft dispatch",
+        "tags": [
+          "Dispatches"
+        ]
+      }
+    },
+    "/dispatches/{id}/freeze": {
+      "post": {
+        "description": "Locks the plan for the day and creates scheduled Visit rows for each slot. After freeze, depots cannot be added or removed.",
+        "operationId": "postDispatchesByIdFreeze",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dispatch frozen with scheduled visits",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DispatchDayResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Freeze dispatch route",
+        "tags": [
+          "Dispatches"
+        ]
+      }
+    },
     "/escalations": {
       "get": {
         "description": "Lists field exceptions raised as escalations, newest first, optionally filtered by depot, visit, and status.",
@@ -5267,6 +5539,366 @@
           },
           "depotsException": {
             "type": "number"
+          }
+        }
+      },
+      "DispatchStatus": {
+        "type": "string",
+        "enum": [
+          "draft",
+          "frozen"
+        ]
+      },
+      "DispatchClusterDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "regionId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name",
+          "regionId"
+        ]
+      },
+      "DispatchUserDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "staffId": {
+            "type": "string",
+            "nullable": true
+          },
+          "role": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "fullName",
+          "staffId",
+          "role"
+        ]
+      },
+      "DispatchDepotDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "readiness": {
+            "type": "string"
+          },
+          "distributorId": {
+            "type": "string"
+          },
+          "distributorName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name",
+          "readiness",
+          "distributorId",
+          "distributorName"
+        ]
+      },
+      "DispatchVisitSummaryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "status"
+        ]
+      },
+      "DispatchSlotResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "dispatchDayId": {
+            "type": "string"
+          },
+          "depotId": {
+            "type": "string"
+          },
+          "qcUserId": {
+            "type": "string"
+          },
+          "sortOrder": {
+            "type": "number"
+          },
+          "visitId": {
+            "type": "string",
+            "nullable": true
+          },
+          "depot": {
+            "$ref": "#/components/schemas/DispatchDepotDto"
+          },
+          "qcUser": {
+            "$ref": "#/components/schemas/DispatchUserDto"
+          },
+          "visit": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DispatchVisitSummaryDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "dispatchDayId",
+          "depotId",
+          "qcUserId",
+          "sortOrder",
+          "visitId",
+          "depot",
+          "qcUser",
+          "visit"
+        ]
+      },
+      "DispatchDayResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "clusterId": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DispatchStatus"
+              }
+            ]
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdByUserId": {
+            "type": "string"
+          },
+          "frozenAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "frozenByUserId": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "cluster": {
+            "$ref": "#/components/schemas/DispatchClusterDto"
+          },
+          "createdBy": {
+            "$ref": "#/components/schemas/DispatchUserDto"
+          },
+          "frozenBy": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DispatchUserDto"
+              }
+            ]
+          },
+          "slots": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DispatchSlotResponseDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "clusterId",
+          "date",
+          "status",
+          "notes",
+          "createdByUserId",
+          "frozenAt",
+          "frozenByUserId",
+          "createdAt",
+          "updatedAt",
+          "cluster",
+          "createdBy",
+          "frozenBy",
+          "slots"
+        ]
+      },
+      "DispatchCandidateQcDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "staffId": {
+            "type": "string",
+            "nullable": true
+          },
+          "dispatchable": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "fullName",
+          "staffId",
+          "dispatchable"
+        ]
+      },
+      "DispatchCandidateResponseDto": {
+        "type": "object",
+        "properties": {
+          "depot": {
+            "$ref": "#/components/schemas/DispatchDepotDto"
+          },
+          "suggestedQc": {
+            "nullable": true,
+            "description": "Suggested QC for this depot, or null if none is dispatchable",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DispatchCandidateQcDto"
+              }
+            ]
+          },
+          "eligibleQcs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DispatchCandidateQcDto"
+            }
+          },
+          "alreadyPlanned": {
+            "type": "boolean",
+            "description": "True when this depot is already on another plan for the day"
+          },
+          "blockReason": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "depot",
+          "suggestedQc",
+          "eligibleQcs",
+          "alreadyPlanned",
+          "blockReason"
+        ]
+      },
+      "CreateDispatchSlotDto": {
+        "type": "object",
+        "properties": {
+          "depotId": {
+            "type": "string"
+          },
+          "qcUserId": {
+            "type": "string",
+            "description": "QC person assigned to this depot for the day"
+          },
+          "sortOrder": {
+            "type": "number",
+            "description": "Display order within the cluster route"
+          }
+        },
+        "required": [
+          "depotId",
+          "qcUserId"
+        ]
+      },
+      "CreateDispatchDto": {
+        "type": "object",
+        "properties": {
+          "clusterId": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string",
+            "description": "Visit day (YYYY-MM-DD)"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "slots": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateDispatchSlotDto"
+            }
+          }
+        },
+        "required": [
+          "clusterId",
+          "date",
+          "slots"
+        ]
+      },
+      "UpdateDispatchDto": {
+        "type": "object",
+        "properties": {
+          "notes": {
+            "type": "string"
+          },
+          "slots": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateDispatchSlotDto"
+            }
           }
         }
       },

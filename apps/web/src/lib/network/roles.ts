@@ -44,3 +44,20 @@ export const ESCALATION_OPS_WRITE_ROLES: UserRole[] = [
 
 export const canTriageEscalation = (role: UserRole): boolean =>
   ESCALATION_OPS_WRITE_ROLES.includes(role);
+
+/** Matches API write guard for next-day dispatch plans. */
+export const DISPATCH_WRITE_ROLES: UserRole[] = [
+  "cluster_supervisor",
+  "regional_supervisor",
+  "national_ops",
+  "admin",
+];
+
+export const canWriteDispatch = (role: UserRole): boolean => DISPATCH_WRITE_ROLES.includes(role);
+
+/** Ops pages that view dispatch (network ops plus supervisors). */
+export const OPS_DISPATCH_ROLES: UserRole[] = [
+  ...OPS_NETWORK_ROLES,
+  "regional_supervisor",
+  "cluster_supervisor",
+];
