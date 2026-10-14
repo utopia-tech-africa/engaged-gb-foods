@@ -28,7 +28,6 @@ export const UserEditDialog = ({ user, onClose }: UserEditDialogProps) => {
   const updateUser = usePatchUsersById();
   const [error, setError] = useState<string | null>(null);
   const [fullName, setFullName] = useState(user.fullName);
-  const [staffId, setStaffId] = useState(user.staffId ?? "");
   const [email, setEmail] = useState(user.email ?? "");
   const [phone, setPhone] = useState(user.phone ?? "");
 
@@ -40,7 +39,7 @@ export const UserEditDialog = ({ user, onClose }: UserEditDialogProps) => {
     const data: UpdateUserDto = {
       fullName,
       phone,
-      ...(fieldRole ? { staffId } : { email }),
+      ...(fieldRole ? {} : { email }),
     };
     try {
       await updateUser.mutateAsync({ id: user.id, data });
@@ -56,7 +55,9 @@ export const UserEditDialog = ({ user, onClose }: UserEditDialogProps) => {
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Edit {user.fullName}</DialogTitle>
-          <DialogDescription>Update profile details. Role cannot be changed.</DialogDescription>
+          <DialogDescription>
+            Update profile details. Role and staff ID cannot be changed.
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={(event) => void onSubmit(event)} className="grid gap-4">
           <div className="space-y-2">
@@ -74,12 +75,11 @@ export const UserEditDialog = ({ user, onClose }: UserEditDialogProps) => {
               <Label htmlFor="edit-user-staff-id">Staff ID</Label>
               <Input
                 id="edit-user-staff-id"
-                required
-                minLength={3}
-                className="font-mono uppercase"
-                value={staffId}
-                onChange={(event) => setStaffId(event.target.value)}
+                readOnly
+                className="font-mono uppercase bg-muted"
+                value={user.staffId ?? "—"}
               />
+              <p className="text-xs text-muted-foreground">Assigned when the person was created.</p>
             </div>
           ) : (
             <div className="space-y-2">

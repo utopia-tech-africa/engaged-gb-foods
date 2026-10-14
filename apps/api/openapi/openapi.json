@@ -2696,7 +2696,7 @@
         ]
       },
       "post": {
-        "description": "Creates a user. Field roles (qc, handler, cluster_supervisor, regional_supervisor) need a staff ID and PIN. Desk roles (admin, national_ops, national_quality, gbfoods_reviewer) need an email and password.",
+        "description": "Creates a user. Field roles (qc, handler, cluster_supervisor, regional_supervisor) need a PIN; staff ID is assigned automatically as the next BTL-#### unless provided. Desk roles (admin, national_ops, national_quality, gbfoods_reviewer) need an email and password.",
         "operationId": "postUsers",
         "parameters": [],
         "requestBody": {
@@ -6484,7 +6484,7 @@
           "staffId": {
             "type": "string",
             "example": "BTL-0031",
-            "description": "Required for field roles"
+            "description": "Optional for field roles. When omitted, the API assigns the next BTL-#### staff ID. Desk roles must not send this."
           },
           "email": {
             "type": "string",
@@ -6522,7 +6522,8 @@
           },
           "staffId": {
             "type": "string",
-            "description": "Field roles only; cannot be cleared"
+            "description": "Rejected. Staff IDs are assigned on create and cannot be changed.",
+            "deprecated": true
           },
           "email": {
             "type": "string",

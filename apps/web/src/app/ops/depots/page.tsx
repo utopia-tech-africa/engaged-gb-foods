@@ -1,9 +1,12 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
+import { Warehouse } from "lucide-react";
 import { type FormEvent, useState } from "react";
 
 import { useAuth } from "@/components/auth-provider";
+import { EmptyState } from "@/components/empty-state";
+import { TableSkeleton } from "@/components/list-skeleton";
 import { RequireAuth } from "@/components/require-auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -235,7 +238,13 @@ export default function OpsDepotsPage() {
         {error ? <p className="text-sm text-danger">{error}</p> : null}
 
         {isLoading ? (
-          <p className="text-sm text-brand-ink">Loading depots…</p>
+          <TableSkeleton columns={5} rows={5} />
+        ) : depots.length === 0 ? (
+          <EmptyState
+            icon={Warehouse}
+            title="No depots in this view"
+            description="Clear the distributor filter, or add the first depot."
+          />
         ) : (
           <Card className="overflow-hidden p-0">
             <Table>

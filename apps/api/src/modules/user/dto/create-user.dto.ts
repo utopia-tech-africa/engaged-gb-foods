@@ -23,7 +23,11 @@ export class CreateUserDto {
   @IsEnum(UserRole)
   role!: UserRole;
 
-  @ApiPropertyOptional({ example: "BTL-0031", description: "Required for field roles" })
+  @ApiPropertyOptional({
+    example: "BTL-0031",
+    description:
+      "Optional for field roles. When omitted, the API assigns the next BTL-#### staff ID. Desk roles must not send this.",
+  })
   @IsOptional()
   @IsString()
   @Length(3, 32)

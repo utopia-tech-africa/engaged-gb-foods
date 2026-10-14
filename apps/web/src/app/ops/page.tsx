@@ -14,6 +14,7 @@ import { useState } from "react";
 
 import { useAuth } from "@/components/auth-provider";
 import { DatePicker } from "@/components/date-picker";
+import { DashboardSkeleton } from "@/components/list-skeleton";
 import { DailyReturnProgress } from "@/components/ops-dashboard/daily-return-progress";
 import { EscalationTriggerChart } from "@/components/ops-dashboard/escalation-trigger-chart";
 import { KpiCard } from "@/components/ops-dashboard/kpi-card";
@@ -66,7 +67,7 @@ export default function OpsDashboardPage() {
           </div>
         </div>
 
-        {isLoading ? <p className="text-sm text-muted-foreground">Loading dashboard…</p> : null}
+        {isLoading ? <DashboardSkeleton /> : null}
         {error ? <p className="text-sm text-danger">{error.message}</p> : null}
 
         {data && kpis ? (

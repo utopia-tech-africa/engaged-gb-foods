@@ -8,6 +8,7 @@ import { toast } from "sonner";
 
 import { useAuth } from "@/components/auth-provider";
 import { DatePicker } from "@/components/date-picker";
+import { FormSkeleton } from "@/components/list-skeleton";
 import { RequireAuth } from "@/components/require-auth";
 import { ShellFrame } from "@/components/shell-frame";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -461,7 +462,7 @@ export default function NewStockLotPage() {
   return (
     <RequireAuth roles={FIELD_ROLES}>
       <ShellFrame title="New stock lot" eyebrow="Field">
-        <Suspense fallback={<p className="text-sm text-brand-ink/70">Loading form…</p>}>
+        <Suspense fallback={<FormSkeleton />}>
           <NewStockLotContent />
         </Suspense>
       </ShellFrame>

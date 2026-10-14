@@ -18,7 +18,7 @@ Field and client platform for the GBfoods nationwide depot sorting and segregati
 - GBfoods disposition on stock lots (`POST /stock-lots/:id/disposition`) with zone lock for release paths
 - Ops visit review: `/ops/visits/[id]`; GBfoods control room: `/client`, `/client/depots/[id]`, `/client/lots/[id]` with overview KPIs, filters, CSV exports, and depot packs
 - Depot recce (`/ops/recce`, `/recces`): checklist, gaps with owner and deadline, optional photo keys, ready/hold decision synced to `Depot.readiness`; a critical gap forces hold
-- People and assignments (`/ops/people`, `/ops/assignments`; API `/users`, `/assignments`, `/clusters`): admin and national ops create, edit, deactivate users and reset PINs (field roles) or passwords (desk roles); field roles need staff ID + PIN, desk roles need email + password; assign field users to a distributor, cluster, or region with dates and end assignments. Credential hashes are never returned. Deactivating or resetting credentials revokes the user's sessions
+- People and assignments (`/ops/people`, `/ops/assignments`; API `/users`, `/assignments`, `/clusters`): admin and national ops create, edit, deactivate users and reset PINs (field roles) or passwords (desk roles); field roles get an auto-assigned `BTL-####` staff ID plus an admin-set PIN; desk roles need email + password; assign field users to a distributor, cluster, or region with dates and end assignments. Credential hashes are never returned. Deactivating or resetting credentials revokes the user's sessions
 - Training assessment roster (`/ops/assessment`, `/assessments`, `/users`): safety, quality, and record-keeping must all pass; any fail means not dispatchable
 - Field exceptions and escalations (`/field/escalations/new`, `/ops/escalations`, `/escalations`): trigger, note, and photos create a timestamped escalation; ops list open items and update status, owner, due date, and written record. Raising one does not change the visit status. Online only for now
 - Ops dashboard (`/ops`, `GET /ops/dashboard?date=`): every `/ops/**` page sits in a shared sidebar layout (`OpsShell`, with a mobile menu); the home page shows KPI cards and recharts charts (visit status, region coverage, stock by zone, open escalations, daily return progress) for a chosen day. Roles: admin, national ops, national quality, regional supervisor. `CLIENT_SYNC_DELAY_HOURS` sets the sync-delay threshold. The API `dev` script runs `tsc-watch` and restarts `node dist/main.js` on each successful compile
@@ -147,6 +147,8 @@ curl -s -X POST http://localhost:4000/api/v1/attendance \
 
 ### Seed accounts
 
+Pilot logins live in **`USER_GUIDE.md`** (share that file with friends and GBfoods testers). They are not shown on the public landing page.
+
 | Role | Login | Secret |
 | --- | --- | --- |
 | QC | staff ID `BTL-0031` | PIN `2468` |
@@ -167,5 +169,5 @@ PRD.md     Product requirements
 ## Brand
 
 - Orange `#fe5000`, ink grey `#54585a`
-- Logo: `apps/web/public/logo-ghana.png`
+- Logo: `apps/web/public/GB_Logo.svg`
 - Favicon: `apps/web/public/favicon.svg`

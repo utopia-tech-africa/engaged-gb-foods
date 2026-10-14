@@ -2,6 +2,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { NationalSummaryResponseDto } from "@/lib/api/generated/model";
 
 type NationalCardProps = {
@@ -23,7 +24,14 @@ export const DailyReturnNationalCard = ({ summary, isLoading }: NationalCardProp
     </CardHeader>
     <CardContent className="space-y-4">
       {isLoading || !summary ? (
-        <p className="text-sm text-muted-foreground">Loading…</p>
+        <div className="grid gap-3 sm:grid-cols-4" role="status" aria-label="Loading summary">
+          {["regions", "planned", "completed", "exceptions"].map((statId) => (
+            <div key={statId} className="space-y-2 rounded-lg border border-border p-4">
+              <Skeleton className="h-3 w-24" />
+              <Skeleton className="h-8 w-16" />
+            </div>
+          ))}
+        </div>
       ) : (
         <>
           <div className="grid gap-3 sm:grid-cols-4">

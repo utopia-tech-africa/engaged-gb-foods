@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { useAuth } from "@/components/auth-provider";
+import { PageLoader } from "@/components/page-loader";
 import { RequireAuth } from "@/components/require-auth";
 import { ShellFrame } from "@/components/shell-frame";
 import { SignaturePad } from "@/components/signature-pad";
@@ -143,7 +144,7 @@ export default function FieldReconcilePage() {
             ← Stock lots
           </Link>
 
-          {loading ? <p className="text-sm text-brand-ink/70">Loading reconciliation…</p> : null}
+          {loading ? <PageLoader label="Loading reconciliation…" /> : null}
           {error ? <p className="text-sm text-red-600">{error}</p> : null}
 
           {snapshot ? (

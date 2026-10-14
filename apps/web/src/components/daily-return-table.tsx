@@ -1,7 +1,9 @@
 "use client";
 
 import { format } from "date-fns";
+import { FileText } from "lucide-react";
 
+import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -21,7 +23,13 @@ type DailyReturnTableProps = {
 
 export const DailyReturnTable = ({ returns, canEdit, onEdit }: DailyReturnTableProps) => {
   if (returns.length === 0) {
-    return <p className="text-sm text-muted-foreground">No returns submitted for this date.</p>;
+    return (
+      <EmptyState
+        icon={FileText}
+        title="No returns submitted for this date"
+        description="Regional supervisors submit coverage and incidents here."
+      />
+    );
   }
 
   return (

@@ -7,6 +7,7 @@ import { useAuth } from "@/components/auth-provider";
 import { DatePicker } from "@/components/date-picker";
 import { DispatchPlanner } from "@/components/dispatch/dispatch-planner";
 import { DispatchTable } from "@/components/dispatch/dispatch-table";
+import { TableSkeleton } from "@/components/list-skeleton";
 import { RequireAuth } from "@/components/require-auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -96,7 +97,7 @@ export default function OpsDispatchPage() {
           </CardHeader>
           <CardContent>
             {dispatchesQuery.isLoading ? (
-              <p className="text-sm text-muted-foreground">Loading…</p>
+              <TableSkeleton columns={4} rows={4} />
             ) : dispatchesQuery.error ? (
               <p className="text-sm text-danger">{dispatchesQuery.error.message}</p>
             ) : (

@@ -1,6 +1,10 @@
 "use client";
 
+import { MapPin } from "lucide-react";
+
 import { useAuth } from "@/components/auth-provider";
+import { EmptyState } from "@/components/empty-state";
+import { TableSkeleton } from "@/components/list-skeleton";
 import { RequireAuth } from "@/components/require-auth";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -28,9 +32,15 @@ export default function OpsRegionsPage() {
       <div className="space-y-6">
         <h1 className="font-display text-3xl font-semibold text-foreground md:text-4xl">Regions</h1>
         {isLoading ? (
-          <p className="text-sm text-brand-ink">Loading regions…</p>
+          <TableSkeleton columns={3} rows={8} />
         ) : error ? (
           <p className="text-sm text-danger">{error.message}</p>
+        ) : regions.length === 0 ? (
+          <EmptyState
+            icon={MapPin}
+            title="No regions yet"
+            description="The Ghana register has not been seeded."
+          />
         ) : (
           <Card className="overflow-hidden p-0">
             <Table>

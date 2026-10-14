@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { EscalationTable } from "@/components/escalation-table";
 import { EscalationTriageForm } from "@/components/escalation-triage-form";
+import { TableSkeleton } from "@/components/list-skeleton";
 import { RequireAuth } from "@/components/require-auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -78,7 +79,7 @@ export default function OpsEscalationsPage() {
           </CardHeader>
           <CardContent>
             {escalationsQuery.isLoading ? (
-              <p className="text-sm text-muted-foreground">Loading…</p>
+              <TableSkeleton columns={7} rows={4} />
             ) : escalationsQuery.error ? (
               <p className="text-sm text-danger">{escalationsQuery.error.message}</p>
             ) : (

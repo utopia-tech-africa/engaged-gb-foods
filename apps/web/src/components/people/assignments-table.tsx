@@ -51,13 +51,6 @@ export const AssignmentsTable = ({ assignments, canWrite, onEnd }: AssignmentsTa
         </TableRow>
       </TableHeader>
       <TableBody>
-        {assignments.length === 0 ? (
-          <TableRow>
-            <TableCell colSpan={canWrite ? 6 : 5} className="text-brand-ink">
-              No assignments yet.
-            </TableCell>
-          </TableRow>
-        ) : null}
         {assignments.map((assignment) => {
           const status = assignmentStatus(assignment);
           const scope = assignmentScopeLabel(assignment);

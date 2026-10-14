@@ -6,11 +6,12 @@ export default function HomePage() {
     <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col justify-between px-6 py-10 md:px-10">
       <header className="flex items-center justify-between gap-4">
         <Image
-          src="/logo-ghana.png"
+          src="/GB_Logo.svg"
           alt="GBfoods"
-          width={155}
-          height={54}
+          width={131}
+          height={77}
           priority
+          unoptimized
           className="h-12 w-auto"
         />
         <p className="font-display text-xs font-semibold uppercase tracking-[0.2em] text-brand-ink">
@@ -47,19 +48,26 @@ export default function HomePage() {
         </div>
 
         <div className="rounded-[1.5rem] border border-border bg-surface/90 p-6 shadow-[0_20px_60px_rgba(28,25,23,0.06)]">
-          <p className="text-sm font-medium text-brand-ink">Pilot seed accounts</p>
-          <ul className="mt-4 space-y-3 text-sm text-foreground">
+          <p className="text-sm font-medium text-brand-ink">Three doors</p>
+          <ul className="mt-4 space-y-4 text-sm text-foreground">
             <li>
-              Field QC: <span className="font-medium">BTL-0031</span> / PIN{" "}
-              <span className="font-medium">2468</span>
+              <span className="font-semibold">Field</span>
+              <span className="mt-1 block text-brand-ink">
+                Staff ID and PIN for QC and supervisors on site.
+              </span>
             </li>
             <li>
-              Admin: <span className="font-medium">admin@gbfoods.local</span>
+              <span className="font-semibold">Operations</span>
+              <span className="mt-1 block text-brand-ink">
+                Email and password for network, dispatch, and review.
+              </span>
             </li>
             <li>
-              GBfoods: <span className="font-medium">reviewer@gbfoods.local</span>
+              <span className="font-semibold">GBfoods</span>
+              <span className="mt-1 block text-brand-ink">
+                Email and password for the control room and dispositions.
+              </span>
             </li>
-            <li>Default ops password: ChangeMe123!</li>
           </ul>
         </div>
       </section>

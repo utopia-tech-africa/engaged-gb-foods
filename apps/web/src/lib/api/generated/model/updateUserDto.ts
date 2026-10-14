@@ -8,7 +8,10 @@
 
 export interface UpdateUserDto {
   fullName?: string;
-  /** Field roles only; cannot be cleared */
+  /**
+     * Rejected. Staff IDs are assigned on create and cannot be changed.
+     * @deprecated
+     */
   staffId?: string;
   /** Desk roles only; cannot be cleared */
   email?: string;

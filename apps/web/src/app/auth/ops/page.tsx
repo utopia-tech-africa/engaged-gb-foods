@@ -37,10 +37,11 @@ export default function OpsSignInPage() {
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center px-6 py-10">
       <Image
-        src="/logo-ghana.png"
+        src="/GB_Logo.svg"
         alt="GBfoods"
-        width={150}
-        height={52}
+        width={131}
+        height={77}
+        unoptimized
         className="mb-8 h-12 w-auto"
       />
       <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand">Stock Control</p>

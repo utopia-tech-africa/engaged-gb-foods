@@ -1,11 +1,14 @@
 "use client";
 
 import { keepPreviousData } from "@tanstack/react-query";
+import { Store } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
 import { useAuth } from "@/components/auth-provider";
 import { DatePicker } from "@/components/date-picker";
+import { EmptyState } from "@/components/empty-state";
+import { TableSkeleton } from "@/components/list-skeleton";
 import { RequireAuth } from "@/components/require-auth";
 import { ShellFrame } from "@/components/shell-frame";
 import { Badge } from "@/components/ui/badge";
@@ -219,11 +222,16 @@ export default function ClientControlRoomPage() {
             </CardContent>
           </Card>
 
-          {loading ? <p className="text-sm text-brand-ink/70">Loading depots…</p> : null}
           {error ? <p className="text-sm text-red-600">{error}</p> : null}
 
-          {!loading && overview && overview.depots.length === 0 ? (
-            <p className="text-sm text-brand-ink/70">No depots match these filters.</p>
+          {loading ? (
+            <TableSkeleton columns={7} rows={6} />
+          ) : overview && overview.depots.length === 0 ? (
+            <EmptyState
+              icon={Store}
+              title="No depots match these filters"
+              description="Try another date, region, or review status."
+            />
           ) : null}
 
           {overview && overview.depots.length > 0 ? (

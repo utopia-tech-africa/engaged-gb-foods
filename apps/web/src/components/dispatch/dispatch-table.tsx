@@ -1,5 +1,8 @@
 "use client";
 
+import { Route } from "lucide-react";
+
+import { EmptyState } from "@/components/empty-state";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -19,7 +22,13 @@ type DispatchTableProps = {
 
 export const DispatchTable = ({ dispatches, selectedId, onSelect }: DispatchTableProps) => {
   if (dispatches.length === 0) {
-    return <p className="text-sm text-muted-foreground">No dispatch plans for this date.</p>;
+    return (
+      <EmptyState
+        icon={Route}
+        title="No dispatch plans for this date"
+        description="Create a plan for a cluster, then freeze it when ready."
+      />
+    );
   }
 
   return (

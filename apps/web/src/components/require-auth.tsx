@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { type ReactNode, useEffect } from "react";
 
 import { useAuth } from "@/components/auth-provider";
+import { PageLoader } from "@/components/page-loader";
 import type { UserRole } from "@/lib/auth/types";
 
 type RequireAuthProps = {
@@ -29,11 +30,7 @@ export const RequireAuth = ({ roles, children }: RequireAuthProps) => {
   }, [isLoading, user, roles, router]);
 
   if (isLoading || !user || !roles.includes(user.role)) {
-    return (
-      <div className="flex min-h-screen items-center justify-center text-sm text-brand-ink">
-        Checking session…
-      </div>
-    );
+    return <PageLoader fullScreen label="Checking session…" />;
   }
 
   return children;

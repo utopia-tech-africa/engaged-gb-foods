@@ -1,7 +1,9 @@
 "use client";
 
 import { format } from "date-fns";
+import { GraduationCap } from "lucide-react";
 
+import { EmptyState } from "@/components/empty-state";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -35,7 +37,13 @@ const failedSteps = (assessment: AssessmentResponseDto): string =>
 
 export const AssessmentRosterTable = ({ rows }: { rows: RosterRow[] }) => {
   if (rows.length === 0) {
-    return <p className="text-sm text-muted-foreground">No users match this filter.</p>;
+    return (
+      <EmptyState
+        icon={GraduationCap}
+        title="No users match this filter"
+        description="Try another assessment result, or add field people first."
+      />
+    );
   }
 
   return (

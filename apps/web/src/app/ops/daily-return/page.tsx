@@ -8,6 +8,7 @@ import { DailyReturnForm } from "@/components/daily-return-form";
 import { DailyReturnNationalCard } from "@/components/daily-return-national-card";
 import { DailyReturnTable } from "@/components/daily-return-table";
 import { DatePicker } from "@/components/date-picker";
+import { TableSkeleton } from "@/components/list-skeleton";
 import { RequireAuth } from "@/components/require-auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -73,7 +74,7 @@ export default function OpsDailyReturnPage() {
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <p className="text-sm text-muted-foreground">Loading…</p>
+              <TableSkeleton columns={7} rows={4} />
             ) : loadError ? (
               <p className="text-sm text-danger">{loadError.message}</p>
             ) : (

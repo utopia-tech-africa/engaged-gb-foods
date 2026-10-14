@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import { useAuth } from "@/components/auth-provider";
+import { TableSkeleton } from "@/components/list-skeleton";
 import { RecceForm } from "@/components/recce-form";
 import { RecceTable } from "@/components/recce-table";
 import { RequireAuth } from "@/components/require-auth";
@@ -48,7 +49,7 @@ export default function OpsReccePage() {
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <p className="text-sm text-muted-foreground">Loading…</p>
+              <TableSkeleton columns={6} rows={4} />
             ) : loadError ? (
               <p className="text-sm text-danger">{loadError.message}</p>
             ) : (

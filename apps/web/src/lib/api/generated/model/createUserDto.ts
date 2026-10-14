@@ -10,7 +10,7 @@ import type { UserRole } from './userRole';
 export interface CreateUserDto {
   fullName: string;
   role: UserRole;
-  /** Required for field roles */
+  /** Optional for field roles. When omitted, the API assigns the next BTL-#### staff ID. Desk roles must not send this. */
   staffId?: string;
   /** Required for desk roles */
   email?: string;
