@@ -9,6 +9,7 @@ import {
   MapPin,
   Menu,
   Package,
+  Route,
   ShieldAlert,
   Store,
   Truck,
@@ -69,6 +70,7 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: "Control",
     items: [
+      { href: "/ops/dispatch", label: "Dispatch", icon: Route },
       { href: "/ops/daily-return", label: "Daily return", icon: ClipboardCheck },
       { href: "/ops/escalations", label: "Escalations", icon: ShieldAlert },
     ],

@@ -22,6 +22,7 @@ Field and client platform for the GBfoods nationwide depot sorting and segregati
 - Training assessment roster (`/ops/assessment`, `/assessments`, `/users`): safety, quality, and record-keeping must all pass; any fail means not dispatchable
 - Field exceptions and escalations (`/field/escalations/new`, `/ops/escalations`, `/escalations`): trigger, note, and photos create a timestamped escalation; ops list open items and update status, owner, due date, and written record. Raising one does not change the visit status. Online only for now
 - Ops dashboard (`/ops`, `GET /ops/dashboard?date=`): every `/ops/**` page sits in a shared sidebar layout (`OpsShell`, with a mobile menu); the home page shows KPI cards and recharts charts (visit status, region coverage, stock by zone, open escalations, daily return progress) for a chosen day. Roles: admin, national ops, national quality, regional supervisor. `CLIENT_SYNC_DELAY_HOURS` sets the sync-delay threshold. The API `dev` script runs `tsc-watch` and restarts `node dist/main.js` on each successful compile
+- Next-day dispatch (`/ops/dispatch`, `/dispatches`): plan depot visits per cluster for a date; only recce-ready depots with a dispatchable QC (assessment pass + assignment) can be added; freeze locks the route and creates scheduled `Visit` rows. Cluster supervisors, regional supervisors, national ops, and admin can write
 - GBfoods brand tokens and logo assets
 - Installable PWA (Serwist service worker, web manifest, `/~offline` fallback) and an offline field queue for depot check-in/out and new stock lots, with sync on reconnect
 - Web data layer: Orval-generated React Query hooks from the committed OpenAPI spec (no hand-written fetch wrappers for JSON endpoints)
@@ -31,6 +32,9 @@ Field and client platform for the GBfoods nationwide depot sorting and segregati
 - Offline queueing for reconcile, visit close, and disposition (these stay online-only)
 - Offline caching of SKU and depot lists (open the check-in or stock form once while online before going offline)
 - Server-side draft model (server never exposes unsynced drafts to client)
+- Ops review queue (missing photos, count mismatches) as a dedicated surface
+- Correction audit log UI (edits already store review entries on some paths)
+- Route optimiser (explicitly after pilot)
 
 See `PRD.md` for the full product definition.
 
