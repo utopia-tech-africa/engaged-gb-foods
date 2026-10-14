@@ -13,6 +13,7 @@ import { DepotModule } from "./modules/depot/depot.module";
 import { DistributorModule } from "./modules/distributor/distributor.module";
 import { EscalationModule } from "./modules/escalation/escalation.module";
 import { HealthModule } from "./modules/health/health.module";
+import { OpsDashboardModule } from "./modules/ops-dashboard/ops-dashboard.module";
 import { PrismaModule } from "./modules/prisma/prisma.module";
 import { RecceModule } from "./modules/recce/recce.module";
 import { RegionModule } from "./modules/region/region.module";
@@ -46,6 +47,7 @@ import { VisitModule } from "./modules/visit/visit.module";
     AssessmentModule,
     DailyReturnModule,
     EscalationModule,
+    OpsDashboardModule,
     UserModule,
   ],
 })

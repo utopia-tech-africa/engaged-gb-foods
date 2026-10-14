@@ -2,10 +2,10 @@ import { ApiProperty } from "@nestjs/swagger";
 import { UserRole } from "@prisma/client";
 
 export class AuthUserDto {
-  @ApiProperty()
+  @ApiProperty({ type: String })
   id!: string;
 
-  @ApiProperty()
+  @ApiProperty({ type: String })
   fullName!: string;
 
   @ApiProperty({ type: String, nullable: true })
@@ -20,20 +20,24 @@ export class AuthUserDto {
   @ApiProperty({ enum: UserRole, enumName: "UserRole" })
   role!: UserRole;
 
-  @ApiProperty()
+  @ApiProperty({ type: Boolean })
   isActive!: boolean;
 }
 
 export class AuthTokenResponseDto {
-  @ApiProperty({ type: AuthUserDto })
+  @ApiProperty({ type: () => AuthUserDto })
   user!: AuthUserDto;
 
-  @ApiProperty()
+  @ApiProperty({ type: String })
   accessToken!: string;
 
-  @ApiProperty()
+  @ApiProperty({ type: String })
   refreshToken!: string;
 
-  @ApiProperty({ example: 900, description: "Access token lifetime in seconds" })
+  @ApiProperty({
+    type: Number,
+    example: 900,
+    description: "Access token lifetime in seconds",
+  })
   expiresIn!: number;
 }

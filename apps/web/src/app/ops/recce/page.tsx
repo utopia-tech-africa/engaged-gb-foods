@@ -3,11 +3,9 @@
 import { useState } from "react";
 
 import { useAuth } from "@/components/auth-provider";
-import { OpsNetworkNav } from "@/components/ops-network-nav";
 import { RecceForm } from "@/components/recce-form";
 import { RecceTable } from "@/components/recce-table";
 import { RequireAuth } from "@/components/require-auth";
-import { ShellFrame } from "@/components/shell-frame";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useGetDepots } from "@/lib/api/generated/depots/depots";
 import type { RecceResponseDto } from "@/lib/api/generated/model";
@@ -30,43 +28,42 @@ export default function OpsReccePage() {
 
   return (
     <RequireAuth roles={OPS_READINESS_ROLES}>
-      <ShellFrame title="Depot recce" eyebrow="Readiness">
-        <div className="space-y-6">
-          <OpsNetworkNav />
+      <div className="space-y-6">
+        <h1 className="font-display text-3xl font-semibold text-foreground md:text-4xl">
+          Depot recce
+        </h1>
+        {canWrite ? (
+          <RecceForm
+            key={editing?.id ?? "new"}
+            depots={depots}
+            editing={editing}
+            onCancelEdit={() => setEditing(null)}
+            onSaved={() => setEditing(null)}
+          />
+        ) : null}
 
-          {canWrite ? (
-            <RecceForm
-              key={editing?.id ?? "new"}
-              depots={depots}
-              editing={editing}
-              onCancelEdit={() => setEditing(null)}
-              onSaved={() => setEditing(null)}
-            />
-          ) : null}
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="font-display text-lg">Recces</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                <p className="text-sm text-muted-foreground">Loading…</p>
-              ) : loadError ? (
-                <p className="text-sm text-danger">{loadError.message}</p>
-              ) : (
-                <RecceTable
-                  recces={recces}
-                  canEdit={canWrite}
-                  onEdit={(recce) => {
-                    setEditing(recce);
-                    window.scrollTo({ top: 0, behavior: "smooth" });
-                  }}
-                />
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      </ShellFrame>
+        <Card>
+          <CardHeader>
+            <CardTitle className="font-display text-lg">Recces</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <p className="text-sm text-muted-foreground">Loading…</p>
+            ) : loadError ? (
+              <p className="text-sm text-danger">{loadError.message}</p>
+            ) : (
+              <RecceTable
+                recces={recces}
+                canEdit={canWrite}
+                onEdit={(recce) => {
+                  setEditing(recce);
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+              />
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </RequireAuth>
   );
 }

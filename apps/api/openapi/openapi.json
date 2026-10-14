@@ -2326,6 +2326,45 @@
         ]
       }
     },
+    "/ops/dashboard": {
+      "get": {
+        "description": "Returns network-wide KPIs and chart data for one day: depot readiness, visit progress, escalations, quality holds, attendance, stock by zone, region coverage and daily return submission.",
+        "operationId": "getOpsDashboard",
+        "parameters": [
+          {
+            "name": "date",
+            "required": false,
+            "in": "query",
+            "description": "Day to report on (YYYY-MM-DD). Defaults to today (UTC).",
+            "schema": {
+              "example": "2026-10-13",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dashboard stats for the day",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpsDashboardResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get ops dashboard stats",
+        "tags": [
+          "Ops dashboard"
+        ]
+      }
+    },
     "/users": {
       "get": {
         "description": "Lists users for ops screens, optionally filtered by role, active flag, or a search term on name, staff ID, or email. Omit isActive to include inactive users. Returns no credentials.",
@@ -5470,6 +5509,263 @@
             "description": "Written record of the resolution or decision"
           }
         }
+      },
+      "OpsDashboardKpisDto": {
+        "type": "object",
+        "properties": {
+          "depotsTotal": {
+            "type": "number",
+            "description": "Active depots in the network."
+          },
+          "depotsReady": {
+            "type": "number",
+            "description": "Active depots with readiness ready."
+          },
+          "depotsHold": {
+            "type": "number",
+            "description": "Active depots with readiness hold."
+          },
+          "visitsScheduled": {
+            "type": "number",
+            "description": "Visits scheduled for the day."
+          },
+          "visitsInProgress": {
+            "type": "number",
+            "description": "Visits in progress for the day."
+          },
+          "visitsComplete": {
+            "type": "number",
+            "description": "Visits complete for the day."
+          },
+          "visitsException": {
+            "type": "number",
+            "description": "Visits flagged as exception for the day."
+          },
+          "openEscalations": {
+            "type": "number",
+            "description": "Escalations that are open or in progress."
+          },
+          "qualityHolds": {
+            "type": "number",
+            "description": "Held or rejected lots from the day's visits that have no disposition yet."
+          },
+          "syncDelayedVisits": {
+            "type": "number",
+            "description": "In-progress visits for the day that never synced or have not synced within the configured delay window."
+          },
+          "activeFieldUsers": {
+            "type": "number",
+            "description": "Active users on field roles (QC, handler, cluster supervisor)."
+          },
+          "dispatchableStaff": {
+            "type": "number",
+            "description": "Active field users whose latest assessment is a pass."
+          }
+        },
+        "required": [
+          "depotsTotal",
+          "depotsReady",
+          "depotsHold",
+          "visitsScheduled",
+          "visitsInProgress",
+          "visitsComplete",
+          "visitsException",
+          "openEscalations",
+          "qualityHolds",
+          "syncDelayedVisits",
+          "activeFieldUsers",
+          "dispatchableStaff"
+        ]
+      },
+      "OpsVisitStatusCountDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "complete"
+          },
+          "count": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "status",
+          "count"
+        ]
+      },
+      "OpsDepotReadinessCountDto": {
+        "type": "object",
+        "properties": {
+          "readiness": {
+            "type": "string",
+            "example": "ready"
+          },
+          "count": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "readiness",
+          "count"
+        ]
+      },
+      "OpsEscalationTriggerCountDto": {
+        "type": "object",
+        "properties": {
+          "trigger": {
+            "type": "string",
+            "example": "count_mismatch"
+          },
+          "count": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "trigger",
+          "count"
+        ]
+      },
+      "OpsAttendanceTodayDto": {
+        "type": "object",
+        "properties": {
+          "checkIns": {
+            "type": "number"
+          },
+          "checkOuts": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "checkIns",
+          "checkOuts"
+        ]
+      },
+      "OpsStockZoneDto": {
+        "type": "object",
+        "properties": {
+          "zone": {
+            "type": "string",
+            "example": "held_or_rejected"
+          },
+          "lots": {
+            "type": "number",
+            "description": "Number of lots recorded in the zone."
+          },
+          "baseQuantity": {
+            "type": "number",
+            "description": "Total base-unit quantity in the zone."
+          }
+        },
+        "required": [
+          "zone",
+          "lots",
+          "baseQuantity"
+        ]
+      },
+      "OpsRegionCoverageDto": {
+        "type": "object",
+        "properties": {
+          "regionCode": {
+            "type": "string"
+          },
+          "regionName": {
+            "type": "string"
+          },
+          "depots": {
+            "type": "number",
+            "description": "Active depots in the region."
+          },
+          "complete": {
+            "type": "number",
+            "description": "Depots with a complete visit on the day."
+          },
+          "exception": {
+            "type": "number",
+            "description": "Depots with an exception visit on the day."
+          }
+        },
+        "required": [
+          "regionCode",
+          "regionName",
+          "depots",
+          "complete",
+          "exception"
+        ]
+      },
+      "OpsDailyReturnSubmissionDto": {
+        "type": "object",
+        "properties": {
+          "regionsSubmitted": {
+            "type": "number"
+          },
+          "regionsTotal": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "regionsSubmitted",
+          "regionsTotal"
+        ]
+      },
+      "OpsDashboardResponseDto": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "example": "2026-10-13"
+          },
+          "kpis": {
+            "$ref": "#/components/schemas/OpsDashboardKpisDto"
+          },
+          "visitStatusChart": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OpsVisitStatusCountDto"
+            }
+          },
+          "depotReadinessChart": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OpsDepotReadinessCountDto"
+            }
+          },
+          "escalationByTrigger": {
+            "description": "Open and in-progress escalations grouped by trigger.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OpsEscalationTriggerCountDto"
+            }
+          },
+          "attendanceToday": {
+            "$ref": "#/components/schemas/OpsAttendanceTodayDto"
+          },
+          "stockByZone": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OpsStockZoneDto"
+            }
+          },
+          "regionCoverage": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OpsRegionCoverageDto"
+            }
+          },
+          "dailyReturnSubmission": {
+            "$ref": "#/components/schemas/OpsDailyReturnSubmissionDto"
+          }
+        },
+        "required": [
+          "date",
+          "kpis",
+          "visitStatusChart",
+          "depotReadinessChart",
+          "escalationByTrigger",
+          "attendanceToday",
+          "stockByZone",
+          "regionCoverage",
+          "dailyReturnSubmission"
+        ]
       },
       "UserResponseDto": {
         "type": "object",

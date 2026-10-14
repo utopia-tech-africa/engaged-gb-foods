@@ -9,6 +9,7 @@ export * from './depots/depots';
 export * from './distributors/distributors';
 export * from './escalations/escalations';
 export * from './health/health';
+export * from './ops-dashboard/ops-dashboard';
 export * from './recces/recces';
 export * from './regions/regions';
 export * from './skus/skus';

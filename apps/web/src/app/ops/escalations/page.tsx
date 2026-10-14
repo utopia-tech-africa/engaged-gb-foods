@@ -5,9 +5,7 @@ import { useState } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { EscalationTable } from "@/components/escalation-table";
 import { EscalationTriageForm } from "@/components/escalation-triage-form";
-import { OpsNetworkNav } from "@/components/ops-network-nav";
 import { RequireAuth } from "@/components/require-auth";
-import { ShellFrame } from "@/components/shell-frame";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import {
@@ -42,58 +40,57 @@ export default function OpsEscalationsPage() {
 
   return (
     <RequireAuth roles={OPS_READINESS_ROLES}>
-      <ShellFrame title="Escalations" eyebrow="Exceptions">
-        <div className="space-y-6">
-          <OpsNetworkNav />
-
-          <div className="max-w-xs space-y-2">
-            <Label>Status</Label>
-            <Select
-              items={filterItems}
-              value={statusFilter}
-              onValueChange={(value) => value && setStatusFilter(value)}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {filterItems.map((item) => (
-                  <SelectItem key={item.value} value={item.value}>
-                    {item.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {canEdit && editing ? (
-            <EscalationTriageForm
-              key={`${editing.id}|${editing.updatedAt}`}
-              escalation={editing}
-              onDone={() => setEditingId(null)}
-            />
-          ) : null}
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="font-display text-lg">Field exceptions</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {escalationsQuery.isLoading ? (
-                <p className="text-sm text-muted-foreground">Loading…</p>
-              ) : escalationsQuery.error ? (
-                <p className="text-sm text-danger">{escalationsQuery.error.message}</p>
-              ) : (
-                <EscalationTable
-                  escalations={escalations}
-                  canEdit={canEdit}
-                  onEdit={(entry) => setEditingId(entry.id)}
-                />
-              )}
-            </CardContent>
-          </Card>
+      <div className="space-y-6">
+        <h1 className="font-display text-3xl font-semibold text-foreground md:text-4xl">
+          Escalations
+        </h1>
+        <div className="max-w-xs space-y-2">
+          <Label>Status</Label>
+          <Select
+            items={filterItems}
+            value={statusFilter}
+            onValueChange={(value) => value && setStatusFilter(value)}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {filterItems.map((item) => (
+                <SelectItem key={item.value} value={item.value}>
+                  {item.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
-      </ShellFrame>
+
+        {canEdit && editing ? (
+          <EscalationTriageForm
+            key={`${editing.id}|${editing.updatedAt}`}
+            escalation={editing}
+            onDone={() => setEditingId(null)}
+          />
+        ) : null}
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="font-display text-lg">Field exceptions</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {escalationsQuery.isLoading ? (
+              <p className="text-sm text-muted-foreground">Loading…</p>
+            ) : escalationsQuery.error ? (
+              <p className="text-sm text-danger">{escalationsQuery.error.message}</p>
+            ) : (
+              <EscalationTable
+                escalations={escalations}
+                canEdit={canEdit}
+                onEdit={(entry) => setEditingId(entry.id)}
+              />
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </RequireAuth>
   );
 }

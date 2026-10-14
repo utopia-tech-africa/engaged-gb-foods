@@ -1,9 +1,7 @@
 "use client";
 
 import { useAuth } from "@/components/auth-provider";
-import { OpsNetworkNav } from "@/components/ops-network-nav";
 import { RequireAuth } from "@/components/require-auth";
-import { ShellFrame } from "@/components/shell-frame";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import {
@@ -27,47 +25,45 @@ export default function OpsRegionsPage() {
 
   return (
     <RequireAuth roles={OPS_NETWORK_ROLES}>
-      <ShellFrame title="Regions" eyebrow="Network">
-        <div className="space-y-6">
-          <OpsNetworkNav />
-          {isLoading ? (
-            <p className="text-sm text-brand-ink">Loading regions…</p>
-          ) : error ? (
-            <p className="text-sm text-danger">{error.message}</p>
-          ) : (
-            <Card className="overflow-hidden p-0">
-              <Table>
-                <TableHeader className="bg-brand-muted/40">
-                  <TableRow>
-                    <TableHead className="text-xs uppercase tracking-wide text-brand-ink">
-                      Code
-                    </TableHead>
-                    <TableHead className="text-xs uppercase tracking-wide text-brand-ink">
-                      Name
-                    </TableHead>
-                    <TableHead className="text-xs uppercase tracking-wide text-brand-ink">
-                      Status
-                    </TableHead>
+      <div className="space-y-6">
+        <h1 className="font-display text-3xl font-semibold text-foreground md:text-4xl">Regions</h1>
+        {isLoading ? (
+          <p className="text-sm text-brand-ink">Loading regions…</p>
+        ) : error ? (
+          <p className="text-sm text-danger">{error.message}</p>
+        ) : (
+          <Card className="overflow-hidden p-0">
+            <Table>
+              <TableHeader className="bg-brand-muted/40">
+                <TableRow>
+                  <TableHead className="text-xs uppercase tracking-wide text-brand-ink">
+                    Code
+                  </TableHead>
+                  <TableHead className="text-xs uppercase tracking-wide text-brand-ink">
+                    Name
+                  </TableHead>
+                  <TableHead className="text-xs uppercase tracking-wide text-brand-ink">
+                    Status
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {regions.map((region) => (
+                  <TableRow key={region.id}>
+                    <TableCell className="font-mono text-brand">{region.code}</TableCell>
+                    <TableCell className="text-foreground">{region.name}</TableCell>
+                    <TableCell>
+                      <Badge variant={region.isActive ? "default" : "outline"}>
+                        {region.isActive ? "Active" : "Inactive"}
+                      </Badge>
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {regions.map((region) => (
-                    <TableRow key={region.id}>
-                      <TableCell className="font-mono text-brand">{region.code}</TableCell>
-                      <TableCell className="text-foreground">{region.name}</TableCell>
-                      <TableCell>
-                        <Badge variant={region.isActive ? "default" : "outline"}>
-                          {region.isActive ? "Active" : "Inactive"}
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </Card>
-          )}
-        </div>
-      </ShellFrame>
+                ))}
+              </TableBody>
+            </Table>
+          </Card>
+        )}
+      </div>
     </RequireAuth>
   );
 }
