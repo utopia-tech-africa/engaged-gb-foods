@@ -9,7 +9,6 @@ import {
   MapPin,
   Menu,
   Package,
-  Route,
   ShieldAlert,
   Store,
   Truck,
@@ -70,7 +69,6 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: "Control",
     items: [
-      { href: "/ops/dispatch", label: "Dispatch", icon: Route },
       { href: "/ops/daily-return", label: "Daily return", icon: ClipboardCheck },
       { href: "/ops/escalations", label: "Escalations", icon: ShieldAlert },
     ],
@@ -94,12 +92,13 @@ const SidebarContent = ({ pathname, onNavigate }: SidebarContentProps) => {
       <div className="px-5 py-5">
         <Link href="/ops" onClick={onNavigate} className="inline-flex">
           <Image
-            src="/logo-ghana.png"
+            src="/GB_Logo.svg"
             alt="GBfoods"
-            width={140}
-            height={48}
+            width={131}
+            height={77}
             className="h-9 w-auto"
             priority
+            unoptimized
           />
         </Link>
         <p className="mt-2 text-xs font-semibold uppercase tracking-[0.18em] text-brand">
@@ -188,10 +187,11 @@ export const OpsShell = ({ children }: OpsShellProps) => {
       <header className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-border bg-background/95 px-4 py-3 backdrop-blur md:hidden">
         <Link href="/ops" className="inline-flex">
           <Image
-            src="/logo-ghana.png"
+            src="/GB_Logo.svg"
             alt="GBfoods"
-            width={140}
-            height={48}
+            width={131}
+            height={77}
+            unoptimized
             className="h-8 w-auto"
           />
         </Link>

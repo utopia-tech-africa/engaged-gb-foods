@@ -26,10 +26,11 @@ export const ShellFrame = ({ title, eyebrow, children }: ShellFrameProps) => {
       <header className="flex items-center justify-between gap-4">
         <Link href="/" className="flex items-center gap-3">
           <Image
-            src="/logo-ghana.png"
+            src="/GB_Logo.svg"
             alt="GBfoods"
-            width={140}
-            height={48}
+            width={131}
+            height={77}
+            unoptimized
             className="h-10 w-auto"
           />
         </Link>

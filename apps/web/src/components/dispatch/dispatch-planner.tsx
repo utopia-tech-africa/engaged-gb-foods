@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
+import { CardListSkeleton } from "@/components/list-skeleton";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -221,7 +222,7 @@ export const DispatchPlanner = ({
         {!clusterId ? (
           <p className="text-sm text-muted-foreground">Pick a cluster to see ready depots.</p>
         ) : candidatesQuery.isLoading ? (
-          <p className="text-sm text-muted-foreground">Loading candidates…</p>
+          <CardListSkeleton count={3} />
         ) : candidatesQuery.error ? (
           <p className="text-sm text-danger">{candidatesQuery.error.message}</p>
         ) : (

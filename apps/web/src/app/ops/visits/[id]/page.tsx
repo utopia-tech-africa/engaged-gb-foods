@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { useAuth } from "@/components/auth-provider";
+import { PageLoader } from "@/components/page-loader";
 import { RequireAuth } from "@/components/require-auth";
 import { SignaturePad } from "@/components/signature-pad";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -118,7 +119,7 @@ export default function OpsVisitDetailPage() {
           ← Stock lots
         </Link>
 
-        {loading ? <p className="text-sm text-brand-ink/70">Loading…</p> : null}
+        {loading ? <PageLoader label="Loading visit…" /> : null}
         {error ? <p className="text-sm text-red-600">{error}</p> : null}
 
         {snapshot ? (

@@ -9,6 +9,7 @@ import {
   type RosterRow,
 } from "@/components/assessment-roster-table";
 import { useAuth } from "@/components/auth-provider";
+import { TableSkeleton } from "@/components/list-skeleton";
 import { RequireAuth } from "@/components/require-auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -88,7 +89,7 @@ export default function OpsAssessmentPage() {
               </Select>
             </div>
             {isLoading ? (
-              <p className="text-sm text-muted-foreground">Loading…</p>
+              <TableSkeleton columns={5} rows={5} />
             ) : loadError ? (
               <p className="text-sm text-danger">{loadError.message}</p>
             ) : (

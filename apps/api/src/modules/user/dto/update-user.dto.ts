@@ -18,7 +18,10 @@ export class UpdateUserDto {
   @MaxLength(120)
   fullName?: string;
 
-  @ApiPropertyOptional({ description: "Field roles only; cannot be cleared" })
+  @ApiPropertyOptional({
+    description: "Rejected. Staff IDs are assigned on create and cannot be changed.",
+    deprecated: true,
+  })
   @IsOptional()
   @IsString()
   @Length(3, 32)

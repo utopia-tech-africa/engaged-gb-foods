@@ -1,8 +1,11 @@
 "use client";
 
+import { Package } from "lucide-react";
 import Link from "next/link";
 
 import { useAuth } from "@/components/auth-provider";
+import { EmptyState } from "@/components/empty-state";
+import { CardListSkeleton } from "@/components/list-skeleton";
 import { RequireAuth } from "@/components/require-auth";
 import { ShellFrame } from "@/components/shell-frame";
 import { Badge } from "@/components/ui/badge";
@@ -62,44 +65,51 @@ export default function FieldStockListPage() {
             </div>
           ) : null}
 
-          {loading ? <p className="text-sm text-brand-ink/70">Loading stock lots…</p> : null}
           {error ? <p className="text-sm text-red-600">{error}</p> : null}
 
-          {!loading && !error && sorted.length === 0 ? (
-            <p className="text-sm text-brand-ink/70">No stock lots captured today yet.</p>
+          {loading ? (
+            <CardListSkeleton count={3} />
+          ) : !error && sorted.length === 0 ? (
+            <EmptyState
+              icon={Package}
+              title="No stock lots today"
+              description="Capture the first lot from one of your assigned depots."
+            />
           ) : null}
 
-          <ul className="space-y-3">
-            {sorted.map((lot) => (
-              <li key={lot.id}>
-                <Card>
-                  <CardContent className="text-sm text-brand-ink">
-                    <p className="font-semibold">{lot.sku.name}</p>
-                    <Badge className="mt-1">{ZONE_LABELS[lot.zone]}</Badge>
-                    <p className="mt-2">
-                      <span className="text-brand-ink/60">Depot:</span> {lot.visit.depot.name} (
-                      {lot.visit.depot.code})
-                    </p>
-                    <p>
-                      <span className="text-brand-ink/60">Batch:</span> {lot.batchCode}
-                    </p>
-                    <p>
-                      <span className="text-brand-ink/60">Quantity:</span> {formatQty(lot)}
-                    </p>
-                    <p className="text-xs text-brand-ink/50">
-                      {new Date(lot.createdAt).toLocaleString()}
-                    </p>
-                    <Link
-                      href={`/field/visits/${lot.visitId}/reconcile`}
-                      className={cn(buttonVariants({ variant: "link" }), "mt-3 h-auto p-0")}
-                    >
-                      Reconcile visit
-                    </Link>
-                  </CardContent>
-                </Card>
-              </li>
-            ))}
-          </ul>
+          {!loading && sorted.length > 0 ? (
+            <ul className="space-y-3">
+              {sorted.map((lot) => (
+                <li key={lot.id}>
+                  <Card>
+                    <CardContent className="text-sm text-brand-ink">
+                      <p className="font-semibold">{lot.sku.name}</p>
+                      <Badge className="mt-1">{ZONE_LABELS[lot.zone]}</Badge>
+                      <p className="mt-2">
+                        <span className="text-brand-ink/60">Depot:</span> {lot.visit.depot.name} (
+                        {lot.visit.depot.code})
+                      </p>
+                      <p>
+                        <span className="text-brand-ink/60">Batch:</span> {lot.batchCode}
+                      </p>
+                      <p>
+                        <span className="text-brand-ink/60">Quantity:</span> {formatQty(lot)}
+                      </p>
+                      <p className="text-xs text-brand-ink/50">
+                        {new Date(lot.createdAt).toLocaleString()}
+                      </p>
+                      <Link
+                        href={`/field/visits/${lot.visitId}/reconcile`}
+                        className={cn(buttonVariants({ variant: "link" }), "mt-3 h-auto p-0")}
+                      >
+                        Reconcile visit
+                      </Link>
+                    </CardContent>
+                  </Card>
+                </li>
+              ))}
+            </ul>
+          ) : null}
         </div>
       </ShellFrame>
     </RequireAuth>

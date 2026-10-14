@@ -37,6 +37,11 @@ const toUserResponse = (user: User): UserResponseDto => ({
   updatedAt: user.updatedAt.toISOString(),
 });
 
+const STAFF_ID_PREFIX = "BTL-";
+const STAFF_ID_PATTERN = /^BTL-(\d+)$/i;
+const STAFF_ID_PAD = 4;
+const STAFF_ID_ALLOCATE_ATTEMPTS = 5;
+
 const normalizeStaffId = (value: string): string => value.trim().toUpperCase();
 const normalizeEmail = (value: string): string => value.trim().toLowerCase();
 
@@ -71,15 +76,17 @@ export class UserService {
 
   async createUser(dto: CreateUserDto): Promise<UserResponseDto> {
     const fieldRole = isFieldRole(dto.role);
-    const staffId = dto.staffId ? normalizeStaffId(dto.staffId) : null;
     const email = dto.email ? normalizeEmail(dto.email) : null;
 
     if (fieldRole) {
-      if (!staffId || !dto.pin) {
-        throw new BadRequestException("Field roles require staffId and pin");
+      if (!dto.pin) {
+        throw new BadRequestException("Field roles require a PIN");
       }
       if (dto.password) {
         throw new BadRequestException("Field roles sign in with a PIN, not a password");
+      }
+      if (email) {
+        throw new BadRequestException("Field roles sign in with a staff ID, not an email");
       }
     } else {
       if (!email || !dto.password) {
@@ -88,25 +95,64 @@ export class UserService {
       if (dto.pin) {
         throw new BadRequestException("Desk roles sign in with a password, not a PIN");
       }
+      if (dto.staffId) {
+        throw new BadRequestException("Only field roles have a staff ID");
+      }
     }
 
-    try {
-      const user = await this.prisma.user.create({
-        data: {
-          fullName: dto.fullName.trim(),
-          role: dto.role,
-          staffId,
-          email,
-          phone: dto.phone?.trim() || null,
-          pinHash: dto.pin ? await bcrypt.hash(dto.pin, HASH_ROUNDS) : null,
-          passwordHash: dto.password ? await bcrypt.hash(dto.password, HASH_ROUNDS) : null,
-          isActive: dto.isActive ?? true,
-        },
-      });
-      return toUserResponse(user);
-    } catch (error) {
-      throw this.mapUniqueViolation(error);
+    const pinHash = dto.pin ? await bcrypt.hash(dto.pin, HASH_ROUNDS) : null;
+    const passwordHash = dto.password ? await bcrypt.hash(dto.password, HASH_ROUNDS) : null;
+    const base = {
+      fullName: dto.fullName.trim(),
+      role: dto.role,
+      email,
+      phone: dto.phone?.trim() || null,
+      pinHash,
+      passwordHash,
+      isActive: dto.isActive ?? true,
+    };
+
+    if (!fieldRole) {
+      try {
+        const user = await this.prisma.user.create({ data: { ...base, staffId: null } });
+        return toUserResponse(user);
+      } catch (error) {
+        throw this.mapUniqueViolation(error);
+      }
     }
+
+    const requestedStaffId = dto.staffId ? normalizeStaffId(dto.staffId) : null;
+    if (requestedStaffId) {
+      try {
+        const user = await this.prisma.user.create({
+          data: { ...base, staffId: requestedStaffId },
+        });
+        return toUserResponse(user);
+      } catch (error) {
+        throw this.mapUniqueViolation(error);
+      }
+    }
+
+    for (let attempt = 0; attempt < STAFF_ID_ALLOCATE_ATTEMPTS; attempt += 1) {
+      const staffId = await this.allocateNextStaffId();
+      try {
+        const user = await this.prisma.user.create({
+          data: { ...base, staffId },
+        });
+        return toUserResponse(user);
+      } catch (error) {
+        if (
+          error instanceof Prisma.PrismaClientKnownRequestError &&
+          error.code === "P2002" &&
+          attempt < STAFF_ID_ALLOCATE_ATTEMPTS - 1
+        ) {
+          continue;
+        }
+        throw this.mapUniqueViolation(error);
+      }
+    }
+
+    throw new ConflictException("Unable to allocate a unique staff ID");
   }
 
   async updateUser(id: string, dto: UpdateUserDto, actorId: string): Promise<UserResponseDto> {
@@ -116,8 +162,8 @@ export class UserService {
     if (dto.isActive === false && id === actorId) {
       throw new BadRequestException("You cannot deactivate your own account");
     }
-    if (dto.staffId !== undefined && !fieldRole) {
-      throw new BadRequestException("Only field roles have a staff ID");
+    if (dto.staffId !== undefined) {
+      throw new BadRequestException("Staff ID is assigned by the system and cannot be changed");
     }
     if (dto.email !== undefined && fieldRole) {
       throw new BadRequestException("Only desk roles have an email");
@@ -132,9 +178,6 @@ export class UserService {
     const data: Prisma.UserUpdateInput = {};
     if (dto.fullName !== undefined) {
       data.fullName = dto.fullName.trim();
-    }
-    if (dto.staffId !== undefined) {
-      data.staffId = normalizeStaffId(dto.staffId);
     }
     if (dto.email !== undefined) {
       data.email = normalizeEmail(dto.email);
@@ -181,6 +224,25 @@ export class UserService {
       throw new NotFoundException("User not found");
     }
     return user;
+  }
+
+  /** Next unused BTL-#### after the highest existing numeric staff ID. */
+  private async allocateNextStaffId(): Promise<string> {
+    const existing = await this.prisma.user.findMany({
+      where: { staffId: { startsWith: STAFF_ID_PREFIX } },
+      select: { staffId: true },
+    });
+
+    let highest = 0;
+    for (const row of existing) {
+      const match = STAFF_ID_PATTERN.exec(row.staffId ?? "");
+      if (!match?.[1]) {
+        continue;
+      }
+      highest = Math.max(highest, Number.parseInt(match[1], 10));
+    }
+
+    return `${STAFF_ID_PREFIX}${String(highest + 1).padStart(STAFF_ID_PAD, "0")}`;
   }
 
   private mapUniqueViolation(error: unknown): unknown {

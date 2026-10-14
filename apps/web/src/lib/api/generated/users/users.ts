@@ -147,7 +147,7 @@ export function useGetUsers<TData = Awaited<ReturnType<typeof getUsers>>, TError
 
 
 /**
- * Creates a user. Field roles (qc, handler, cluster_supervisor, regional_supervisor) need a staff ID and PIN. Desk roles (admin, national_ops, national_quality, gbfoods_reviewer) need an email and password.
+ * Creates a user. Field roles (qc, handler, cluster_supervisor, regional_supervisor) need a PIN; staff ID is assigned automatically as the next BTL-#### unless provided. Desk roles (admin, national_ops, national_quality, gbfoods_reviewer) need an email and password.
  * @summary Create user
  */
 export const postUsers = (

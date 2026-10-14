@@ -6,6 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { useAuth } from "@/components/auth-provider";
+import { PageLoader } from "@/components/page-loader";
 import { RequireAuth } from "@/components/require-auth";
 import { ShellFrame } from "@/components/shell-frame";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -86,7 +87,7 @@ export default function ClientLotDispositionPage() {
             ← Control room
           </Link>
 
-          {loading ? <p className="text-sm text-brand-ink/70">Loading lot…</p> : null}
+          {loading ? <PageLoader label="Loading lot…" /> : null}
           {error ? <p className="text-sm text-red-600">{error}</p> : null}
 
           {lot ? (

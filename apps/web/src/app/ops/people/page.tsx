@@ -1,9 +1,12 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
+import { Users } from "lucide-react";
 import { useState } from "react";
 
 import { useAuth } from "@/components/auth-provider";
+import { EmptyState } from "@/components/empty-state";
+import { TableSkeleton } from "@/components/list-skeleton";
 import { UserCreateDialog } from "@/components/people/user-create-dialog";
 import { UserCredentialDialog } from "@/components/people/user-credential-dialog";
 import { UserEditDialog } from "@/components/people/user-edit-dialog";
@@ -134,7 +137,13 @@ export default function OpsPeoplePage() {
         {error ? <p className="text-sm text-danger">{error}</p> : null}
 
         {usersQuery.isLoading ? (
-          <p className="text-sm text-brand-ink">Loading people…</p>
+          <TableSkeleton columns={5} rows={6} />
+        ) : users.length === 0 ? (
+          <EmptyState
+            icon={Users}
+            title="No people match these filters"
+            description="Clear the filters, or create a user if you can edit people."
+          />
         ) : (
           <UsersTable
             users={users}

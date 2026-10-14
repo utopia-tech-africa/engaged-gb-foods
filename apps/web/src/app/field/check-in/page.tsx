@@ -6,6 +6,7 @@ import { Suspense, useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { useAuth } from "@/components/auth-provider";
+import { PageLoader } from "@/components/page-loader";
 import { RequireAuth } from "@/components/require-auth";
 import { ShellFrame } from "@/components/shell-frame";
 import { Button } from "@/components/ui/button";
@@ -299,7 +300,7 @@ export default function FieldCheckInPage() {
   return (
     <RequireAuth roles={FIELD_ROLES}>
       <ShellFrame title="Depot check-in" eyebrow="Field">
-        <Suspense fallback={<p className="text-sm text-brand-ink/70">Loading…</p>}>
+        <Suspense fallback={<PageLoader label="Loading check-in…" />}>
           <CheckInContent />
         </Suspense>
       </ShellFrame>

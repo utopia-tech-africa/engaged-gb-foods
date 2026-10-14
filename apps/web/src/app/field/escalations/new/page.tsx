@@ -1,10 +1,14 @@
 "use client";
 
+import { Warehouse } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 
 import { useAuth } from "@/components/auth-provider";
+import { EmptyState } from "@/components/empty-state";
 import { EscalationForm } from "@/components/escalation-form";
+import { FormSkeleton } from "@/components/list-skeleton";
+import { PageLoader } from "@/components/page-loader";
 import { RequireAuth } from "@/components/require-auth";
 import { ShellFrame } from "@/components/shell-frame";
 import { useGetMeDepots } from "@/lib/api/generated/assignments/assignments";
@@ -18,7 +22,7 @@ function NewEscalationContent() {
   const depotsQuery = useGetMeDepots({ query: { enabled: Boolean(accessToken) } });
 
   if (depotsQuery.isLoading) {
-    return <p className="text-sm text-brand-ink/70">Loading assigned depots…</p>;
+    return <PageLoader label="Loading assigned depots…" />;
   }
   if (depotsQuery.error) {
     return <p className="text-sm text-red-600">{depotsQuery.error.message}</p>;
@@ -26,9 +30,11 @@ function NewEscalationContent() {
   const depots = depotsQuery.data ?? [];
   if (depots.length === 0) {
     return (
-      <p className="text-sm text-brand-ink/70">
-        No depots in your assignment scope yet. Ask ops to link your account to a distributor.
-      </p>
+      <EmptyState
+        icon={Warehouse}
+        title="No assigned depots"
+        description="Ask ops to link your account to a distributor."
+      />
     );
   }
 
@@ -45,7 +51,7 @@ export default function NewEscalationPage() {
   return (
     <RequireAuth roles={FIELD_ESCALATION_ROLES}>
       <ShellFrame title="Report an exception" eyebrow="Field">
-        <Suspense fallback={<p className="text-sm text-brand-ink/70">Loading form…</p>}>
+        <Suspense fallback={<FormSkeleton />}>
           <NewEscalationContent />
         </Suspense>
       </ShellFrame>

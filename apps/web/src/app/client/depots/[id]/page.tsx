@@ -1,9 +1,12 @@
 "use client";
 
+import { ClipboardList, Package, ShieldAlert } from "lucide-react";
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
 
 import { useAuth } from "@/components/auth-provider";
+import { EmptyState } from "@/components/empty-state";
+import { PageLoader } from "@/components/page-loader";
 import { RequireAuth } from "@/components/require-auth";
 import { ShellFrame } from "@/components/shell-frame";
 import { buttonVariants } from "@/components/ui/button";
@@ -58,7 +61,7 @@ export default function ClientDepotPackPage() {
             <span className="text-brand-ink/60">Date {date}</span>
           </div>
 
-          {loading ? <p className="text-sm text-brand-ink/70">Loading pack…</p> : null}
+          {loading ? <PageLoader label="Loading depot pack…" /> : null}
           {error ? <p className="text-sm text-red-600">{error}</p> : null}
 
           {pack ? (
@@ -69,7 +72,12 @@ export default function ClientDepotPackPage() {
                 </CardHeader>
                 <CardContent className="text-sm text-brand-ink">
                   {pack.visits.length === 0 ? (
-                    <p className="text-brand-ink/70">No visits recorded for this day.</p>
+                    <EmptyState
+                      icon={ClipboardList}
+                      title="No visits for this day"
+                      size="sm"
+                      className="border-0 bg-transparent"
+                    />
                   ) : (
                     <ul className="space-y-1">
                       {pack.visits.map((visit) => (
@@ -92,7 +100,12 @@ export default function ClientDepotPackPage() {
                   </CardHeader>
                   <CardContent>
                     {snapshot.lines.length === 0 ? (
-                      <p className="text-sm text-brand-ink/70">No stock lines yet.</p>
+                      <EmptyState
+                        icon={Package}
+                        title="No stock lines yet"
+                        size="sm"
+                        className="border-0 bg-transparent"
+                      />
                     ) : (
                       <Table>
                         <TableHeader>
@@ -138,7 +151,12 @@ export default function ClientDepotPackPage() {
                 </CardHeader>
                 <CardContent>
                   {pack.holds.length === 0 ? (
-                    <p className="text-sm text-brand-ink/70">No held or rejected lots.</p>
+                    <EmptyState
+                      icon={ShieldAlert}
+                      title="No held or rejected lots"
+                      size="sm"
+                      className="border-0 bg-transparent"
+                    />
                   ) : (
                     <ul className="space-y-3">
                       {pack.holds.map((hold) => (

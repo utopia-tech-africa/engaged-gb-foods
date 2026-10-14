@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from "react";
 
+import { Skeleton } from "@/components/ui/skeleton";
 import { fetchPhotoObjectUrl } from "@/lib/uploads";
+import { cn } from "@/lib/utils";
 
 type AttendancePhotoProps = {
   objectKey: string;
@@ -41,12 +43,23 @@ export const AttendancePhoto = ({ objectKey, alt, className }: AttendancePhotoPr
     };
   }, [objectKey]);
 
-  if (error) {
-    return <p className="text-xs text-red-600">{error}</p>;
-  }
-
-  if (!src) {
-    return <p className="text-xs text-brand-ink/60">Loading photo…</p>;
+  if (error || !src) {
+    return (
+      <div
+        className={cn(
+          "flex items-center justify-center bg-muted text-center text-xs text-muted-foreground",
+          className,
+        )}
+        role="img"
+        aria-label={error ? "Photo unavailable" : "Loading photo"}
+      >
+        {error ? (
+          "Photo unavailable"
+        ) : (
+          <Skeleton className="size-full min-h-20 rounded-[inherit]" />
+        )}
+      </div>
+    );
   }
 
   return (

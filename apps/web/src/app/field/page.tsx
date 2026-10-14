@@ -1,8 +1,11 @@
 "use client";
 
+import { Warehouse } from "lucide-react";
 import Link from "next/link";
 
 import { useAuth } from "@/components/auth-provider";
+import { EmptyState } from "@/components/empty-state";
+import { CardListSkeleton } from "@/components/list-skeleton";
 import { RequireAuth } from "@/components/require-auth";
 import { ShellFrame } from "@/components/shell-frame";
 import { buttonVariants } from "@/components/ui/button";
@@ -44,35 +47,40 @@ export default function FieldHomePage() {
             ) : null}
           </div>
 
-          {loading ? <p className="text-sm text-brand-ink/70">Loading assigned depots…</p> : null}
           {error ? <p className="text-sm text-red-600">{error}</p> : null}
 
-          {!loading && !error && depots.length === 0 ? (
-            <p className="text-sm text-brand-ink/70">
-              No depots in your assignment scope yet. Ask ops to link your account to a distributor.
-            </p>
+          {loading ? (
+            <CardListSkeleton count={2} />
+          ) : !error && depots.length === 0 ? (
+            <EmptyState
+              icon={Warehouse}
+              title="No assigned depots"
+              description="Ask ops to link your account to a distributor."
+            />
           ) : null}
 
-          <ul className="grid gap-3 sm:grid-cols-2">
-            {depots.map((depot) => (
-              <li key={depot.id}>
-                <Card className="transition hover:ring-brand/40">
-                  <CardContent className="p-0">
-                    <Link
-                      href={`/field/check-in?depotId=${encodeURIComponent(depot.id)}`}
-                      className="block p-4"
-                    >
-                      <p className="font-semibold text-brand-ink">{depot.name}</p>
-                      <p className="mt-1 text-xs font-medium uppercase tracking-wide text-brand">
-                        {depot.code}
-                      </p>
-                      <p className="mt-2 text-sm text-brand-ink/70">{depot.address}</p>
-                    </Link>
-                  </CardContent>
-                </Card>
-              </li>
-            ))}
-          </ul>
+          {!loading && depots.length > 0 ? (
+            <ul className="grid gap-3 sm:grid-cols-2">
+              {depots.map((depot) => (
+                <li key={depot.id}>
+                  <Card className="transition hover:ring-brand/40">
+                    <CardContent className="p-0">
+                      <Link
+                        href={`/field/check-in?depotId=${encodeURIComponent(depot.id)}`}
+                        className="block p-4"
+                      >
+                        <p className="font-semibold text-brand-ink">{depot.name}</p>
+                        <p className="mt-1 text-xs font-medium uppercase tracking-wide text-brand">
+                          {depot.code}
+                        </p>
+                        <p className="mt-2 text-sm text-brand-ink/70">{depot.address}</p>
+                      </Link>
+                    </CardContent>
+                  </Card>
+                </li>
+              ))}
+            </ul>
+          ) : null}
         </div>
       </ShellFrame>
     </RequireAuth>

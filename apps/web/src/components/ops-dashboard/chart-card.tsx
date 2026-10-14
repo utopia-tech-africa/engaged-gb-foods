@@ -1,5 +1,7 @@
+import { BarChart3, type LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
+import { EmptyState } from "@/components/empty-state";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 type ChartCardProps = {
@@ -7,6 +9,7 @@ type ChartCardProps = {
   description?: string;
   isEmpty?: boolean;
   emptyMessage?: string;
+  emptyIcon?: LucideIcon;
   children: ReactNode;
 };
 
@@ -15,6 +18,7 @@ export const ChartCard = ({
   description,
   isEmpty = false,
   emptyMessage = "No data for this day.",
+  emptyIcon = BarChart3,
   children,
 }: ChartCardProps) => (
   <Card>
@@ -24,9 +28,12 @@ export const ChartCard = ({
     </CardHeader>
     <CardContent>
       {isEmpty ? (
-        <div className="flex h-56 items-center justify-center text-sm text-muted-foreground">
-          {emptyMessage}
-        </div>
+        <EmptyState
+          icon={emptyIcon}
+          title={emptyMessage}
+          size="sm"
+          className="border-0 bg-muted/30"
+        />
       ) : (
         children
       )}

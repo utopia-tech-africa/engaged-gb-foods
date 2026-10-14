@@ -1,8 +1,11 @@
 "use client";
 
+import { Link2 } from "lucide-react";
 import { useState } from "react";
 
 import { useAuth } from "@/components/auth-provider";
+import { EmptyState } from "@/components/empty-state";
+import { TableSkeleton } from "@/components/list-skeleton";
 import { AssignmentCreateForm } from "@/components/people/assignment-create-form";
 import { AssignmentEndDialog } from "@/components/people/assignment-end-dialog";
 import { AssignmentsTable } from "@/components/people/assignments-table";
@@ -78,7 +81,13 @@ export default function OpsAssignmentsPage() {
         {error ? <p className="text-sm text-danger">{error}</p> : null}
 
         {assignmentsQuery.isLoading ? (
-          <p className="text-sm text-brand-ink">Loading assignments…</p>
+          <TableSkeleton columns={4} rows={5} />
+        ) : (assignmentsQuery.data ?? []).length === 0 ? (
+          <EmptyState
+            icon={Link2}
+            title="No assignments yet"
+            description="Link a field user to a distributor, cluster, or region."
+          />
         ) : (
           <AssignmentsTable
             assignments={assignmentsQuery.data ?? []}

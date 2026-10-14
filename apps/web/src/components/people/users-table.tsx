@@ -47,13 +47,6 @@ export const UsersTable = ({
         </TableRow>
       </TableHeader>
       <TableBody>
-        {users.length === 0 ? (
-          <TableRow>
-            <TableCell colSpan={canWrite ? 5 : 4} className="text-brand-ink">
-              No people match these filters.
-            </TableCell>
-          </TableRow>
-        ) : null}
         {users.map((user) => {
           const isSelf = user.id === currentUserId;
           return (

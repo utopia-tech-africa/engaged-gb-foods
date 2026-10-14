@@ -1,7 +1,9 @@
 "use client";
 
 import { format } from "date-fns";
+import { ClipboardCheck } from "lucide-react";
 
+import { EmptyState } from "@/components/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,7 +24,13 @@ type RecceTableProps = {
 
 export const RecceTable = ({ recces, canEdit, onEdit }: RecceTableProps) => {
   if (recces.length === 0) {
-    return <p className="text-sm text-muted-foreground">No recces recorded yet.</p>;
+    return (
+      <EmptyState
+        icon={ClipboardCheck}
+        title="No recces recorded yet"
+        description="Complete a recce checklist for a depot to show readiness."
+      />
+    );
   }
 
   return (

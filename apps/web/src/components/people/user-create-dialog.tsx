@@ -2,6 +2,7 @@
 
 import { useQueryClient } from "@tanstack/react-query";
 import { type FormEvent, useState } from "react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -38,7 +39,6 @@ export const UserCreateDialog = () => {
   const [error, setError] = useState<string | null>(null);
   const [role, setRole] = useState<UserRole>("qc");
   const [fullName, setFullName] = useState("");
-  const [staffId, setStaffId] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [pin, setPin] = useState("");
@@ -49,7 +49,6 @@ export const UserCreateDialog = () => {
   const reset = (): void => {
     setError(null);
     setFullName("");
-    setStaffId("");
     setEmail("");
     setPhone("");
     setPin("");
@@ -63,11 +62,22 @@ export const UserCreateDialog = () => {
       fullName,
       role,
       phone: phone.trim() || undefined,
-      ...(fieldRole ? { staffId, pin } : { email, password }),
+      ...(fieldRole ? { pin } : { email, password }),
     };
     try {
-      await createUser.mutateAsync({ data });
+      const created = await createUser.mutateAsync({ data });
       await queryClient.invalidateQueries({ queryKey: getGetUsersQueryKey() });
+      if (created.staffId) {
+        toast.success(`${created.fullName} created`, {
+          description: `Staff ID ${created.staffId} · share the PIN you set with them.`,
+        });
+      } else {
+        toast.success(`${created.fullName} created`, {
+          description: created.email
+            ? `They sign in with ${created.email}.`
+            : "Desk account ready.",
+        });
+      }
       reset();
       setOpen(false);
     } catch (mutationError) {
@@ -82,7 +92,8 @@ export const UserCreateDialog = () => {
         <DialogHeader>
           <DialogTitle>Add person</DialogTitle>
           <DialogDescription>
-            Field roles sign in with staff ID and PIN. Desk roles use email and password.
+            Field roles get a staff ID automatically and sign in with a PIN you set. Desk roles use
+            email and password.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={(event) => void onSubmit(event)} className="grid gap-4">
@@ -120,32 +131,21 @@ export const UserCreateDialog = () => {
             </Select>
           </div>
           {fieldRole ? (
-            <>
-              <div className="space-y-2">
-                <Label htmlFor="new-user-staff-id">Staff ID</Label>
-                <Input
-                  id="new-user-staff-id"
-                  required
-                  minLength={3}
-                  className="font-mono uppercase"
-                  placeholder="BTL-0031"
-                  value={staffId}
-                  onChange={(event) => setStaffId(event.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="new-user-pin">PIN (4–6 digits)</Label>
-                <Input
-                  id="new-user-pin"
-                  required
-                  inputMode="numeric"
-                  pattern="\d{4,6}"
-                  autoComplete="new-password"
-                  value={pin}
-                  onChange={(event) => setPin(event.target.value)}
-                />
-              </div>
-            </>
+            <div className="space-y-2">
+              <Label htmlFor="new-user-pin">PIN (4–6 digits)</Label>
+              <Input
+                id="new-user-pin"
+                required
+                inputMode="numeric"
+                pattern="\d{4,6}"
+                autoComplete="new-password"
+                value={pin}
+                onChange={(event) => setPin(event.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">
+                Staff ID is assigned on save (next BTL number).
+              </p>
+            </div>
           ) : (
             <>
               <div className="space-y-2">

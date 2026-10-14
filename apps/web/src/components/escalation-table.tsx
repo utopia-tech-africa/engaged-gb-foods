@@ -1,7 +1,9 @@
 "use client";
 
 import { format } from "date-fns";
+import { AlertTriangle } from "lucide-react";
 
+import { EmptyState } from "@/components/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -29,7 +31,13 @@ const STATUS_VARIANTS: Record<EscalationStatus, "destructive" | "secondary" | "o
 
 export const EscalationTable = ({ escalations, canEdit, onEdit }: EscalationTableProps) => {
   if (escalations.length === 0) {
-    return <p className="text-sm text-muted-foreground">No escalations match this filter.</p>;
+    return (
+      <EmptyState
+        icon={AlertTriangle}
+        title="No escalations match this filter"
+        description="Open exceptions from the field will appear here."
+      />
+    );
   }
 
   return (
